@@ -2,14 +2,15 @@
 from codex_harness.domain.model import digest, require
 from codex_harness.domain.research import research_origin
 
+AUDIT_EVIDENCE_BUCKETS = ('research_paths', 'research_subsystems', 'research_partitions')
+
 
 def binding(tx, audit_id, proposal):
     audit = tx.get('research_audits', audit_id)
     require(audit is not None, 'Unknown audit')
     evidence = {bucket: sorted((r for r in tx.scan(bucket) if r['audit_id'] == audit_id),
                               key=digest)
-                for bucket in ('research_paths', 'research_subsystems',
-                               'research_partitions')}
+                for bucket in AUDIT_EVIDENCE_BUCKETS}
     receipt_ids = {receipt for bucket in ('research_paths', 'research_subsystems')
                    for row in evidence[bucket] for receipt in row['record']['receipt_ids']}
     evidence['receipts'] = {key: tx.get('research_receipts', key) for key in sorted(receipt_ids)}
@@ -98,8 +99,9 @@ def inspect_approval(tx, details, artifacts):
             return [i for v in value for i in approval_ids(v)]
         return []
     approval = tx.get('research_approvals', approval_ids(details)[0])
+    collect(approval)
     collect(tx.get('research_audits', approval['audit_id']))
-    for bucket in ('research_paths', 'research_subsystems', 'research_receipts'):
+    for bucket in (*AUDIT_EVIDENCE_BUCKETS, 'research_receipts'):
         for row in tx.scan(bucket):
             if row['audit_id'] == approval['audit_id']:
                 collect(row)

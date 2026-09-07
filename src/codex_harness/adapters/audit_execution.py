@@ -3,6 +3,7 @@ import json
 from dataclasses import asdict, replace
 from importlib.resources import files
 
+from codex_harness.application.audit_gate import AUDIT_EVIDENCE_BUCKETS
 from codex_harness.application.research import ResearchAudits
 from codex_harness.domain.model import digest, require, utcnow
 from codex_harness.domain.research import IndependentReview, PartitionCheckpoint, parse_record
@@ -146,7 +147,7 @@ class AuditExecution:
             with self.audits.store.transaction() as tx:
                 audit = tx.get('research_audits', data['audit_id'])
                 evidence = {bucket: [r for r in tx.scan(bucket) if r['audit_id'] == data['audit_id']]
-                            for bucket in ('research_paths', 'research_subsystems', 'research_receipts')}
+                            for bucket in (*AUDIT_EVIDENCE_BUCKETS, 'research_receipts')}
             result = self.run_model(task, 'Independently inspect source evidence and evaluate this adaptation. '
                 'Reject incomplete scope, unresolved contradictions, license/dependency concerns or unsafe '
                 'architecture, SRE and graph impact. Source inventory alone is not semantic evidence.',

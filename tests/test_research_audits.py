@@ -452,6 +452,29 @@ def test_host_output_digests_are_not_artifact_edges_but_declared_children_are(au
     assert not service.coverage(record['id'])['adoption_eligible']
 
 
+@pytest.mark.parametrize('damage', ['missing', 'corrupt'])
+def test_checkpoint_only_evidence_survives_continuation_and_is_required_for_adoption(audit, damage):
+    service, record, source, _, _ = audit
+    activate_fixture(service)
+    evidence = service.artifacts.put('checkpoint-only evidence', 'fixture')['ref']
+    task, checkpoint = assigned_partition(service, record)
+    saved = service.checkpoint(task, replace(checkpoint, evidence_refs=[evidence]), [], [])
+    continued = service.checkpoint(task, replace(PartitionCheckpoint(**saved), evidence_refs=[]), [], [])
+    assert evidence in continued['evidence_refs']
+    service.workflow.complete(task, continued)
+    proposal = complete_fixture_audit(service, record, source)
+    service.propose(record['id'], proposal)
+    approve_fixture(service, 'lead:research')
+    approve_fixture(service, 'conductor')
+    assert service.coverage(record['id'])['adoption_eligible']
+    path = service.artifacts.root / (evidence[7:] + '.txt')
+    if damage == 'missing':
+        path.unlink()
+    else:
+        path.write_text('tampered checkpoint evidence')
+    assert not service.coverage(record['id'])['adoption_eligible']
+
+
 @pytest.mark.parametrize('change', ['graph', 'evidence', 'receipt', 'review_receipt', 'policy', 'revision'])
 def test_approval_invalidated_by_changed_binding(audit, change):
     service, record, source, _, _ = audit

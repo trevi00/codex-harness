@@ -187,7 +187,7 @@ class ResearchAudits:
                     and set(checkpoint.remaining_subsystems) == set(old['subsystems']) - subsystems,
                     'Remaining work does not reconcile')
             body = asdict(checkpoint)
-            body['evidence_refs'] = sorted(set(body['evidence_refs']) |
+            body['evidence_refs'] = sorted(set(old['evidence_refs']) | set(body['evidence_refs']) |
                 {ref for r in [*dispositions, *analyses] for ref in r.evidence_refs})
             body['generation'] += 1
             # Immutable checkpoint history retains prior evidence transitively.
