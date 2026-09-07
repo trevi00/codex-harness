@@ -36,6 +36,13 @@ def load_yaml(text):
         value = yaml.load(text, Loader=UniqueLoader)
     except (yaml.YAMLError, RecursionError) as exc:
         raise ContractError('Invalid project YAML') from exc
+    pending, count = [(value, 0)], 0
+    while pending:
+        node, depth = pending.pop()
+        count += 1
+        require(count <= 4096 and depth <= 64, 'Project YAML expansion exceeds limit')
+        children = node.values() if isinstance(node, dict) else node if isinstance(node, list) else ()
+        pending.extend((child, depth + 1) for child in children)
     return value
 
 
@@ -83,10 +90,11 @@ def initialize(root, text, *, legacy=False):
 
 def project_context(git, artifacts, cwd, revision):
     cwd = git._git('rev-parse', '--show-toplevel', cwd=cwd)
-    raw = git._git('ls-tree', '-rz', revision, '--', '.harness', cwd=cwd, strip=False)
+    raw = git._git('ls-tree', '-rz', revision, '--', '.harness', '.claude/stages.yaml', cwd=cwd, strip=False)
     inventory = {entry.split('\t', 1)[1]: entry.split(' ', 1)[0]
                  for entry in raw.split('\0') if '\t' in entry}
-    if PROFILE not in inventory and '.harness/stages.yaml' not in inventory and not any(
+    if PROFILE not in inventory and not any(p in inventory for p in (
+            '.harness/stages.yaml', '.claude/stages.yaml')) and not any(
             p.startswith(SKILLS) for p in inventory):
         return [], {'status': 'not_configured', 'selected': 0}
     if PROFILE in inventory:
@@ -95,8 +103,9 @@ def project_context(git, artifacts, cwd, revision):
     profile = parse_profile(text) if text is not None else normalize_profile({})
     selection = select_skill_paths(profile, [p[len(SKILLS):] for p in inventory if p.startswith(SKILLS)])
     pipeline = pipeline_context(git, artifacts, cwd, revision, profile, load_yaml)
-    recommended = {name for recommendation in pipeline['recommendations']
-                   for name in recommendation['skills']}
+    recommended = {}
+    for recommendation in pipeline['recommendations']:
+        recommended.setdefault(recommendation['language'], set()).update(recommendation['skills'])
     items, records = [], []
     for relative in selection:
         path = SKILLS + relative
@@ -104,7 +113,10 @@ def project_context(git, artifacts, cwd, revision):
         body = git._git('show', revision + ':' + path, cwd=cwd, strip=False)
         require(len(body.encode('utf-8')) <= 1024 * 1024, 'Skill exceeds input size limit')
         stored = artifacts.put(body, f'git:{revision}:{path}')
-        boost = 3 if Path(relative).name in recommended else 0
+        language = relative.split('/', 1)[0]
+        names = (set().union(*recommended.values()) if language == '_common' else
+                 recommended.get(language, set()) | recommended.get('project', set()))
+        boost = 3 if Path(relative).name in names else 0
         records.append({'path': path, 'content_ref': stored['ref'], 'revision': revision,
                         'pipeline_boost': boost,
                         'file': str(artifacts.root / (stored['ref'][7:] + '.txt'))})

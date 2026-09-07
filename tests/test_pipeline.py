@@ -1,5 +1,6 @@
 import hashlib
 import json
+import shutil
 from importlib.resources import files
 
 import pytest
@@ -18,7 +19,7 @@ def asset(name):
 
 def test_all_bundled_source_bytes_match_pinned_manifest():
     root = files('codex_harness.resources').joinpath('baldrix_pipeline')
-    provenance = json.loads(root.joinpath('provenance.json').read_text())
+    provenance = json.loads(root.joinpath('provenance.json').read_text('utf-8'))
     assert len(provenance['files']) == 10
     for item in provenance['files']:
         assert hashlib.sha256(root.joinpath(item['destination']).read_bytes()).hexdigest() == item['sha256']
@@ -110,3 +111,67 @@ def test_git_override_boost_is_stack_filtered_and_changes_only_after_commit(tmp_
     assert max(after, key=lambda item: item.priority).body == 'BUILD'
     assert all(item.body != 'EXCLUDED' for item in after)
     assert new['manifest_ref'] != meta['manifest_ref']
+
+
+@pytest.mark.parametrize('body', ['x: &x [*x]', 'x: &a [x,x,x,x,x,x,x,x,x,x]\ny: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a,*a]\nz: [*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b,*b]'])
+def test_yaml_alias_expansion_is_bounded_before_manifest_serialization(body):
+    with pytest.raises(ContractError):
+        load_yaml(body)
+
+
+def test_bundled_recommendations_preserve_metadata_without_cross_language_boost(tmp_path):
+    root = tmp_path / 'project'
+    root.mkdir()
+    git = GitWorkspace(str(root), str(tmp_path / 'workspaces'))
+    git._git('init', '-q')
+    git._git('config', 'user.name', 'Fixture')
+    git._git('config', 'user.email', 'fixture@localhost')
+    contents = {'.harness/tech-stack.yaml': 'stacks: [{language: java}, {language: node}]',
+                '.harness/skills/java/doc-writer.md': 'JAVA',
+                '.harness/skills/node/doc-writer.md': 'NODE'}
+    for path, body in contents.items():
+        target = root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(body)
+    git._git('add', '.')
+    git._git('commit', '-qm', 'fixture')
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    items, info = project_context(git, artifacts, str(root), git._git('rev-parse', 'HEAD'))
+    assert {item.body: item.priority for item in items} == {'JAVA': 18, 'NODE': 15}
+    manifest = artifacts.document(info['manifest_ref'])
+    assert manifest['pipeline']['recommendations'][1]['overlay_metadata']['testgen']['framework'] == 'cucumber-js'
+    legacy = root / '.claude/stages.yaml'
+    legacy.parent.mkdir()
+    legacy.write_text('stages: [{id: legacy, dge: designer}]')
+    git._git('add', '.')
+    git._git('commit', '-qm', 'legacy override')
+    assert project_context(git, artifacts, str(root), git._git('rev-parse', 'HEAD'))[1]['pipeline'][0]['stage_id'] == 'legacy'
+    (root / '.harness/stages.yaml').write_text('stages: [{id: canonical}]')
+    git._git('add', '.')
+    git._git('commit', '-qm', 'canonical override')
+    assert project_context(git, artifacts, str(root), git._git('rev-parse', 'HEAD'))[1]['pipeline'][0]['stage_id'] == 'canonical'
+
+
+@pytest.mark.parametrize('failure', ['missing_hash', 'corrupt_body'])
+def test_bundle_integrity_failures_are_classified(tmp_path, monkeypatch, failure):
+    from codex_harness.adapters import project_pipeline
+
+    root = tmp_path / 'resources'
+    shutil.copytree(files('codex_harness.resources').joinpath('baldrix_pipeline'),
+                    root / 'baldrix_pipeline')
+    provenance = root / 'baldrix_pipeline/provenance.json'
+    if failure == 'missing_hash':
+        body = json.loads(provenance.read_text('utf-8'))
+        body['files'] = [p for p in body['files'] if p['destination'] != 'stages.core.yaml']
+        provenance.write_text(json.dumps(body))
+    else:
+        (root / 'baldrix_pipeline/stages.core.yaml').write_text('modified')
+    monkeypatch.setattr(project_pipeline, 'files', lambda package: root)
+
+    class EmptyTree:
+        def _git(self, *args, **kwargs):
+            return ''
+
+    with pytest.raises(ContractError, match='Pipeline asset'):
+        project_pipeline.pipeline_context(EmptyTree(), FileArtifacts(str(tmp_path / 'artifacts')),
+            str(tmp_path), 'a' * 40, {'stacks': [{'language': 'java'}]}, load_yaml)

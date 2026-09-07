@@ -16,7 +16,10 @@ of the upstream parser's flow-string versus block-list distinction; both accepte
 forms are normalized for output/skill selection. Duplicate IDs and invalid shapes fail
 explicitly instead of silently disabling the pipeline.
 
-Project .harness/stages.yaml overrides defaults, including with an empty stage list.
+Project .harness/stages.yaml overrides .claude/stages.yaml and bundled defaults,
+including with an empty stage list. Unlike upstream, an explicit invalid override fails
+instead of silently falling through. Existing .md skill suffixes are retained rather
+than duplicated.
 Every configured stack gets its own recommendation; JavaScript/TypeScript map to the
 Node overlay. This extends the original single-language picker. Overlay metadata,
 including source_finder/testgen settings, is retained as data; test generation and
@@ -38,7 +41,8 @@ free-text outputs are not parsed into invented commands or assertions. No gate e
 The manifest contains full definitions' artifact references, merged selected stage,
 output observations, language and overlay metadata. Compact stage/phase summaries enter
 the required Executor context. Matching filenames receive the original +3 pipeline
-boost, applied to eligible context-item priority; stack filtering remains authoritative.
+boost, applied only within the recommending language (or shared _common/project
+override skills) to eligible context-item priority; stack filtering remains authoritative.
 Full prompt relevance scoring, forced-match/pointer tiers, body rendering and native
 skill activation remain pending. This is pipeline recommendation integration, not the
 full Baldrix skill matcher. Recovery is bound to the updated manifest digest.
@@ -53,3 +57,6 @@ Remaining full-scope work includes all pipeline gate/status consumers, lifecycle
 execution, complete ranking/rendering, all skill/agent assets and remaining Baldrix
 subsystems, then all oh-my-codex and Ouroboros. Component tests and Claude review do not
 mean the full repository migration is complete or deployed.
+
+YAML expansion is bounded to 4096 expanded values and depth 64, including aliases,
+before manifest serialization. Loaded bundle assets are cached within each call.

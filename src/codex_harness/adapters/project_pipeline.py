@@ -13,7 +13,8 @@ def pipeline_context(git, artifacts, cwd, revision, profile, load_yaml):
                  for entry in raw.split('\0') if '\t' in entry}
     regular = [path for path, mode in inventory.items() if mode in {'100644', '100755'}]
     sources = []
-    override = '.harness/stages.yaml'
+    override = next((path for path in ('.harness/stages.yaml', '.claude/stages.yaml')
+                     if path in inventory), '.harness/stages.yaml')
     if override in inventory:
         require(override in regular, 'Pipeline override must be a regular Git file')
         body = git._git('show', revision + ':' + override, cwd=cwd, strip=False)
@@ -25,13 +26,19 @@ def pipeline_context(git, artifacts, cwd, revision, profile, load_yaml):
         provenance = json.loads(root.joinpath('provenance.json').read_text('utf-8'))
         hashes = {p['destination']: p['sha256'] for p in provenance['files']}
 
+        cache = {}
+
         def read(name):
+            if name in cache:
+                return cache[name]
+            require(name in hashes, 'Pipeline asset missing from provenance')
             body = root.joinpath(name).read_bytes()
             require(hashlib.sha256(body).hexdigest() == hashes[name], 'Pipeline asset drift')
             stored = artifacts.put(body.decode('utf-8'),
                                    f'baldrix:{provenance["revision"]}:{name}')
             sources.append(stored['ref'])
-            return load_yaml(body.decode('utf-8'))
+            cache[name] = load_yaml(body.decode('utf-8'))
+            return cache[name]
 
         definitions = []
         languages = list(dict.fromkeys(stack['language'] for stack in profile['stacks']))
