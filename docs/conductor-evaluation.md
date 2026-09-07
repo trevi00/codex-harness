@@ -1,5 +1,7 @@
 # Conductor evaluation requirements
 
+Source expansion and harness-specific candidate metrics: [metric-source-catalog.md](metric-source-catalog.md).
+
 Status: implementation specification, not deployed metric enforcement. The current VERDICT uses
 free-text SRE and arc42 assessments. Source audit work strengthens provenance but does not complete
 the measurement and decision framework described here.
