@@ -46,6 +46,124 @@ def message(occurrence=None):
                      "scope": "integration", "evidence_refs": ["test:evidence"]}, "integration")
 
 
+def seed_stream(bus, ids, agent="compact"):
+    key = bus.stream(agent)
+    for entry_id in ids:
+        bus.client.xadd(key, {"body": "payload:" + entry_id}, id=entry_id)
+    return key
+
+
+def read_group(bus, key, group, count=None):
+    return bus.client.xreadgroup(group, "reader", {key: ">"}, count=count)[0][1]
+
+
+@pytest.mark.parametrize("retain,removed", [(0, 1004), (1, 1004), (3, 1002),
+                                                  (1005, 0), (10**100, 0), (None, 5)])
+def test_bus_compact_retention_and_isolation(bus, retain, removed):
+    ids = [f"{n}-0" for n in range(1, 1006)]
+    key = seed_stream(bus, ids)
+    other = seed_stream(bus, ids, agent="other")
+    bus.ensure_group("compact")
+    read_group(bus, key, "workers")
+    bus.client.xack(key, "workers", *ids)
+    result = bus.compact("compact") if retain is None else bus.compact("compact", retain)
+    assert result == removed
+    assert bus.client.xrange(key) == [(i, {"body": "payload:" + i}) for i in ids[removed:]]
+    assert bus.client.xlen(other) == len(ids)
+    assert (bus.compact("compact") if retain is None else bus.compact("compact", retain)) == 0
+
+
+@pytest.mark.parametrize("retain", [0, 1, 3])
+def test_bus_compact_preserves_pending_and_undelivered_across_groups(bus, retain):
+    ids = [f"{n}-0" for n in range(1, 9)]
+    key = seed_stream(bus, ids)
+    bus.ensure_group("compact")
+    read_group(bus, key, "workers")
+    bus.client.xack(key, "workers", *ids)
+    bus.client.xgroup_create(key, "slow", id="0")
+    assert bus.compact("compact", 0) == 0  # A group that has never read protects everything.
+    read_group(bus, key, "slow", count=4)
+    bus.client.xack(key, "slow", ids[0], ids[2], ids[3])
+    assert bus.compact("compact", retain) == 1
+    pending = bus.client.xreadgroup("slow", "reader", {key: "0"})[0][1]
+    assert pending == [(ids[1], {"body": "payload:" + ids[1]})]
+    bus.client.xack(key, "slow", ids[1])
+    assert bus.compact("compact", 0) == 2
+    delivered = read_group(bus, key, "slow")
+    assert delivered == [(i, {"body": "payload:" + i}) for i in ids[4:]]
+    bus.client.xack(key, "slow", *ids[4:])
+    assert bus.compact("compact", 0) == 4
+    assert bus.client.xrange(key) == [(ids[-1], {"body": "payload:" + ids[-1]})]
+
+
+def test_bus_compact_preserves_pending_for_every_consumer(bus):
+    ids = [f"{n}-0" for n in range(1, 7)]
+    key = seed_stream(bus, ids)
+    bus.ensure_group("compact")
+    read_group(bus, key, "workers", count=3)
+    bus.client.xreadgroup("workers", "another-reader", {key: ">"})
+    bus.client.xack(key, "workers", ids[0], ids[2], ids[4], ids[5])
+    assert bus.compact("compact", 0) == 1
+    for consumer, pending_id in [("reader", ids[1]), ("another-reader", ids[3])]:
+        assert bus.client.xreadgroup("workers", consumer, {key: "0"})[0][1] == [
+            (pending_id, {"body": "payload:" + pending_id})]
+    bus.client.xack(key, "workers", ids[1])
+    assert bus.compact("compact", 0) == 2
+    assert bus.client.xrange(key) == [(i, {"body": "payload:" + i}) for i in ids[3:]]
+
+
+def test_bus_compact_handles_deleted_delivered_boundary(bus):
+    ids = [f"{n}-0" for n in range(1, 7)]
+    key = seed_stream(bus, ids)
+    bus.ensure_group("compact")
+    read_group(bus, key, "workers", count=3)
+    bus.client.xack(key, "workers", *ids[:3])
+    bus.client.xdel(key, ids[2])
+    assert bus.compact("compact", 0) == 2
+    assert read_group(bus, key, "workers") == [
+        (i, {"body": "payload:" + i}) for i in ids[3:]]
+
+
+@pytest.mark.parametrize("ids", [
+    ["1-0", "9-0", "10-0", "11-0"],
+    ["1-0", "1-9", "1-10", "1-11"],
+    ["1-0", "9007199254740992-0", "9007199254740993-0", "9007199254740994-0"],
+    ["1-0", "2-9007199254740992", "2-9007199254740993", "2-9007199254740994"],
+    ["1-0", "18446744073709551614-0", "18446744073709551615-0",
+     "18446744073709551615-18446744073709551615"],
+])
+def test_bus_compact_compares_both_id_components_exactly(bus, ids):
+    key = seed_stream(bus, ids)
+    bus.ensure_group("compact")
+    read_group(bus, key, "workers")
+    bus.client.xack(key, "workers", ids[0], *ids[2:])
+    # The pending ID is smaller than the retention boundary, even above 2**53.
+    assert bus.compact("compact", 2) == 1
+    assert [row[0] for row in bus.client.xrange(key)] == ids[1:]
+    assert bus.client.xreadgroup("workers", "reader", {key: "0"})[0][1] == [
+        (ids[1], {"body": "payload:" + ids[1]})]
+
+
+def test_bus_compact_missing_empty_and_no_groups(bus):
+    assert bus.compact("compact", 0) == 0
+    assert not bus.client.exists(bus.stream("compact"))
+    bus.ensure_group("compact")
+    assert bus.compact("compact", 0) == 0
+    key = seed_stream(bus, ["1-0", "2-0"], agent="no-groups")
+    assert bus.compact("no-groups", 0) == 0
+    assert bus.client.xlen(key) == 2
+
+
+def test_bus_compact_propagates_redis_errors_without_mutation(bus):
+    from redis.exceptions import ResponseError
+
+    key = bus.stream("compact")
+    bus.client.set(key, "not a stream")
+    with pytest.raises(ResponseError, match="WRONGTYPE"):
+        bus.compact("compact", 0)
+    assert bus.client.get(key) == "not a stream"
+
+
 def test_concurrent_second_strike_is_atomic(pgstore):
     service = Harness(pgstore, organization())
     messages = [message() for _ in range(8)]
