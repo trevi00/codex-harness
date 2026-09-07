@@ -81,9 +81,11 @@ class Executor:
             task_contract["hook_contract"] = evidence["hook_contract"]
         items = [ContextItem(raw["ref"], canonical(evidence), raw["ref"], digest(evidence), 10)]
         skill_items, skill_selection = project_context(self.git, self.artifacts, cwd, basis_revision, objective)
-        skill_items, skill_observation = prepare_history(
-            self.service.store, self.artifacts, str(self.git.repository), agent, key, objective,
-            skill_selection, skill_items)
+        skill_observation = None
+        if skill_selection.get('manifest_ref'):
+            skill_items, skill_observation = prepare_history(
+                self.service.store, self.artifacts, str(self.git.repository), agent, key, objective,
+                skill_selection, skill_items)
         items.extend(skill_items)
         if self.knowledge:
             query = task_contract.get("objective", objective) if isinstance(task_contract, dict) else objective

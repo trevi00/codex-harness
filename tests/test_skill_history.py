@@ -92,3 +92,26 @@ def test_postgres_concurrent_duplicate_delivery_has_one_sample():
         results = list(pool.map(lambda _: history.record(project, event('same')), range(8)))
     assert sum(results) == 1
     assert history.snapshot(project, event('same')['top'], '')[0]['count'] == 1
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(lambda i: history.record(project, event('distinct-' + str(i))),
+                                range(12)))
+    assert all(results)
+    assert history.snapshot(project, event('same')['top'], '')[0]['count'] == 13
+    with store.transaction() as tx:
+        ids = {entry['id'] for entry in tx.get('skill_history', project)['events']}
+    assert ids == {'same'} | {'distinct-' + str(i) for i in range(12)}
+
+
+def test_invalid_observation_does_not_write_history():
+    store = MemoryStore()
+    history = SkillHistory(store)
+    for field in ('manifest_ref', 'context_ref'):
+        malformed = event('invalid')
+        del malformed[field]
+        with pytest.raises(ContractError, match='Missing skill evidence'):
+            history.record('project', malformed)
+    malformed = event('invalid')
+    malformed['top'] = [None]
+    with pytest.raises(ContractError, match='Invalid skill observation item'):
+        history.record('project', malformed)
+    assert store.data == {}

@@ -13,10 +13,13 @@ class SkillHistory:
         return assess_history(state['events'], current, exclude)
 
     def record(self, project, event, guard=None):
+        require(all(isinstance(event.get(key), str) and event[key]
+                    for key in ('manifest_ref', 'context_ref')), 'Missing skill evidence reference')
         require(isinstance(event.get('id'), str) and bool(event['id']), 'Missing skill observation id')
         require(isinstance(event.get('top'), list) and len(event['top']) <= TOP_MATCHES,
                 'Invalid skill observation size')
         for item in event['top']:
+            require(isinstance(item, dict), 'Invalid skill observation item')
             require(isinstance(item.get('score'), int) and not isinstance(item['score'], bool)
                     and item['score'] >= 0, 'Invalid skill score')
             require(all(isinstance(item.get(key), str) and item[key]
