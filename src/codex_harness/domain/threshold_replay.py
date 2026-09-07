@@ -7,6 +7,7 @@ from codex_harness.domain.skill_audit import timestamp
 
 REFERENCE_BODY_BUDGET = 4000
 REFERENCE_TOP_K = 3
+REFERENCE_MODEL = 'baldrix-b9586c59-total-score-raw-body'
 
 
 def top_entries(event):
@@ -110,7 +111,7 @@ def replay_report(events, **options):
                      for entry in scored)
         usable_events += usable > 0
         partially_sized_events += 0 < usable < len(scored)
-    return {'reference_model': 'baldrix-b9586c59-total-score-raw-body', 'gate': asdict(result),
+    return {'reference_model': REFERENCE_MODEL, 'gate': asdict(result),
             'observations': len(events), 'entries': len(entries), 'sized_entries': sized,
             'missing_or_invalid_sizes': len(entries) - sized,
             'guard_usable_events': usable_events,

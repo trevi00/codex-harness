@@ -6,7 +6,8 @@ Pure proposals carry their current-policy basis; staging/activation are separate
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
-from codex_harness.domain.model import digest, require
+from codex_harness.domain import threshold_replay as replay
+from codex_harness.domain.model import ContractError, digest, require
 from codex_harness.domain.skill_audit import timestamp
 from codex_harness.domain.threshold_replay import (
     finite_number,
@@ -17,6 +18,7 @@ from codex_harness.domain.threshold_replay import (
 
 HOLDOUT_FRACTION = 0.30
 HYSTERESIS_MARGIN = 0.02
+CALCULATION_VERSION = 1
 
 
 @dataclass(frozen=True)
@@ -66,6 +68,9 @@ def validate_registry():
         require(entry.direction_safety in {'raise_safe', 'lower_safe', 'either'}, 'Invalid safe direction')
         require(finite_number(entry.step) and entry.step > 0 and finite_number(entry.default),
                 'Invalid threshold registry number')
+        if entry.wired:
+            require(entry.target_metric == 'full_body_admit_precision'
+                    and entry.guard_metric == 'non_truncation_rate', 'Unresolved threshold metrics')
 
 
 def holdout_boundary(events):
@@ -98,11 +103,12 @@ def propose_threshold_changes(*, events_by_source, current_values, policy_revisi
         if not entry.wired:
             continue
         require(name in current_values, 'Missing effective threshold value')
-        # Resolver is closed-world; registry text cannot import arbitrary code.
-        require(entry.target_metric == 'full_body_admit_precision'
-                and entry.guard_metric == 'non_truncation_rate', 'Unresolved threshold metrics')
         events = events_by_source.get(entry.telemetry_source, [])
         require(isinstance(events, list), 'Invalid threshold corpus')
+        try:
+            corpus_hash = digest(events)
+        except (TypeError, ValueError, OverflowError, RecursionError) as exc:
+            raise ContractError('Invalid threshold corpus encoding') from exc
         if len(events) < min_sample:
             continue
         boundary = holdout_boundary(events)
@@ -130,8 +136,12 @@ def propose_threshold_changes(*, events_by_source, current_values, policy_revisi
                   if accepted else rejected[-1])
         basis = {'name': name, 'policy_revision': policy_revision, 'current': current,
                  'suggested': chosen['value'] if accepted else None,
-                 'evaluated_value': chosen['value'], 'corpus_hash': digest(events),
+                 'evaluated_value': chosen['value'], 'corpus_hash': corpus_hash,
                  'registry_hash': digest(asdict(entry)), 'min_sample': min_sample,
+                 'calculation': {'version': CALCULATION_VERSION,
+                     'reference_model': replay.REFERENCE_MODEL,
+                     'body_budget': replay.REFERENCE_BODY_BUDGET, 'top_k': replay.REFERENCE_TOP_K,
+                     'holdout_fraction': HOLDOUT_FRACTION, 'hysteresis_margin': HYSTERESIS_MARGIN},
                  'holdout_boundary': boundary}
         proposals.append({**basis, 'id': digest(basis), 'reference_accepted': bool(accepted),
             'advisory_only': True, 'activation_ready': False,

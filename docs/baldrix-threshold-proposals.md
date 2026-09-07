@@ -18,6 +18,12 @@ values fail explicitly. Pure-domain input validation does not prove that the
 supplied revision exists or that its policy equals those values: the Git adapter
 and staging application must establish that binding.
 
+The identity also binds calculation version, reference-model identifier, body
+budget, top-k, holdout fraction and hysteresis margin. Any algorithm change outside
+these parameters must increment the calculation version. Ties preserve upstream's
+raise-first candidate order; the source metric can rate raising and lowering equally
+because it measures borderline admission, not task success.
+
 This increment provides calculation only. It does not emit the upstream ready
 file, write PostgreSQL proposals, expose a CLI or activate policy. The existing
 reference metric's limits remain: recorded top matches and raw body sizes are
@@ -29,3 +35,24 @@ interpret this as completion of the upstream proposer/apply subsystem.
 
 Existing follow-ups in `baldrix-threshold-replay.md`, including cross-version
 observation identity and import integration coverage, remain open.
+
+Integration trace: native `application/research.py` queues lead/conductor reviews
+with six-W envelopes and immutable bindings; `application/releases.py` binds
+candidate revision and incumbent policy hash, requires ordered reviews and checks,
+and compares the active deployment before promotion. Threshold staging must join
+these existing review/release paths rather than treat the source token strings or
+readiness file as standalone authorization. These native paths were inspected for
+the integration design; threshold proposals are not connected to them yet.
+
+At runtime revision `0b22fe9a941fe543048da1ba8589d33c2be04f80`, an isolated execution
+of the unmodified upstream proposer compared 300 seeded corpora and 177 resulting
+proposals. Registry fields and all locked names matched; proposal values, training
+sizes and gate results matched with current values set to source defaults:
+`sha256:c87fe0019ab3fde768d35c8c9480fa84171e9c767f58184ed0c4b034dcb4c860`.
+Non-default current values are intentionally adapted and covered by native tests.
+
+Initial actual Claude review ACCEPT:
+`sha256:c72526f80c47b0be67772d965910d1f13c2e214a3814a1d466ddcc8d7f84581d`.
+Follow-up binds calculation constants, moves metric validation into the registry
+validator, normalizes corpus encoding failures and strengthens tests for ties,
+hysteresis, lower-safe direction and malformed registry/input.
