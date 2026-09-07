@@ -65,6 +65,7 @@ def test_invalid_bytes_entries_dates_and_line_boundaries_are_explicit():
 
 @pytest.mark.parametrize('data', [
     b'{"ts":NaN,"top":[]}\n', b'{"ts":"\\ud800","top":[]}\n',
+    b'{"ts":1e999,"top":[]}\n',
     b'{"ts":"\\u0000","top":[]}\n', b'{"top":' + b'[' * 2000 + b']' * 2000 + b'}\n',
 ])
 def test_unrepresentable_json_never_poison_postgres_projection(data):
@@ -81,6 +82,12 @@ def test_size_limits_crlf_and_incomplete_record(monkeypatch):
     assert parsed['counts']['events'] == 1 and parsed['pending_bytes'] == len(row()) - 1
     monkeypatch.setattr('codex_harness.domain.skill_import.MAX_LINE_BYTES', 10)
     assert project_jsonl(row(), 'segment')['counts']['invalid_lines'] == 1
+
+
+def test_unbounded_integer_score_is_retained_only_in_raw_source():
+    parsed = project_jsonl(row(top=[{'name': 'large', 'score': 10**500}]) + row(), 'segment')
+    assert parsed['counts']['invalid_entries'] == 1
+    assert parsed['counts']['invalid_lines'] == 1 and parsed['counts']['events'] == 1
 
 
 def test_concurrent_reimport_and_retention_keep_one_cursor(monkeypatch):

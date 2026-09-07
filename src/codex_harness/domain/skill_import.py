@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import json
+import math
 import re
 from collections import deque
 
@@ -10,6 +11,7 @@ from codex_harness.domain.skill_history import MAX_EVENTS, TOP_MATCHES
 
 MAX_INPUT_BYTES = 8 * 1024 * 1024
 MAX_LINE_BYTES = 64 * 1024
+MAX_IMPORT_SCORE = 2**31 - 1
 IMPORT_VERSION = 1
 
 
@@ -51,6 +53,8 @@ def project_jsonl(data, source, *, start=0, line_offset=0):
                 value = pending.pop()
                 if isinstance(value, str):
                     require('\x00' not in value, 'NUL is not representable in PostgreSQL JSONB strings')
+                elif isinstance(value, float):
+                    require(math.isfinite(value), 'Non-finite JSON number')
                 elif isinstance(value, dict):
                     pending.extend(value.keys())
                     pending.extend(value.values())
@@ -68,7 +72,7 @@ def project_jsonl(data, source, *, start=0, line_offset=0):
             if (not isinstance(entry, dict) or not isinstance(entry.get('name'), str)
                     or not entry['name']
                     or not isinstance(entry.get('score'), int) or isinstance(entry['score'], bool)
-                    or entry['score'] < 0):
+                    or not 0 <= entry['score'] <= MAX_IMPORT_SCORE):
                 counts['invalid_entries'] += 1
                 continue
             item = {'path': 'legacy-name:' + entry['name'], 'content_ref': unknown_version,

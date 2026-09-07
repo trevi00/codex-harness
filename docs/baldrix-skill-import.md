@@ -33,6 +33,9 @@ lines advance the cursor (CRLF is supported). An unterminated final line remains
 even if it happens to parse as JSON, until a later snapshot completes it. Malformed,
 oversized, non-finite, unrepresentable Unicode/NUL and excessively nested JSON records
 are counted and skipped in projection, with up to 20 issue examples per invocation.
+Projected scores must be non-negative 32-bit signed integers; larger values stay in
+the raw archive and are counted as invalid entries rather than overflowing median
+calculations. This is an explicit import boundary, not a claim about an upstream cap.
 The immutable source keeps every skipped byte. Valid empty top lists remain invocations;
 wholly invalid top lists do not become empty successful observations. Partially valid
 top lists retain valid entries and count invalid ones.
