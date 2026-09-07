@@ -47,8 +47,10 @@ Inspect the user's harness + guardian as related components, baldrix separately,
 ouroboros using pinned manifests in reference-audit-status.md. For each borrowed metric trace its actual
 collector, denominator, storage, evaluator, consumers and tests. A README claim is not a working metric.
 
-`khaness` is user-named but **repository identity unresolved**. A clarification has been requested.
-Do not substitute a fuzzy search result. Keep its source analysis pending while other work continues.
+The user clarified that `khaness` was a mistaken name for `https://github.com/trevi00/baldrix.git`.
+Resolve that name to the existing `trevi00/baldrix` audit and its pinned source identity in
+reference-audit-status.md. Do not create another repository audit or double-count its metrics.
+This identity correction does not change the audit's semantic coverage or verification status.
 
 ## Integration and metric lifecycle
 
