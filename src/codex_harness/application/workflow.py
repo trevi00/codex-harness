@@ -122,6 +122,25 @@ class Workflow:
             task.update(status="cancelled", error=reason, generation=task["generation"] + 1)
             tx.put("tasks", task_id, task)
 
+    def request_rebase(self, task_id: str, new_base: str) -> dict:
+        with self.store.transaction() as tx:
+            task = tx.get("tasks", task_id)
+            require(task is not None and task["status"] == "succeeded"
+                    and task["result"].get("candidate"), "Completed candidate task required")
+            key = digest({"task": task_id, "base": new_base})
+            previous = tx.get("rebase_requests", key)
+            if previous:
+                return previous["message"]
+            actor = self.org.actor(task["agent"], "worker")
+            message = self._next(task["message"], actor.parent, actor.id, "rebase",
+                                 {"candidate": task["result"]["candidate"], "new_base": new_base})
+            message["when"]["after"] = [task_id]
+            message["where"]["revision"] = new_base
+            self.org.authorize(message)
+            tx.put("outbox", message["message_id"], {"message": message, "sent": False})
+            tx.put("rebase_requests", key, {"id": key, "message": message})
+            return message
+
     def handle(self, message: dict) -> dict:
         """Consume a report once and atomically queue the next reporting-edge command."""
         self.org.authorize(message)

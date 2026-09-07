@@ -8,6 +8,7 @@ from pathlib import Path
 from codex_harness.adapters.commands import run_process
 from codex_harness.adapters.hooks import NativeHooks
 from codex_harness.application.releases import Releases
+from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import canonical, digest, require, utcnow
 
 
@@ -36,6 +37,10 @@ class ReleaseRunner:
             active = tx.get("deployment", "active")
         require(release is not None and release["status"] == "reviewed", "Release not reviewed")
         candidate = release["candidate"]
+        current_main = self.git._git("rev-parse", "HEAD")
+        if current_main != candidate["base"]:
+            request = Workflow(self.service.store, self.service.org).request_rebase(candidate["task_id"], current_main)
+            return {"status": "rebasing", "task_id": request["message_id"]}
         inspected = self.git.inspect(candidate["revision"], candidate["base"])
         require(inspected["tree"] == candidate["tree"], "Candidate tree mismatch")
         incumbent = self.git.review_workspace(candidate["base"], "evaluator-" + release_id[:16])

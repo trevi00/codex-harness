@@ -144,6 +144,9 @@ def parser() -> argparse.ArgumentParser:
     cancel = commands.add_parser("cancel")
     cancel.add_argument("task_id")
     cancel.add_argument("--reason", required=True)
+    rebase = commands.add_parser("rebase")
+    rebase.add_argument("task_id")
+    rebase.add_argument("--onto", default="HEAD")
     artifact = commands.add_parser("artifact")
     artifact.add_argument("reference")
     artifact.add_argument("--start", type=int, default=0)
@@ -263,6 +266,11 @@ def main() -> None:
         elif args.command == "cancel":
             Workflow(service.store, service.org).cancel(args.task_id, "conductor", args.reason)
             emit({"cancelled": args.task_id})
+        elif args.command == "rebase":
+            executor = build_executor(service)
+            revision = executor.git._git("rev-parse", "--verify", args.onto + "^{commit}")
+            emit(executor.workflow.request_rebase(args.task_id, revision))
+            service.flush_outbox(RedisBus(redis_url()))
         elif args.command == "artifact":
             artifacts = build_executor(service).artifacts
             emit(artifacts.search(args.reference, args.search) if args.search
