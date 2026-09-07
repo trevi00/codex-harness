@@ -64,3 +64,24 @@ Unit tests substitute model execution, while using actual Git checkouts and cont
 artifacts. They cover ordered completion, rejected/blocked lead decisions, wrong
 receipt identity, mid-execution record/policy changes and stale generations. Actual
 CLI/model and PostgreSQL evidence is distinguished in validation receipts.
+
+Validation at runtime revision `049397f2f5f8845b066bc3771c4efd3d00b59594`:
+Windows 479 passed / 7 skipped (`sha256:943055235f7b6382e0d45f11621fa3c6750f055b9a350ee3aaf88daa02207c9a`);
+Linux 486 passed (`sha256:7edf078d3944c641090071a7d30ae6789f6471f9c2e62ee6aaf5ccb858b71763`).
+Actual CLI image canary passed (`sha256:d21b1c39228ff4f9d5315532e2c18963fef64aa46636565cf7c6a108f8b339e3`).
+Two actual Codex calls accepted further investigation over a synthetic corpus with
+MemoryStore (`sha256:a708a43978af6081edf1850d847ffc0cdce62e84c2869983d45b37043bf43fd3`).
+The PostgreSQL test used substituted model execution and isolated bucket prefixes
+(`sha256:b51dabe261e76a50f3fb9e47b92e0188515a5b0fddc9cff8f564492d8dd22872`).
+Claude returned ACCEPT with follow-up findings
+(`sha256:88cf69db4762cd4facd2d9a182442f9e1495dfd2fc9a6a73493ba74ef8e65dc7`).
+These receipts describe that revision, not subsequent fixes.
+
+Review follow-up: a post-commit exception cannot downgrade a succeeded decision;
+exhaustion only fails the stage awaiting that exact decision. Threshold retries use
+generation-specific review clones, preserving prior attempt files and preventing
+stale attempts from sharing a checkout. Clone retention remains follow-up work.
+The heartbeat finding is conditional: current decision execution is bounded at 300
+seconds and the heartbeat lease is 600 seconds; it does not currently expire before
+the configured model deadline. Lease duration configuration still deserves a shared
+decision policy instead of the initial hard-coded 1200 seconds.

@@ -211,3 +211,41 @@ def test_collection_run_membership_is_required(policy_repo, tmp_path):
         tx.put('threshold_proposal_runs', run['id'], run)
     with pytest.raises(ContractError, match='collection run'):
         reviews.request(request['row_id'])
+
+
+def test_post_commit_error_does_not_rewrite_success(policy_repo, tmp_path, monkeypatch):
+    executor, reviews, request = setup_review(policy_repo, tmp_path)
+    monkeypatch.setattr(executor, '_run', runtime(executor, []))
+    original = ThresholdReviews.complete
+    def complete(self, *args):
+        original(self, *args)
+        raise OSError('lost commit acknowledgement')
+    monkeypatch.setattr(ThresholdReviews, 'complete', complete)
+    executor.decide_one('lead:improvement')
+    with executor.service.store.transaction() as tx:
+        lead = tx.get('decisions_pending', digest([request['id'], 'lead:improvement']))
+        assert lead['status'] == 'succeeded'
+        # A stale exhausted lead must not fail the conductor's pending stage.
+        reviews.exhausted(tx, lead)
+        assert tx.get('threshold_review_requests', request['id'])['status'] == 'awaiting_conductor'
+
+
+def test_dirty_attempt_does_not_poison_retry_workspace(policy_repo, tmp_path, monkeypatch):
+    from pathlib import Path
+
+    executor, _, request = setup_review(policy_repo, tmp_path)
+    original = runtime(executor, [])
+    paths = []
+    def run(*args, **kwargs):
+        paths.append(args[4])
+        result = original(*args, **kwargs)
+        if len(paths) == 1:
+            (Path(args[4]) / 'leftover.txt').write_text('failed attempt')
+        return result
+    monkeypatch.setattr(executor, '_run', run)
+    assert executor.decide_one('lead:improvement')['status'] == 'retry'
+    assert executor.decide_one('lead:improvement')['status'] == 'succeeded'
+    assert paths[0] != paths[1]
+    assert (Path(paths[0]) / 'leftover.txt').exists()
+    with executor.service.store.transaction() as tx:
+        assert tx.get('threshold_review_requests', request['id'])['status'] == 'awaiting_conductor'

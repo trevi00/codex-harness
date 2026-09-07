@@ -523,7 +523,7 @@ class Executor:
         except Exception as exc:
             with self.service.store.transaction() as tx:
                 current = tx.get("decisions_pending", decision["id"])
-                if current["owner"] == owner:
+                if current["owner"] == owner and current["status"] == "running":
                     current.update(status="retry", error=str(exc))
                     tx.put("decisions_pending", decision["id"], current)
             return {"id": decision["id"], "status": "retry", "error": str(exc)}

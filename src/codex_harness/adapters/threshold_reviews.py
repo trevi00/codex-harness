@@ -11,7 +11,8 @@ def review_threshold(executor, lease, schema):
     policy = current_policy(executor.git)
     require(policy == document['policy'], 'Current threshold policy changed; recollect evidence')
     revision = policy['revision']
-    cwd = executor.git.review_workspace(revision, lease['id'])
+    # INV-THRESHOLD-REVIEW-001: retries must not share a stale execution's checkout.
+    cwd = executor.git.review_workspace(revision, lease['id'] + '-' + str(lease['generation']))
     evidence = {'review': bundle, 'corpus_file': str(executor.artifacts.root /
         (bundle['record']['evidence_ref'][7:] + '.txt'))}
     result = executor._run(lease['actor'], lease['id'],

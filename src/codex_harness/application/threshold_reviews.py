@@ -117,7 +117,9 @@ class ThresholdReviews:
     @staticmethod
     def exhausted(tx, decision):
         request = tx.get('threshold_review_requests', decision['input']['request_id'])
-        if request and request['status'] in {'awaiting_lead', 'awaiting_conductor'}:
+        expected = ({'awaiting_lead': 'lead:improvement', 'awaiting_conductor': 'conductor'}
+                    .get(request['status']) if request else None)
+        if expected and decision['id'] == digest([request['id'], expected]):
             request.update(status='failed', failure='decision_attempt_budget_exhausted',
                            failed_decision=decision['id'], completed_at=utcnow())
             tx.put('threshold_review_requests', request['id'], request)
