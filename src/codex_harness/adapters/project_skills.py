@@ -49,6 +49,7 @@ def initialize(root, text):
 
 
 def project_context(git, artifacts, cwd, revision):
+    cwd = git._git('rev-parse', '--show-toplevel', cwd=cwd)
     raw = git._git('ls-tree', '-rz', revision, '--', '.harness', cwd=cwd, strip=False)
     inventory = {entry.split('\t', 1)[1]: entry.split(' ', 1)[0]
                  for entry in raw.split('\0') if '\t' in entry}

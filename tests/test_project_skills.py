@@ -82,6 +82,10 @@ def test_init_is_exclusive_and_git_pin_ignores_uncommitted_configuration(project
     assert {i.body for i in items} == {'COMMON_ONLY', 'FASTAPI_ELIGIBLE'}
     assert summary['count'] == 2
     assert artifacts.document(summary['manifest_ref'])['revision'] == revision
+    nested = root / 'src'
+    nested.mkdir()
+    nested_items, _ = project_context(git, artifacts, str(nested), revision)
+    assert nested_items == items
 
 
 def test_actual_executor_context_contains_only_eligible_pinned_skills(project, monkeypatch):
@@ -102,6 +106,19 @@ def test_actual_executor_context_contains_only_eligible_pinned_skills(project, m
     assert 'FASTAPI_ELIGIBLE' in text and 'COMMON_ONLY' in text
     assert 'JAVA_MUST_NOT_LOAD' not in text
     assert prompts[0]['required']['project_skills']['count'] == 2
+    (root / '.harness/tech-stack.yaml').write_text('stack: {language: java}')
+    git._git('add', '.harness/tech-stack.yaml')
+    git._git('commit', '-qm', 'switch stack')
+    executor._run('worker:implementation', 'task', 'Test context routing', {}, str(root), IMPLEMENTATION)
+    assert 'JAVA_MUST_NOT_LOAD' in json.dumps(prompts[1])
+    assert 'FASTAPI_ELIGIBLE' not in json.dumps(prompts[1])
+    assert prompts[1]['required']['recovery']['sources'] == {}
+    git._git('rm', '-r', '.harness')
+    git._git('commit', '-qm', 'remove project skill configuration')
+    executor._run('worker:implementation', 'task', 'Test context routing', {}, str(root), IMPLEMENTATION)
+    assert prompts[2]['required']['project_skills']['status'] == 'not_configured'
+    assert prompts[2]['required']['recovery']['sources'] == {}
+    assert 'JAVA_MUST_NOT_LOAD' not in json.dumps(prompts[2])
 
 
 def test_profile_symlink_in_git_is_rejected(project):

@@ -110,10 +110,15 @@ class Executor:
         # INV-SESSION-001: task identity is stable, but recovery belongs to one
         # stage, evidence set and harness revision; never replay shortlist as final.
         binding = {"stage": stage, "evidence_ref": raw["ref"], "basis_revision": basis_revision}
-        if stage:
+        if skill_selection.get('manifest_ref'):
+            binding['project_skills_ref'] = skill_selection['manifest_ref']
+        context_bound = bool(stage or skill_selection.get('manifest_ref'))
+        if context_bound:
             required["research_context"] = {**binding, **evidence.get("provenance", {})}
         def matches(value):
-            return not stage or value.get("research_binding") == binding
+            previous = value.get('research_binding') or {}
+            return ((not context_bound and not previous.get('project_skills_ref'))
+                    or previous == binding)
 
         with self.service.store.transaction() as tx:
             checkpoint = tx.get("sessions", agent)
@@ -163,7 +168,7 @@ class Executor:
                         previous = tx.get("execution_progress", key) or {"id": key, "recent": []}
                         if not matches(previous):
                             previous = {"id": key, "recent": []}
-                        if stage:
+                        if context_bound:
                             previous["research_binding"] = binding
                         previous["recent"] = (previous["recent"] + [receipt["ref"]])[-6:]
                         previous["last_record"] = receipt["ref"]
@@ -187,7 +192,7 @@ class Executor:
                 # INV-RELEASE-001 / INV-SESSION-001: cleanup cannot erase a known
                 # blocked result before its artifact and fenced checkpoint are saved.
                 result["cleanup_error"] = {"type": type(exc).__name__, "message": str(exc)}
-            if stage:
+            if context_bound:
                 result.update(elapsed_seconds=time.monotonic() - started,
                               context_ref=context_ref["ref"], research_binding=binding)
             evidence_ref = self.artifacts.put(canonical(result), "execution:" + key)
@@ -201,7 +206,7 @@ class Executor:
                      "thread_id": result["thread_id"], "usage": result["usage"],
                      "message_cursor": key, "decisions": result["answer"],
                      "handoff_reason": "context_threshold" if result["rotate"] else "task_boundary"}
-            if stage:
+            if context_bound:
                 state["research_binding"] = binding
             session = self.service.checkpoint(agent, generation, state, execution=lease)
             generation = session["generation"]
