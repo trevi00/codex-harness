@@ -1,5 +1,7 @@
 """Archive proposal calculations for later review; never authorize activation."""
-from codex_harness.domain.model import canonical, digest, utcnow
+import json
+
+from codex_harness.domain.model import ContractError, canonical, digest, utcnow
 from codex_harness.domain.skill_history import MAX_EVENTS
 from codex_harness.domain.skill_import import validate_source
 from codex_harness.domain.threshold_proposals import propose_threshold_changes
@@ -23,6 +25,10 @@ class ThresholdProposals:
         document = {'project_key': project, 'legacy_source': legacy_source,
             'source_ref': state.get('source_ref'), 'policy': policy, 'events': events,
             'min_sample': min_sample, 'proposals': proposals}
+        try:
+            json.dumps(document, allow_nan=False)
+        except (TypeError, ValueError, OverflowError, RecursionError) as exc:
+            raise ContractError('Proposal evidence must be finite JSON') from exc
         receipt = self.artifacts.put(canonical(document), 'threshold-proposal-corpus')
         run_id = digest([project, receipt['ref']])
         rows = []

@@ -135,6 +135,8 @@ def replay_report(events, **options):
                                       is None for event in events),
             'advisory_only': True, 'policy_changed': False,
             'limitations': ['Total scores, not native base-score admission.',
+                'The target is a score-margin statistic, not admission quality or task success.',
+                'Target deltas use holdout; guard deltas use the complete corpus, including training.',
                 'Raw character sum, not per-body reduction or the final UTF-8 context compiler.',
                 'Only recorded top matches are available; lowering thresholds can undercount admissions and pressure.',
                 'Empty admission scores optimistically; reference acceptance can select zero skills.',

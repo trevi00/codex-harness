@@ -10,6 +10,11 @@ POLICY_PATHS = (
     'src/codex_harness/adapters/skill_routing.py',
     'src/codex_harness/domain/threshold_proposals.py',
     'src/codex_harness/domain/threshold_replay.py',
+    'src/codex_harness/domain/skill_audit.py',
+    'src/codex_harness/domain/skill_history.py',
+    'src/codex_harness/domain/model.py',
+    'src/codex_harness/application/threshold_proposals.py',
+    'src/codex_harness/adapters/threshold_proposals.py',
     'src/codex_harness/adapters/threshold_policy.py',
 )
 

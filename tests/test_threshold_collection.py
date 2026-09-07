@@ -133,3 +133,16 @@ def test_real_git_cli_collection_and_stale_code_rejection(policy_repo, tmp_path,
     before = copy.deepcopy(store.data)
     assert main(args, store=store) == 2
     assert 'Traceback' not in capsys.readouterr().err and store.data == before
+
+
+def test_nonfinite_source_metadata_cannot_enter_evidence(policy_repo, tmp_path):
+    _, git = policy_repo
+    store, artifacts = MemoryStore(), FileArtifacts(str(tmp_path / 'artifacts'))
+    corpus = events()
+    corpus[0]['extra'] = float('nan')
+    with store.transaction() as tx:
+        tx.put('skill_history', 'project', {'events': corpus})
+    with pytest.raises(ContractError, match='finite JSON'):
+        ThresholdProposals(store, artifacts, lambda: current_policy(git)).collect('project')
+    assert not list(artifacts.root.glob('*.txt'))
+    assert not any(bucket.startswith('threshold_') for bucket, _ in store.data)
