@@ -20,4 +20,90 @@ def schedule_research(service, now: float | None = None) -> int:
             tx.put("outbox", message["message_id"], {"message": message, "sent": False})
             tx.put("schedule", key, {"id": key, "at": utcnow()})
             created += 1
+    return created + schedule_audits(service)
+
+
+def schedule_audits(service) -> int:
+    """One durable assignment per partition generation; unfinished scope survives budgets."""
+    from codex_harness.domain.model import digest
+    created = 0
+    with service.store.transaction() as tx:
+        control = tx.get('research_control', 'activation') or {}
+        if control.get('status') == 'paused':
+            return 0
+        for discovery in tx.scan('research_discoveries'):
+            key = 'map:' + discovery['id']
+            if tx.get('schedule', key):
+                continue
+            message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_discovery',
+                               {'discovery_id': discovery['id']}, key)
+            service.org.authorize(message)
+            tx.put('outbox', message['message_id'], {'message': message, 'sent': False})
+            tx.put('schedule', key, {'id': key, 'task_id': message['message_id'], 'at': utcnow()})
+            created += 1
+        for row in sorted(tx.scan('research_backlog'), key=lambda r: r['priority']):
+            if row.get('audit_id'):
+                continue
+            key = 'acquire:' + row['id']
+            if tx.get('schedule', key):
+                continue
+            message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_acquire',
+                               {'backlog_id': row['id'], 'repository': row['repository'],
+                                'commit': row['revision']}, key)
+            service.org.authorize(message)
+            tx.put('outbox', message['message_id'], {'message': message, 'sent': False})
+            tx.put('schedule', key, {'id': key, 'task_id': message['message_id'], 'at': utcnow()})
+            created += 1
+        for partition in tx.scan('research_partitions'):
+            if not (partition['remaining_paths'] or partition['remaining_subsystems']
+                    or partition['open_questions']):
+                continue
+            # Do not overlap a predecessor whose checkpoint committed before task completion.
+            prior = [r for r in tx.scan('schedule') if r.get('partition_id') == partition['partition_id']]
+            if any((tx.get('tasks', r['task_id']) or {}).get('status', 'queued')
+                   in {'queued', 'running', 'retry'} for r in prior):
+                continue
+            key = 'audit:' + digest({'partition': partition['partition_id'],
+                                     'generation': partition['generation']})
+            if tx.get('schedule', key):
+                continue
+            message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_partition',
+                {'audit_id': partition['audit_id'], 'partition_id': partition['partition_id'],
+                 'generation': partition['generation']}, key)
+            service.org.authorize(message)
+            tx.put('outbox', message['message_id'], {'message': message, 'sent': False})
+            tx.put('schedule', key, {'id': key, 'task_id': message['message_id'],
+                'partition_id': partition['partition_id'], 'at': utcnow()})
+            created += 1
+        for audit in tx.scan('research_audits'):
+            partitions = [p for p in tx.scan('research_partitions') if p['audit_id'] == audit['id']]
+            if not partitions or any(p['remaining_paths'] or p['remaining_subsystems']
+                                     or p['open_questions'] for p in partitions):
+                continue
+            key = 'propose:' + digest(partitions)
+            if tx.get('schedule', key):
+                continue
+            message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_propose',
+                               {'audit_id': audit['id']}, key)
+            service.org.authorize(message)
+            tx.put('outbox', message['message_id'], {'message': message, 'sent': False})
+            tx.put('schedule', key, {'id': key, 'task_id': message['message_id'], 'at': utcnow()})
+            created += 1
+        from codex_harness.application.audit_gate import require_adoption
+        from codex_harness.domain.model import ContractError
+        for approval in tx.scan('research_approvals'):
+            key = 'adopt:' + approval['binding']
+            if tx.get('schedule', key):
+                continue
+            details = {'audit_id': approval['audit_id'], 'audit_approval': approval['binding'],
+                       'proposal': approval['proposal']}
+            try:
+                require_adoption(tx, details)
+            except ContractError:
+                continue
+            message = envelope('task.assign', 'conductor', 'lead:improvement', 'plan', details, key)
+            service.org.authorize(message)
+            tx.put('outbox', message['message_id'], {'message': message, 'sent': False})
+            tx.put('schedule', key, {'id': key, 'task_id': message['message_id'], 'at': utcnow()})
+            created += 1
     return created

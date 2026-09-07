@@ -47,6 +47,12 @@ class FileArtifacts:
         require(hashlib.sha256(data).hexdigest() == key, "Artifact modified")
         return data.decode("utf-8")
 
+    def document(self, reference: str) -> dict:
+        """Load an integrity-checked document for mechanical validation, not model context."""
+        value = json.loads(self._body(reference))
+        require(isinstance(value, dict), "Evidence document must be an object")
+        return value
+
     def read(self, reference: str, start: int = 0, length: int = 8000) -> str:
         require(start >= 0 and 0 < length <= 32000, "Artifact read exceeds budget")
         return self._body(reference)[start:start + length]

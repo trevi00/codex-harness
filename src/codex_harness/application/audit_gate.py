@@ -1,0 +1,113 @@
+"""Transaction-local adoption checks shared by admission and execution."""
+from codex_harness.domain.model import digest, require
+from codex_harness.domain.research import research_origin
+
+
+def binding(tx, audit_id, proposal):
+    audit = tx.get('research_audits', audit_id)
+    require(audit is not None, 'Unknown audit')
+    evidence = {bucket: sorted((r for r in tx.scan(bucket) if r['audit_id'] == audit_id),
+                              key=digest)
+                for bucket in ('research_paths', 'research_subsystems',
+                               'research_partitions')}
+    receipt_ids = {receipt for bucket in ('research_paths', 'research_subsystems')
+                   for row in evidence[bucket] for receipt in row['record']['receipt_ids']}
+    evidence['receipts'] = {key: tx.get('research_receipts', key) for key in sorted(receipt_ids)}
+    active = tx.get('deployment', 'active')
+    release = tx.get('releases', (active or {}).get('release_id', ''))
+    require(release is not None and release['status'] == 'active', 'No active evaluator')
+    return digest({'audit': audit, 'evidence': evidence, 'proposal': proposal,
+                   'revision': active['revision'], 'policy': release['policy_hash'],
+                   'graph': tx.get('research_control', 'graph')})
+
+
+def require_adoption(tx, details):
+    if not (research_origin(details) or 'proposal' in details):
+        return
+    # INV-RESEARCH-004: authority is a retained approval ID, never a model verdict.
+    def ids(value):
+        if isinstance(value, dict):
+            return ([value['audit_approval']] if 'audit_approval' in value else []) + [
+                x for v in value.values() for x in ids(v)]
+        if isinstance(value, list):
+            return [x for v in value for x in ids(v)]
+        return []
+    approvals = set(ids(details))
+    require(len(approvals) == 1, 'Research adoption deferred: approval required')
+    approval = tx.get('research_approvals', approvals.pop())
+    control = tx.get('research_control', 'activation') or {}
+    active = tx.get('deployment', 'active') or {}
+    require(approval is not None and control.get('release_id') == active.get('release_id')
+            and control.get('status') == 'active', 'Research adoption deferred: rollout paused')
+    actors = set()
+    for key in approval.get('reviews', []):
+        row = tx.get('research_reviews', key)
+        require(row is not None and digest(row['review']) == key
+                and row['review']['binding'] == approval['binding'] and row['review']['accepted'],
+                'Research adoption deferred: changed independent review')
+        receipt_id = row['review']['execution_id']
+        receipt = tx.get('research_receipts', receipt_id)
+        require(receipt is not None and digest(receipt) == receipt_id
+                and receipt['receipt']['exit_status'] == 0 and not receipt['receipt']['inspection_blocked'],
+                'Research adoption deferred: changed independent inspection')
+        actors.add(row['review']['actor'])
+    require(actors == {'lead:research', 'conductor'}, 'Research adoption deferred: reviews incomplete')
+    def provenance(value):
+        if isinstance(value, dict):
+            for key, expected in [('audit_id', approval['audit_id']),
+                                  ('source_url', approval['proposal']['source']['repository']),
+                                  ('source_revision', approval['proposal']['source']['commit']),
+                                  ('proposal', approval['proposal'])]:
+                if key in value:
+                    require(value[key] == expected, 'Research adoption deferred: changed provenance')
+            for item in value.values():
+                provenance(item)
+        elif isinstance(value, list):
+            for item in value:
+                provenance(item)
+    provenance(details)
+    require(approval['binding'] == binding(tx, approval['audit_id'], approval['proposal']),
+            'Research adoption deferred: stale evidence, graph, revision or policy')
+
+
+def inspect_approval(tx, details, artifacts):
+    """Re-read immutable bytes at execution, including transitive evidence handles."""
+    require_adoption(tx, details)
+    if not research_origin(details):
+        return
+    import re
+
+    from codex_harness.domain.model import ContractError
+    references = set()
+    def collect(value):
+        if isinstance(value, dict):
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+        elif isinstance(value, str):
+            references.update(re.findall(r'sha256:[0-9a-f]{64}', value))
+    def approval_ids(value):
+        if isinstance(value, dict):
+            return ([value['audit_approval']] if 'audit_approval' in value else []) + [
+                i for v in value.values() for i in approval_ids(v)]
+        if isinstance(value, list):
+            return [i for v in value for i in approval_ids(v)]
+        return []
+    approval = tx.get('research_approvals', approval_ids(details)[0])
+    collect(tx.get('research_audits', approval['audit_id']))
+    for bucket in ('research_paths', 'research_subsystems', 'research_receipts'):
+        for row in tx.scan(bucket):
+            if row['audit_id'] == approval['audit_id']:
+                collect(row)
+    visited = set()
+    while references - visited:
+        ref = next(iter(references - visited))
+        visited.add(ref)
+        artifacts.inspect(ref)
+        # Full document traversal is mechanical validation; model context stays bounded.
+        try:
+            collect(artifacts.document(ref))
+        except (ValueError, ContractError):
+            pass

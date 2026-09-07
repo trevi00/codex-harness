@@ -1,7 +1,7 @@
 FROM node:22-bookworm-slim AS codex
 RUN npm install -g @openai/codex@0.153.4
 FROM python:3.13-slim-bookworm
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates bubblewrap && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir uv==0.12.2
 COPY --from=codex /usr/local/bin/node /usr/local/bin/node
 COPY --from=codex /usr/local/lib/node_modules /usr/local/lib/node_modules

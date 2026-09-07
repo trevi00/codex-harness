@@ -3,8 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+from codex_harness.application.audit_gate import require_adoption
 from codex_harness.domain.model import canonical, digest, envelope, require, utcnow
 from codex_harness.domain.policy import POLICY
+from codex_harness.domain.research import require_dispatch
 from codex_harness.ports import Store
 
 
@@ -19,6 +21,8 @@ class Workflow:
         require(message["type"] == "task.assign", "Expected task assignment")
         task_id = message["message_id"]
         with self.store.transaction() as tx:
+            if message["what"]["action"] in {"plan", "implement"}:
+                require_adoption(tx, message["what"]["details"])
             old = tx.get("tasks", task_id)
             if old:
                 require(old["input_hash"] == digest(message), "Conflicting task identity")
@@ -49,6 +53,12 @@ class Workflow:
                     continue
                 if task["status"] == "running" and datetime.fromisoformat(task["lease_until"]) > now:
                     continue
+                if task["message"]["what"]["action"] in {"plan", "implement"}:
+                    from codex_harness.domain.model import ContractError
+                    try:
+                        require_adoption(tx, task["message"]["what"]["details"])
+                    except ContractError:
+                        continue
                 deadline = task["message"]["when"]["deadline"]
                 dependencies = [tx.get("tasks", dep) for dep in task["message"]["when"]["after"]]
                 terminal_dependency = any(d["status"] in {"failed", "cancelled", "expired"}
@@ -184,10 +194,13 @@ class Workflow:
                     if tx.get("research_topics", topic) is None:
                         tx.put("research_topics", topic, {"id": topic, "result": result,
                                                          "decision_id": message["message_id"]})
-                        tx.put("decisions_pending", message["message_id"],
-                               {"id": message["message_id"], "actor": recipient, "phase": "research_lead",
-                                "message": message, "input": result, "status": "pending", "attempt": 0})
+                        tx.put("research_discoveries", topic,
+                               {"id": topic, "version": 1, "result": result,
+                                "status": "deferred_pending_source_audit",
+                                "remaining_work": ["pinned source acquisition", "exhaustive audit",
+                                                   "independent research review", "conductor approval"]})
                 elif action == "assess_research" and result.get("accepted") is True:
+                    require_dispatch({"proposal": result})
                     tx.put("decisions_pending", message["message_id"],
                            {"id": message["message_id"], "actor": "conductor", "phase": "proposal",
                             "message": message, "input": result, "status": "pending", "attempt": 0})

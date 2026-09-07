@@ -123,7 +123,8 @@ def test_research_topics_deduplicate_across_scheduled_runs():
                            if row["message"]["what"]["details"].get("task_id") == task["id"])
         workflow.handle(message)
     with workflow.store.transaction() as tx:
-        assert len(tx.scan("decisions_pending")) == 1
+        assert len(tx.scan("decisions_pending")) == 0
+        assert len(tx.scan("research_discoveries")) == 1
 
 
 @pytest.mark.parametrize('phase,actor', [('review_lead', 'lead:improvement'),

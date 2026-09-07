@@ -83,6 +83,20 @@ class Releases:
             pointer = {"release_id": release_id, "revision": record["candidate"]["revision"],
                        "previous": {"release_id": active["release_id"]} if active else None, "at": utcnow()}
             tx.put("deployment", "active", pointer)
+            # INV-RESEARCH-004: activation follows the exact candidate's incumbent checks.
+            if record['candidate'].get('audit_lifecycle_version') == 1:
+                require(all(record['checks'].get(k, {}).get('passed')
+                            for k in ('tests', 'cli_start', 'cli_file_task')),
+                        'Audit activation requires actual CLI canary')
+                from dataclasses import asdict
+                tx.put('research_control', 'graph', {'revision': pointer['revision'],
+                    'tree': record['candidate']['tree'],
+                    'organization': digest({k: asdict(v) for k, v in self.org.agents.items()})})
+                tx.put('research_control', 'activation', {'status': 'active',
+                    'release_id': release_id, 'revision': pointer['revision']})
+            elif tx.get('research_control', 'activation'):
+                tx.put('research_control', 'activation', {'status': 'paused',
+                    'reason': 'active candidate does not declare audit lifecycle'})
             record["status"] = "active"
             tx.put("releases", release_id, record)
             tx.put("events", str(uuid4()), {"type": "release.promoted", **pointer})
@@ -100,6 +114,10 @@ class Releases:
             hook = tx.get("hooks", hook_id) if hook_id else None
             if hook and hook["revision"] == record["candidate"]["revision"]:
                 tx.put("hooks", hook_id, hook.get("previous_active") or {**hook, "status": "rolled_back"})
+            # Retain all audit/checkpoint/approval records; stop dispatch on rollback.
+            if tx.get('research_control', 'activation'):
+                tx.put('research_control', 'activation', {'status': 'paused',
+                    'reason': reason, 'rolled_back_release': expected_active})
             record.update(status="rolled_back", rollback_reason=reason)
             tx.put("releases", expected_active, record)
             previous = tx.get("deployment_history", active["previous"]["release_id"]) or active["previous"]
