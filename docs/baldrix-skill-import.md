@@ -10,10 +10,12 @@ version. This import is a migration adapter for that format, not an upstream fea
 ```powershell
 uv run python scripts/import_skill_telemetry.py copied-skill-match.jsonl --project-id YOUR-UUID --source-id old-machine-segment-001 --dry-run
 uv run python scripts/import_skill_telemetry.py copied-skill-match.jsonl --project-id YOUR-UUID --source-id old-machine-segment-001 --artifacts .runtime/artifacts
-uv run python scripts/skill_telemetry_audit.py --project-id YOUR-UUID --legacy-source old-machine-segment-001 --json --since 7d
+uv run python scripts/skill_telemetry_audit.py --project-id YOUR-UUID --legacy-source old-machine-segment-001 --json
 ```
 
-The caller explicitly selects a file and stable source ID. A source ID denotes one
+The caller explicitly selects a file and stable source ID. Optional `--since 7d` is
+relative to the current clock and will exclude genuinely old segments; omit it to
+inspect all retained imported events. A source ID denotes one
 append-only physical log segment, not a rotating pathname. Reuse it for a renamed
 copy or a longer snapshot of that segment; choose a new ID after log rotation. An
 already-consumed prefix that differs, or a shorter snapshot, is rejected. Source IDs
@@ -83,3 +85,29 @@ This does not import the user's original logs automatically. It does not impleme
 remaining calibration proposal/holdout/approval pipeline, all other Baldrix telemetry,
 full Baldrix adoption, or OMC/Ouroboros migration. Registry and metrics sources already
 identify the next requirement: preserve body sizes and never tune locked invariants.
+
+## Candidate verification
+
+Runtime revision `577a414e6bf5a97294482bc9a900329310db2d24`:
+
+- Windows PostgreSQL/Redis suite: 436 passed, 7 skipped.
+  `sha256:027c45c2887a0fc537775252882a91b3a17ac79a5fe214236f26e28582884fb4`.
+- Linux PostgreSQL/Redis suite: 443 passed, no skips.
+  `sha256:43b7944940eef93da9cfbcc5f45b6c5a460866f9e192b96851834d2911ef8d0f`.
+- Actual Codex CLI canary passed with all 85 source/config/lock hashes matched to the
+  immutable image. `sha256:43dfc6df599f4639c52cae18ab25c41745ce3875e259c32be88e9775e9843dc3`.
+- Actual PostgreSQL import/audit CLI commands and concurrent use-case calls verified
+  old-time exclusion, append-only additions, repeat no-op, prefix-conflict rollback,
+  live-history isolation and one change for eight identical deliveries.
+  `sha256:c988e76f084b99257b5d7de53aebf2f626abbb91cb40a3ecd665d6c39915b86c`.
+  These are isolated synthetic segments; no user log import or deployment is claimed.
+- Claude complete-source review: ACCEPT, with non-blocking follow-ups.
+  `sha256:f9ea0053ff99f36c9e99850b077c898ff848b2cf9e21b45a628cd0dc7325eb06`.
+
+Follow-ups remain explicit: incremental archives/retention, shorter lock-held parsing,
+labeling legacy candidate heuristics against an unverified historical policy, treatment
+of pending-only initial cursors, and body-size contracts for future calibration. The
+legacy audit applies the pinned reference predicate, not a recovered historical admission
+policy. Its source-inherited candidate reason must not be treated as proof of historical
+full-body eligibility. Unknown-version labeling is not a historical-policy attestation.
+No full-repository migration or release approval follows from these component checks.
