@@ -16,6 +16,9 @@ POLICY_PATHS = (
     'src/codex_harness/application/threshold_proposals.py',
     'src/codex_harness/adapters/threshold_proposals.py',
     'src/codex_harness/adapters/threshold_policy.py',
+    'src/codex_harness/adapters/threshold_reviews.py',
+    'src/codex_harness/application/threshold_reviews.py',
+    'src/codex_harness/adapters/executor.py',
 )
 
 

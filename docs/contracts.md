@@ -96,3 +96,11 @@ digests, and temporal holdout evidence. A single allowed step must improve train
 beyond hysteresis and pass independent reference replay. Reference acceptance alone
 never grants native activation authority. Staging and apply must verify the supplied
 basis against authoritative Git and runtime state before changing policy.
+
+## INV-THRESHOLD-REVIEW-001
+
+Threshold assessments require a live execution lease, immutable calculated evidence,
+current Git-bound policy and separate lead then conductor execution. Receipt identity
+must match the actor, decision, input and revision. Review completion and downstream
+review queueing are atomic. An assessment never authorizes implementation, source
+adoption, policy activation or deployment; existing approval gates remain required.

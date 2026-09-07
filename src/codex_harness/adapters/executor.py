@@ -404,6 +404,10 @@ class Executor:
             if phase == 'audit_review':
                 require(self.audit_execution is not None, 'Audit executor unavailable')
                 return self.audit_execution.review(lease)
+            if phase == 'threshold_review':
+                from codex_harness.adapters.threshold_reviews import review_threshold
+
+                return review_threshold(self, lease, VERDICT)
             if phase.startswith("review_"):
                 candidate = data["candidate"]
                 inspected = self.git.inspect(candidate["revision"], candidate["base"])
