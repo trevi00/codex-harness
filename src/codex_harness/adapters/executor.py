@@ -11,7 +11,7 @@ from codex_harness.adapters.app_server import AppServer
 from codex_harness.adapters.embeddings import LocalEmbeddings
 from codex_harness.adapters.hooks import NativeHooks
 from codex_harness.adapters.project_skills import project_context
-from codex_harness.adapters.skill_history import prepare_history
+from codex_harness.adapters.skill_history import prepare_history, project_identity, record_history
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import (
@@ -84,7 +84,7 @@ class Executor:
         skill_observation = None
         if skill_selection.get('manifest_ref'):
             skill_items, skill_observation = prepare_history(
-                self.service.store, self.artifacts, str(self.git.repository), agent, key, objective,
+                self.service.store, self.artifacts, project_identity(skill_selection, self.git), agent, key, objective,
                 skill_selection, skill_items)
         items.extend(skill_items)
         if self.knowledge:
@@ -118,13 +118,15 @@ class Executor:
         binding = {"stage": stage, "evidence_ref": raw["ref"], "basis_revision": basis_revision}
         if skill_selection.get('manifest_ref'):
             binding['project_skills_ref'] = skill_selection['manifest_ref']
-        if skill_selection.get('history'):
-            binding['skill_history_ref'] = skill_selection['history']['ref']
         context_bound = bool(stage or skill_selection.get('manifest_ref'))
         if context_bound:
             required["research_context"] = {**binding, **evidence.get("provenance", {})}
         def matches(value):
-            previous = value.get('research_binding') or {}
+            # INV-SESSION-001: advisory observations may drift between retries;
+            # only authoritative task/source bindings fence recovery. Older draft
+            # checkpoints included this hint hash, so ignore it on read as well.
+            previous = {k: v for k, v in (value.get('research_binding') or {}).items()
+                        if k != 'skill_history_ref'}
             return ((not context_bound and not previous.get('project_skills_ref'))
                     or previous == binding)
 
@@ -161,10 +163,11 @@ class Executor:
             packet.seal()
             require(packet.estimated_tokens <= before_counts, 'Skill counts increased context size')
             context_ref = self.artifacts.put(canonical(asdict(packet)), "context:" + key)
+            history_recording = None
             if skill_observation:
-                history, project_key, event = skill_observation
-                history.record(project_key, {**event, 'context_ref': context_ref['ref']},
-                               (lambda tx: self.workflow._owned(tx, lease)) if lease else None)
+                history_recording = record_history(
+                    skill_observation, context_ref['ref'],
+                    (lambda tx: self.workflow._owned(tx, lease)) if lease else None)
             prompt = packet.render()
             if heartbeat:
                 heartbeat()
@@ -215,6 +218,8 @@ class Executor:
             if context_bound:
                 result.update(elapsed_seconds=time.monotonic() - started,
                               context_ref=context_ref["ref"], research_binding=binding)
+            if history_recording:
+                result['skill_history_recording'] = history_recording
             evidence_ref = self.artifacts.put(canonical(result), "execution:" + key)
             graph = ({"code": self.knowledge.index_python(cwd),
                       "runtime": self.knowledge.project_runtime(self.service.store, self.service.org)}

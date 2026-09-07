@@ -1,5 +1,6 @@
 """Project stack definitions and deterministic eligibility, independent of file formats."""
 import re
+from uuid import UUID
 
 from codex_harness.domain.model import require
 
@@ -14,7 +15,7 @@ def segment(value):
 
 def normalize_profile(value):
     require(isinstance(value, dict), 'Project profile must be a mapping')
-    require(set(value) <= {'schema_version', 'stacks', 'extensions', 'metadata', *BLOCKS},
+    require(set(value) <= {'schema_version', 'project_id', 'stacks', 'extensions', 'metadata', *BLOCKS},
             'Unknown project profile field')
     require(str(value.get('schema_version', '1')) == '1', 'Unsupported project profile version')
     require(not ('stacks' in value and any(k in value for k in BLOCKS)),
@@ -39,8 +40,18 @@ def normalize_profile(value):
             require(part == '_common' or bool(segment(part)), 'Invalid extension')
     metadata = value.get('metadata', {})
     require(isinstance(metadata, dict), 'Profile metadata must be a mapping')
-    return {'schema_version': '1', 'stacks': normalized,
-            'extensions': list(dict.fromkeys(extensions)), 'metadata': metadata}
+    result = {'schema_version': '1', 'stacks': normalized,
+              'extensions': list(dict.fromkeys(extensions)), 'metadata': metadata}
+    if 'project_id' in value:
+        identity = value['project_id']
+        require(isinstance(identity, str), 'Invalid project UUID')
+        try:
+            parsed = UUID(identity)
+        except ValueError:
+            require(False, 'Invalid project UUID')
+        require(str(parsed) == identity and parsed.int != 0, 'Invalid project UUID')
+        result['project_id'] = identity
+    return result
 
 
 def eligible_paths(profile):

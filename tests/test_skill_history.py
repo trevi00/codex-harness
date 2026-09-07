@@ -1,15 +1,22 @@
 import copy
 import os
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 
 from codex_harness.adapters.artifacts import FileArtifacts
-from codex_harness.adapters.skill_history import prepare_history
+from codex_harness.adapters.skill_history import prepare_history, project_identity, record_history
 from codex_harness.adapters.store import MemoryStore, PostgresStore
 from codex_harness.application.skill_history import SkillHistory
-from codex_harness.domain.model import ContextItem, ContractError, canonical, digest
+from codex_harness.domain.model import (
+    ContextItem,
+    ContractError,
+    canonical,
+    compile_context,
+    digest,
+)
 from codex_harness.domain.skill_history import assess_history
 
 
@@ -68,6 +75,18 @@ def test_atomic_body_advisory_uses_prior_samples_and_preserves_source(tmp_path):
                                          selection, [item])
     assert 'historical_advisory' in items[0].body
     assert items[0].source_ref == raw['ref']
+    required = {'role': 'worker', 'objective': 'verify',
+                'acceptance_criteria': ['bounded'], 'policy': 'fixture'}
+    plain = compile_context('worker', 'task', 'snapshot', required, [item], 10000, 0)
+    budget = plain.estimated_tokens
+    bounded = compile_context('worker', 'task', 'snapshot', required, items, budget, 0)
+    assert bounded.evidence == []
+    assert bounded.omitted[0]['id'] == item.id
+    assert bounded.estimated_tokens == len(bounded.render().encode()) <= budget
+    admitted = compile_context('worker', 'task', 'snapshot', required, items, 10000, 0)
+    assert admitted.evidence[0]['body'] == items[0].body
+    assert admitted.estimated_tokens > plain.estimated_tokens
+    assert admitted.manifest_hash != plain.manifest_hash
     before = copy.deepcopy(selection)
     service, project, current = observation
     service.record(project, {**current, 'context_ref': 'context'})
@@ -115,3 +134,47 @@ def test_invalid_observation_does_not_write_history():
     with pytest.raises(ContractError, match='Invalid skill observation item'):
         history.record('project', malformed)
     assert store.data == {}
+
+
+def test_project_identity_is_portable_and_never_inferred_from_checkout_path():
+    identity = str(uuid4())
+    one = SimpleNamespace(repository='/workspace/one', remote=None)
+    other = SimpleNamespace(repository='/workspace/two', remote='owner/other')
+    assert project_identity({'project_id': identity}, one) == project_identity(
+        {'project_id': identity}, other)
+    assert project_identity({'project_id': str(uuid4())}, one) != project_identity(
+        {'project_id': identity}, one)
+    assert project_identity({}, one) is None
+    assert project_identity({}, other) == 'github:owner/other'
+    assert project_identity({}, SimpleNamespace(remote='Owner/Other.git')) == 'github:owner/other'
+    assert project_identity({}, SimpleNamespace(remote='https://secret@host/repo')) is None
+
+
+def test_advisory_failures_degrade_but_ownership_failure_still_stops_work(tmp_path, monkeypatch):
+    store = MemoryStore()
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    item = ContextItem('fixture', 'body', 'source', 'revision')
+    selection = {'manifest_ref': 'sha256:' + 'f' * 64}
+    items, observation = prepare_history(store, artifacts, 'project', 'agent', 'task', 'objective',
+                                        selection, [item])
+    assert items == [item] and observation is None
+    assert selection['history']['status'] == 'unavailable'
+    history = SkillHistory(store)
+    observation = (history, 'project', event('record'))
+
+    def stale(tx):
+        raise ContractError('Stale ownership')
+
+    with pytest.raises(ContractError, match='Stale ownership'):
+        record_history(observation, 'context', stale)
+    assert store.data == {}
+    assert record_history(observation, 'context')['status'] == 'recorded'
+    assert record_history(observation, 'new-context')['status'] == 'duplicate'
+
+    def unavailable(*args, **kwargs):
+        raise OSError('Do not expose secret backend details')
+
+    monkeypatch.setattr(history, 'record', unavailable)
+    assert record_history(observation, 'context') == {'status': 'unavailable', 'reason': 'OSError'}
+    with pytest.raises(OSError):
+        record_history(observation, 'context', stale)  # ownership could not be checked

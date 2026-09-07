@@ -1,4 +1,5 @@
 """Bind routed skill observations and atomic body advisories to Executor context."""
+import re
 from dataclasses import replace
 
 from codex_harness.application.skill_history import SkillHistory
@@ -6,8 +7,59 @@ from codex_harness.domain.model import canonical, digest
 from codex_harness.domain.skill_history import TOP_MATCHES
 
 
+def project_identity(selection, git):
+    """Prefer Git-owned UUID; configured GitHub slug supports existing profiles."""
+    if selection.get('project_id'):
+        return 'uuid:' + selection['project_id']
+    remote = getattr(git, 'remote', None)
+    if isinstance(remote, str) and re.fullmatch(r'[\w.-]+/[\w.-]+', remote):
+        return 'github:' + remote.lower().removesuffix('.git')
+    return None
+
+
 def prepare_history(store, artifacts, project, agent, task, objective, selection, items):
+    draft = dict(selection)
+    try:
+        prepared = _prepare_history(store, artifacts, project, agent, task, objective, draft, items)
+    except Exception as exc:
+        # INV-SKILL-HISTORY-001: optional history cannot abort authoritative work.
+        # Only the class is exposed; backend exceptions can contain credentials.
+        selection['history'] = {'status': 'unavailable', 'reason': type(exc).__name__}
+        return items, None
+    selection.update(draft)
+    return prepared
+
+
+def record_history(observation, context_ref, guard=None):
+    history, project, event = observation
+    ownership_failed = False
+    ownership_checked = False
+
+    def owned(tx):
+        nonlocal ownership_failed, ownership_checked
+        try:
+            if guard:
+                guard(tx)
+            ownership_checked = True
+        except Exception:
+            ownership_failed = True
+            raise
+
+    try:
+        recorded = history.record(project, {**event, 'context_ref': context_ref}, owned)
+        return {'status': 'recorded' if recorded else 'duplicate'}
+    except Exception as exc:
+        # Lease authority is never advisory: stale ownership must stop execution.
+        if ownership_failed or (guard is not None and not ownership_checked):
+            raise
+        return {'status': 'unavailable', 'reason': type(exc).__name__}
+
+
+def _prepare_history(store, artifacts, project, agent, task, objective, selection, items):
     if not selection.get('manifest_ref'):
+        return items, None
+    if not project:
+        selection['history'] = {'status': 'unavailable', 'reason': 'project_identity_required'}
         return items, None
     manifest = artifacts.document(selection['manifest_ref'])
     records = [r for r in manifest['skills'] if 'score' in r and r['tier'] != 'unmatched']

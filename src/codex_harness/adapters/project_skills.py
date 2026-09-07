@@ -1,5 +1,6 @@
 """Git-pinned YAML profiles and skills; working-tree initialization is explicit."""
 from pathlib import Path
+from uuid import uuid4
 
 import yaml
 
@@ -79,6 +80,7 @@ def initialize(root, text, *, legacy=False):
     root = Path(root).resolve()
     require(root.is_dir(), 'Project root must exist')
     profile = import_legacy_profile(text) if legacy else parse_profile(text)
+    profile.setdefault('project_id', str(uuid4()))
     path = root / PROFILE
     require(path.resolve().is_relative_to(root), 'Project profile escapes project root')
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -136,6 +138,7 @@ def project_context(git, artifacts, cwd, revision, objective=None):
                                          'guidance': guidance_summary}),
                              'project-skill-selection')
     return items, {'status': 'configured' if text is not None else 'common_only',
+                   'project_id': profile.get('project_id'),
                    'selected': sum(item.id.startswith('project-skill:') for item in items),
                    'guidance': guidance_summary,
                    'routing': {k: v for k, v in routing.items() if k != 'pattern_evidence'}, 'manifest_ref': manifest['ref'],

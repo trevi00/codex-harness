@@ -44,6 +44,7 @@ extensions: [flutter/outpos-agent, _gsd]
     'stack: !!python/object/apply:builtins.dict {}',
     '[' * 2000 + 'x' + ']' * 2000,
     '#' * 65537,
+    'project_id: invalid', 'project_id: 00000000-0000-0000-0000-000000000000',
 ], ids=lambda text: f'yaml-{len(text)}')
 def test_invalid_profile_never_falls_back_to_all_skills(text):
     with pytest.raises(ContractError):
@@ -147,6 +148,60 @@ def test_profile_symlink_in_git_is_rejected(project):
     git._git('commit', '-qm', 'fixture symlink mode')
     with pytest.raises(ContractError, match='regular Git file'):
         project_context(git, artifacts, str(root), git._git('rev-parse', 'HEAD'))
+
+
+def test_real_skill_history_annotation_and_recovery_survive_other_task_observation(project, monkeypatch):
+    root, git, artifacts = project
+    (root / '.harness/stages.yaml').write_text('stages: []\n', encoding='utf-8')
+    (root / '.harness/skills/python/fastapi/routes.md').write_text(
+        '---\nkeywords: [alpha, beta, gamma]\n---\nFASTAPI_ELIGIBLE', encoding='utf-8')
+    git._git('add', '.')
+    git._git('commit', '-qm', 'history fixture')
+    prompts = []
+
+    class Runtime:
+        def __init__(self, **kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def run(self, prompt, *args, **kwargs):
+            prompts.append(json.loads(prompt))
+            kwargs['on_event']({'method': 'item/completed', 'params': {
+                'item': {'id': 'completed-' + str(len(prompts)), 'type': 'commandExecution',
+                         'status': 'completed'}}})
+            return {'answer': {'summary': 'fixture', 'tests': []}, 'thread_id': 'fixture',
+                    'usage': {}, 'rotate': False, 'interrupted': False, 'events': []}
+
+    monkeypatch.setattr('codex_harness.adapters.executor.AppServer', Runtime)
+    store = MemoryStore()
+    executor = Executor(Harness(store, organization()), git, artifacts)
+    for index in range(3):
+        executor._run('worker:implementation', 'weak-' + str(index), 'alpha', {},
+                      str(root), IMPLEMENTATION)
+    executor._run('worker:implementation', 'main', 'alpha beta gamma', {},
+                  str(root), IMPLEMENTATION)
+    first = prompts[-1]
+    full = next(i for i in first['evidence'] if i['id'].endswith('/routes.md'))
+    assert 'historical_advisory' in full['body'] and 'FASTAPI_ELIGIBLE' in full['body']
+    old_history = first['required']['project_skills']['history']['ref']
+    with store.transaction() as tx:
+        original_progress = tx.get('execution_progress', 'main')
+        checkpoint = tx.get('sessions', 'worker:implementation')
+        # Verify compatibility with a checkpoint written by the previous draft.
+        checkpoint['checkpoint']['research_binding']['skill_history_ref'] = old_history
+        tx.put('sessions', 'worker:implementation', checkpoint)
+    executor._run('lead:improvement', 'other-task', 'alpha', {}, str(root), IMPLEMENTATION)
+    executor._run('worker:implementation', 'main', 'alpha beta gamma', {},
+                  str(root), IMPLEMENTATION)
+    resumed = prompts[-1]
+    assert resumed['required']['project_skills']['history']['ref'] != old_history
+    recovery = resumed['required']['recovery']['sources']
+    assert set(recovery) == {'checkpoint', 'progress'}
+    assert artifacts.document(recovery['progress']['ref']) == original_progress
+    assert artifacts.document(recovery['checkpoint']['ref']) == checkpoint
+    assert 'skill_history_ref' not in resumed['required']['research_context']
+    executor._run('worker:implementation', 'main', 'changed objective', {},
+                  str(root), IMPLEMENTATION)
+    assert prompts[-1]['required']['recovery']['sources'] == {}
 
 
 def test_selected_skill_symlink_is_rejected(project):
