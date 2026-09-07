@@ -38,6 +38,14 @@ class Workflow:
             tx.put("tasks", task_id, task)
             return task
 
+    @staticmethod
+    def _attempt_outcome(task, status, at, error=None):
+        # INV-METRIC-001: retain failures across retries; never invent legacy outcomes.
+        if task['attempt'] and not any(r['attempt'] == task['attempt']
+                                      for r in task.get('attempt_outcomes', [])):
+            task.setdefault('attempt_outcomes', []).append(
+                {'attempt': task['attempt'], 'status': status, 'at': at, 'error': error})
+
     def claim(self, agent: str, owner: str, lease_seconds: int = POLICY.task_lease_seconds,
               max_attempts: int = POLICY.max_attempts, now: datetime | None = None) -> dict | None:
         self.org.actor(agent)
@@ -59,6 +67,8 @@ class Workflow:
                         require_adoption(tx, task["message"]["what"]["details"])
                     except ContractError:
                         continue
+                if task["status"] == "running":
+                    self._attempt_outcome(task, "lease_expired", now.isoformat())
                 deadline = task["message"]["when"]["deadline"]
                 dependencies = [tx.get("tasks", dep) for dep in task["message"]["when"]["after"]]
                 terminal_dependency = any(d["status"] in {"failed", "cancelled", "expired"}
@@ -103,6 +113,7 @@ class Workflow:
         require(isinstance(result, dict), "Task result must be an object")
         with self.store.transaction() as tx:
             current = self._owned(tx, task)
+            self._attempt_outcome(current, "succeeded", utcnow())
             current.update(status="succeeded", result=result, completed_at=utcnow())
             tx.put("tasks", task["id"], current)
             message = task["message"]
@@ -122,6 +133,7 @@ class Workflow:
     def fail(self, task: dict, error: str, retryable: bool = True) -> None:
         with self.store.transaction() as tx:
             current = self._owned(tx, task)
+            self._attempt_outcome(current, "failed", utcnow(), error)
             current.update(status="retry" if retryable else "failed", error=error,
                            lease_until=None, lease_owner=None)
             tx.put("tasks", task["id"], current)
@@ -132,6 +144,7 @@ class Workflow:
             require(task is not None and bool(reason), "Task and cancellation reason required")
             require(actor in {"conductor", task["message"]["who"]["sender"]}, "Cannot cancel task")
             require(task["status"] not in {"succeeded", "cancelled"}, "Task already terminal")
+            self._attempt_outcome(task, "cancelled", utcnow(), reason)
             task.update(status="cancelled", error=reason, generation=task["generation"] + 1)
             tx.put("tasks", task_id, task)
 

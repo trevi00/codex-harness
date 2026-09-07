@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>10 - Quality | arc42 Documentation</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="10 - Quality" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="how to use the arc42 template." />
+<meta property="og:description" content="how to use the arc42 template." />
+<link rel="canonical" href="https://docs.arc42.org/section-10/" />
+<meta property="og:url" content="https://docs.arc42.org/section-10/" />
+<meta property="og:site_name" content="arc42 Documentation" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="10 - Quality" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"how to use the arc42 template.","headline":"10 - Quality","url":"https://docs.arc42.org/section-10/"}</script>
+<!-- End Jekyll SEO tag -->
+
+    
+
+
+
+    
+
+    <title>10 - Quality | arc42 Documentation</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/assets/favicon/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/assets/favicon/favicon-16x16.png" sizes="16x16">
+    <link rel="manifest" href="/assets/favicon/manifest.json"><meta name="theme-color" content="#0e4f80"><link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/fonts/atkinson-hyperlegible-next-latin.woff2">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/fonts/libre-caslon-text-400-latin.woff2">
+
+    <script>
+      try { document.getElementsByTagName('html')[0].className += ' js'; } catch(e) { /* NO-JS */ }
+    </script>
+
+    <link href="/assets/css/style.css" rel="stylesheet">
+    <script defer data-domain="docs.arc42.org,rollup.arc42.com" src="https://plausible.io/js/script.outbound-links.file-downloads.js"></script>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<header class="masthead masthead--bar">
+  <div class="masthead-inner">
+    <a class="masthead-logo" href="/home/" aria-label="arc42 Documentation home">
+      <img src="/assets/images/brand/arc42-logo-white.svg" alt="" width="93" height="26" decoding="async">
+    </a>
+    <p class="masthead-title"><a href="/home/">Documentation</a></p>
+    <span class="spark" aria-hidden="true"></span>
+    <div class="masthead-search">
+  <form action="/search/" data-baseurl="" role="search">
+    <label class="search-field" for="search">
+      <svg class="icon icon--search" aria-hidden="true" focusable="false"><use href="/assets/icons/ui.svg#search"></use></svg>
+      <input type="search" id="search" name="q" placeholder="Search" aria-label="Search">
+    </label>
+  </form>
+</div>
+  </div>
+</header><div class="layout layout--doc">
+    <aside class="rail">
+  <button class="rail-toggle" type="button" aria-expanded="false" aria-controls="rail-body">
+    <svg class="icon icon--menu" aria-hidden="true" focusable="false"><use href="/assets/icons/ui.svg#menu"></use></svg>
+    <span class="rail-toggle-label">Sections</span>
+    <svg class="icon icon--chevron-down chev" aria-hidden="true" focusable="false"><use href="/assets/icons/ui.svg#chevron-down"></use></svg>
+  </button>
+
+  <div class="rail-body" id="rail-body">
+    <nav aria-labelledby="rail-heading-sections">
+      <p class="rail-heading" id="rail-heading-sections">Template sections</p>
+      <ol class="rail-nav">
+        <li>
+          <a href="/section-1/">
+            <span class="num">01</span>
+            <span class="label">Introduction and Goals</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-2/">
+            <span class="num">02</span>
+            <span class="label">Constraints</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-3/">
+            <span class="num">03</span>
+            <span class="label">Context and Scope</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-4/">
+            <span class="num">04</span>
+            <span class="label">Solution Strategy</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-5/">
+            <span class="num">05</span>
+            <span class="label">Building Block View</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-6/">
+            <span class="num">06</span>
+            <span class="label">Runtime View</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-7/">
+            <span class="num">07</span>
+            <span class="label">Deployment View</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-8/">
+            <span class="num">08</span>
+            <span class="label">Crosscutting Concepts</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-9/">
+            <span class="num">09</span>
+            <span class="label">Architecture Decisions</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-10/" aria-current="page">
+            <span class="num">10</span>
+            <span class="label">Quality Requirements</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-11/">
+            <span class="num">11</span>
+            <span class="label">Risks and Technical Debt</span>
+          </a>
+        </li>
+        <li>
+          <a href="/section-12/">
+            <span class="num">12</span>
+            <span class="label">Glossary</span>
+          </a>
+        </li>
+      </ol>
+    </nav>
+    <nav aria-labelledby="rail-heading-more">
+      <p class="rail-heading" id="rail-heading-more">More</p>
+      <ul class="rail-nav rail-meta">
+        <li>
+          <a href="/examples/">
+            <span class="label">Examples</span>
+          </a>
+        </li>
+        <li>
+          <a href="/keywords/">
+            <span class="label">Keywords</span>
+          </a>
+        </li>
+        <li>
+          <a href="/contact/">
+            <span class="label">Contact</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>
+<main class="site-content" id="main-content" tabindex="-1">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/home/">Home</a></li>
+    <li><a href="/home/#template-sections">Sections</a></li>
+    <li aria-current="page">10. Quality Requirements</li>
+  </ol>
+</nav>
+
+
+<div class="prose">
+  <details class="toc-inline" id="toc-inline">
+  <summary>
+    <span>On this page</span><svg class="icon icon--chevron-down chev" aria-hidden="true" focusable="false"><use href="/assets/icons/ui.svg#chevron-down"></use></svg></summary>
+  <ol class="toc-inline-list"></ol>
+</details>
+  <h1 id="10-quality-requirements">10. Quality Requirements</h1>
+
+<div class="arc42-help">
+
+  <h2 id="content">Content</h2>
+  <p>This section contains all relevant quality requirements.</p>
+
+  <p>The most important of these requirements have already been described in section 1.2. (quality goals), therefore they should only be referenced here.
+In this section 10 you should also capture quality requirements with lesser importance, which will not create high risks when they are not fully achieved (but might be <em>nice-to-have</em>).</p>
+
+  <h2 id="motivation">Motivation</h2>
+  <p>Since quality requirements will have a lot of influence on architectural decisions you should know  what qualities are really important for your stakeholders, in a specific and measurable way.</p>
+
+  <h2 id="further-information">Further Information</h2>
+
+  <p>See the extensive <a href="https://quality.arc42.org">Q42 quality model on https://quality.arc42.org</a>.</p>
+
+  <!-- collect all examples that are related to this section of arc42 -->
+
+  <h3 id="examples">Examples</h3>
+
+  <div class="example-list">
+  <ul>
+    
+                
+       <li><a class="post-link" href="/examples/quality-htmlsc-2/">:Example Quality Scenarios: HTML Sanity Checker</a></li>
+
+               
+       <li><a class="post-link" href="/examples/quality-tpu-1/">:Example Quality Scenarios: TrafficPursuitUnit</a></li>
+
+   
+  </ul>
+
+</div>
+
+</div>
+
+<!-- the same section, inside complete documentation of real systems -->
+<p class="examples-link">Want to see this section inside a whole document?
+Read <a target="_blank" rel="noopener noreferrer nofollow" href="https://examples.arc42.org/sections/10-quality-requirements/">the quality requirements of real systems</a> at examples.arc42.org.</p>
+
+<h2 id="101-quality-requirements-overview">10.1 Quality Requirements Overview</h2>
+<div class="arc42-help">
+
+  <h2 id="content-1">Content</h2>
+
+  <p>An overview or summary of quality requirements.</p>
+
+  <h2 id="motivation-1">Motivation</h2>
+  <p>Often we encounter dozens (or even hundreds) of detailed quality requirements. 
+In this overview section you should try to summarize, e.g. by describing categories or topics (as suggested by <a href="https://www.iso.org/obp/ui/#iso:std:iso-iec:25010:ed-2:v1:en">ISO 25010:2023</a> or <a href="https://quality.arc42.org">Q42</a>).</p>
+
+  <p>If these summary descriptions are already precise, specific enough and measurable, you may skip section 10.2.</p>
+
+  <h2 id="form">Form</h2>
+  <p>Use a simple table in which each line contains a category or topic and a short description of the quality requirement.
+Alternatively, you may use a mindmap to structure these quality requirements.</p>
+
+  <p>In literature, the idea of a <em>quality attribute tree</em> has also been described, which puts the generic term “quality” as the root and uses a tree-like refinement of the term “quality”. 
+[Bass+21] introduced the term “Quality Attribute Utility Tree” for this purpose.</p>
+
+</div>
+
+<p><em>&lt;Give an overview of quality requirements here &gt;</em></p>
+
+<h2 id="102-quality-scenarios">10.2 Quality Scenarios</h2>
+
+<div class="arc42-help">
+
+  <h2 id="content-2">Content</h2>
+  <p>Quality scenarios make quality requirements concrete and allow to decide whether they are fulfilled (in the sense of acceptance criteria).
+Ensure that your scenarios are specific and measurable.</p>
+
+  <p>Two kinds of scenarios are especially useful:</p>
+
+  <ul>
+    <li><em>Usage scenarios</em> (also called application scenarios or use case scenarios) describe the system’s runtime reaction to a certain stimulus. 
+This also includes scenarios that describe the system’s efficiency or performance. 
+Example: The system reacts to a user’s request within one second.</li>
+    <li><em>Change scenarios</em> describe the desired effect of a modification or extension of the system or of its immediate environment. 
+Example: Additional functionality is implemented or requirements for a quality attribute change, and the effort or duration of the change is measured.</li>
+  </ul>
+
+  <h2 id="form-1">Form</h2>
+
+  <p>Typical information for detailed scenarios include the following:</p>
+
+  <p>In short form (favoured in the Q42 model):</p>
+
+  <ul>
+    <li><strong>Context/Background</strong>: What kind of system or component, what is the envirionment or situation?</li>
+    <li><strong>Source/Stimulus</strong>: Who or what initiates or triggers a behaviour, reaction or action.</li>
+    <li><strong>Metric/Acceptance Criteria</strong>: A response including a <em>measure</em> or <em>metric</em></li>
+  </ul>
+
+  <p>The long form of scenarios (favoured by the SEI and [Bass+21]) is more detailed and includes the following information:</p>
+
+  <ul>
+    <li><strong>Scenario ID</strong>: A unique identifier for the scenario.</li>
+    <li><strong>Scenario Name</strong>: A short, descriptive name for the scenario.</li>
+    <li><strong>Source</strong>: The entity (user, system, or event) that initiates the scenario.</li>
+    <li><strong>Stimulus</strong>: The triggering event or condition the system must address.</li>
+    <li><strong>Environment</strong>: The operational context or condition under which the system experiences the stimulus.</li>
+    <li><strong>Artifact</strong>: The building-blocks or other elements of the system affected by the stimulus.</li>
+    <li><strong>Response</strong>: The outcome or behavior the system exhibits in reaction to the stimulus.</li>
+    <li><strong>Response Measure</strong>: The criteria or metric by which the system’s response is evaluated.</li>
+  </ul>
+
+  <h2 id="examples-1">Examples</h2>
+  <p>See <a href="https://quality.arc42.org">the Q42 quality model website</a> for detailed examples of quality requirements.</p>
+
+  <h2 id="further-information-1">Further Information</h2>
+
+  <ul>
+    <li>Len Bass, Paul Clements, Rick Kazman: “Software Architecture in Practice”, 4th Edition, Addison-Wesley, 2021.</li>
+  </ul>
+
+</div>
+
+<p><em>&lt;describe quality scenarios here &gt;</em></p>
+
+<h2 id="see-also">See also</h2>
+
+<p>Since January 2023, arc42 provides a <a target="_blank" rel="noopener noreferrer nofollow" href="https://quality.arc42.org">pragmatic quality model</a>, that proposes to <em>label</em> quality requirements, with <em>hashtags</em> or <em>labels</em> like #flexible, #efficient, #usable, #operable, #testable, #secure, #safe” and #reliable.</p>
+
+<p><img src="/assets/images/sections/10/arc42-system-qualities-overview.svg" alt="Q42, the arc42 quality model, with tags/labels for system qualities" /></p>
+
+<hr class="with-no-margin" />
+
+<h2 id="practical-tips">Practical Tips</h2>
+
+<ul class="tips-list">
+  <li>
+    <a class="tip-title" href="/tips/10-1/">Tip 10-1: Keep the quality goals in arc42-section 1.2 short!</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality">#quality</a>
+      <a class="tag" href="/keywords/#quality-scenario">#quality-scenario</a>
+      <a class="tag" href="/keywords/#quality-goal">#quality-goal</a>
+    </span>
+  </li>
+  <li>
+    <a class="tip-title" href="/tips/10-2/">Tip 10-2: Document and explain the specific quality tree! (deprecated!)</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality">#quality</a>
+      <a class="tag" href="/keywords/#quality-tree">#quality-tree</a>
+    </span>
+  </li>
+  <li>
+    <a class="tip-title" href="/tips/10-3/">Tip 10-3: Use a mind-map as quality tree!</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality">#quality</a>
+      <a class="tag" href="/keywords/#quality-tree">#quality-tree</a>
+    </span>
+  </li>
+  <li>
+    <a class="tip-title" href="/tips/10-4/">Tip 10-4: Use the quality tree as checklist!</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality-tree">#quality-tree</a>
+      <a class="tag" href="/keywords/#thorough">#thorough</a>
+      <a class="tag" href="/keywords/#iso-25010">#iso-25010</a>
+    </span>
+  </li>
+  <li>
+    <a class="tip-title" href="/tips/10-5/">Tip 10-5: Consider usage or application (quality) scenarios!</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality">#quality</a>
+      <a class="tag" href="/keywords/#quality-scenario">#quality-scenario</a>
+      <a class="tag" href="/keywords/#scenario">#scenario</a>
+    </span>
+  </li>
+  <li>
+    <a class="tip-title" href="/tips/10-6/">Tip 10-6: Consider change (quality) scenarios!!</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality">#quality</a>
+      <a class="tag" href="/keywords/#quality-scenario">#quality-scenario</a>
+      <a class="tag" href="/keywords/#scenario">#scenario</a>
+    </span>
+  </li>
+  <li>
+    <a class="tip-title" href="/tips/10-7/">Tip 10-7: Consider fault/error/failure (quality) scenarios!!</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality">#quality</a>
+      <a class="tag" href="/keywords/#quality-scenario">#quality-scenario</a>
+      <a class="tag" href="/keywords/#scenario">#scenario</a>
+    </span>
+  </li>
+  <li>
+    <a class="tip-title" href="/tips/10-8/">Tip 10-8: Use (quality) scenarios for architecture analysis or evaluation!</a>
+    <span class="tags">
+      <a class="tag" href="/keywords/#quality">#quality</a>
+      <a class="tag" href="/keywords/#quality-scenario">#quality-scenario</a>
+      <a class="tag" href="/keywords/#scenario">#scenario</a>
+      <a class="tag" href="/keywords/#atam">#atam</a>
+    </span>
+  </li>
+</ul>
+
+<h3 id="related-questions">Related Questions</h3>
+
+<p>See <a target="_blank" rel="noopener noreferrer nofollow" href="https://faq.arc42.org/category_c/#c-sec-10">here for questions related to quality requirements, quality-tree and/or quality scenarios</a>.</p>
+
+<h3 id="complete-examples">Complete Examples</h3>
+
+<p>See <a target="_blank" rel="noopener noreferrer nofollow" href="https://examples.arc42.org/sections/10-quality-requirements/">the quality requirements of real systems</a>, documented in full at examples.arc42.org.</p>
+
+
+  <aside class="subtle-ads" aria-label="Training from the arc42 team"><div class="subtle-ad">
+    <h4>Prefer to learn arc42 hands-on?</h4>
+    <p>
+        Practical architecture training, most classes taught by Peter Hruschka
+        and Gernot Starke — the people who created arc42 and maintain this free
+        reference (dates with other trainers say so) — and solid preparation for
+        <a rel="noopener noreferrer nofollow" target="_blank" href="https://www.isaqb.org">iSAQB</a>
+        certifications.
+    </p>
+    <p class="training-dates__label" id="training-dates-label">Next dates</p>
+    <ul class="training-dates" aria-labelledby="training-dates-label"><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#req4arc-sep-2026">15&#8211;17&nbsp;Sep&nbsp;2026</a>
+            <b class="training-dates__lang" title="held in German">DE</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/info-req4arc/">Req4Arc</a>
+                <span class="training-dates__where">&middot; Frankfurt/Main</span><span class="training-dates__slug">getting your requirements right</span>
+            </span>
+        </li><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#msa-online-sep-2026">29&nbsp;Sep&#8211;1&nbsp;Oct&nbsp;2026</a>
+            <b class="training-dates__lang" title="held in English">EN</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://trainings.arc42.org/courses/msa/">Mastering SW Architectures</a>
+                <span class="training-dates__where">&middot; online</span><span class="training-dates__slug">perfect preparation for iSAQB CPSA-Foundation certification &middot; with Wolfgang Reimesch</span>
+            </span>
+        </li><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#adoc-oct-2026">27&#8211;28&nbsp;Oct&nbsp;2026</a>
+            <b class="training-dates__lang" title="held in German">DE</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/info-adoc/">ADOC</a>
+                <span class="training-dates__where">&middot; Zürich</span><span class="training-dates__slug">architecture documentation &middot; with Gernot Starke</span>
+            </span>
+        </li><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#improve-nov-2026">24&#8211;26&nbsp;Nov&nbsp;2026</a>
+            <b class="training-dates__lang" title="held in German">DE</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/info-improve/">IMPROVE</a>
+                <span class="training-dates__where">&middot; Hamburg</span><span class="training-dates__slug">evolve and maintain systems &middot; with Carola Lilienthal &amp; Gernot Starke</span>
+            </span>
+        </li><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#msa-dez-2026">1&#8211;4&nbsp;Dec&nbsp;2026</a>
+            <b class="training-dates__lang" title="held in German">DE</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://trainings.arc42.org/courses/msa/">Mastering SW Architectures</a>
+                <span class="training-dates__where">&middot; München</span><span class="training-dates__slug">perfect preparation for iSAQB CPSA-Foundation certification</span>
+            </span>
+        </li><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#msa-27-02-online">23&#8211;25&nbsp;Feb&nbsp;2027</a>
+            <b class="training-dates__lang" title="held in English">EN</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://trainings.arc42.org/courses/msa/">Mastering SW Architectures</a>
+                <span class="training-dates__where">&middot; online</span><span class="training-dates__slug">perfect preparation for iSAQB CPSA-Foundation certification &middot; with Wolfgang Reimesch</span>
+            </span>
+        </li><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#msa-mar-2027">2&#8211;5&nbsp;Mar&nbsp;2027</a>
+            <b class="training-dates__lang" title="held in German">DE</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://trainings.arc42.org/courses/msa/">Mastering SW Architectures</a>
+                <span class="training-dates__where">&middot; München</span><span class="training-dates__slug">perfect preparation for iSAQB CPSA-Foundation certification</span>
+            </span>
+        </li><li class="training-dates__row">
+            <a class="training-dates__when" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/termine#req4arc-mar-2027">9&#8211;11&nbsp;Mar&nbsp;2027</a>
+            <b class="training-dates__lang" title="held in German">DE</b>
+            <span class="training-dates__what">
+                <a class="training-dates__course" rel="noopener noreferrer nofollow" target="_blank" href="https://www.arc42.de/info-req4arc/">Req4Arc</a>
+                <span class="training-dates__where">&middot; München</span><span class="training-dates__slug">getting your requirements right</span>
+            </span>
+        </li>
+    </ul>
+    <p class="training-dates__more">
+        All courses and dates:
+        <a rel="noopener noreferrer nofollow" target="_blank" href="https://trainings.arc42.org">trainings.arc42.org</a>
+        <span class="training-dates__asof">&middot; as of 25 Aug 2026</span>
+    </p>
+</div>
+</aside>
+  <nav class="stepper" aria-label="Section pagination">
+  <a class="step step-prev" rel="prev" href="/section-9/">
+    <span class="step-dir"><span class="step-arrow" aria-hidden="true">&#8592;</span> Previous</span>
+    <span class="step-name">9. Architecture Decisions</span>
+    <span class="step-blurb">Important, expensive, risky or contentious decisions</span>
+  </a>
+  <a class="step step-next" rel="next" href="/section-11/">
+    <span class="step-dir">Next <span class="step-arrow" aria-hidden="true">&#8594;</span></span>
+    <span class="step-name">11. Risks and Technical Debt</span>
+    <span class="step-blurb">Known problems, risks and technical debt</span>
+  </a>
+</nav>
+</div>
+
+    </main>
+
+    <aside class="toc" aria-labelledby="toc-title">
+  <p class="toc-title" id="toc-title">On this page</p>
+  <nav class="toc-nav" aria-labelledby="toc-title">
+    <ol class="toc-list"></ol>
+  </nav>
+</aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p class="footer-icons">
+      <a href="https://www.innoq.com" target="_blank" rel="noopener noreferrer nofollow">
+        <img class="supported-by-innoq" src="/assets/images/brand/supported-by-innoq.svg" alt="Supported by INNOQ" width="110" height="24">
+      </a>
+    </p>
+
+    <nav class="footer-links" aria-label="Site">
+      <a href="https://status.arc42.org">Status</a>
+      <a href="/imprint/">Imprint + Privacy</a>
+      <a href="/contact/">Contact</a>
+      <a href="https://github.com/arc42/docs.arc42.org-site" target="_blank" rel="noopener noreferrer nofollow">GitHub</a>
+    </nav>
+
+    <p class="footer-maintainer">
+      Created by <a target="_blank" rel="noopener noreferrer nofollow" href="https://gernotstarke.de">Gernot Starke</a>,
+      licensed under <a target="_blank" rel="noopener noreferrer nofollow" href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+      Supported by <a href="https://kroener-starke.ch/projekte/" target="_blank" rel="noopener noreferrer">Kröner &amp; Starke</a>.
+    </p>
+  </div>
+</footer>
+<script defer src="/assets/js/site.js"></script>
+<script defer src="/assets/js/search.js"></script>
+
+
+</body>
+</html>
