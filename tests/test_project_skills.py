@@ -1,4 +1,8 @@
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -35,7 +39,12 @@ extensions: [flutter/outpos-agent, _gsd]
     'schema_version: 2', 'unexpected: field',
     'stacks: []\nstack: {language: python}',
     'stack: &recursive {language: *recursive}',
-])
+    '!x\nstack: {language: python}\nstack: {language: java}',
+    'stack: !x {language: python, language: java}',
+    'stack: !!python/object/apply:builtins.dict {}',
+    '[' * 2000 + 'x' + ']' * 2000,
+    '#' * 65537,
+], ids=lambda text: f'yaml-{len(text)}')
 def test_invalid_profile_never_falls_back_to_all_skills(text):
     with pytest.raises(ContractError):
         parse_profile(text)
@@ -80,7 +89,7 @@ def test_init_is_exclusive_and_git_pin_ignores_uncommitted_configuration(project
     (root / '.harness/tech-stack.yaml').write_text('stack: {language: java}')
     items, summary = project_context(git, artifacts, str(root), revision)
     assert {i.body for i in items} == {'COMMON_ONLY', 'FASTAPI_ELIGIBLE'}
-    assert summary['count'] == 2
+    assert summary['selected'] == 2
     assert artifacts.document(summary['manifest_ref'])['revision'] == revision
     nested = root / 'src'
     nested.mkdir()
@@ -90,22 +99,32 @@ def test_init_is_exclusive_and_git_pin_ignores_uncommitted_configuration(project
 
 def test_actual_executor_context_contains_only_eligible_pinned_skills(project, monkeypatch):
     root, git, artifacts = project
+    big = root / '.harness/skills/python/fastapi/big.md'
+    big.write_text('LARGE_SKILL_BODY ' * 3000)
+    git._git('add', '.harness/skills/python/fastapi/big.md')
+    git._git('commit', '-qm', 'large skill fixture')
     prompts = []
     class Runtime:
         def __init__(self, **kwargs): pass
         def __enter__(self): return self
         def __exit__(self, *args): pass
         def run(self, prompt, *args, **kwargs):
+            assert len(prompt.encode('utf-8')) <= 22000
             prompts.append(json.loads(prompt))
             return {'answer': {'summary': 'fixture', 'tests': []}, 'thread_id': 'fixture',
                     'usage': {}, 'rotate': False, 'interrupted': False, 'events': []}
     monkeypatch.setattr('codex_harness.adapters.executor.AppServer', Runtime)
     executor = Executor(Harness(MemoryStore(), organization()), git, artifacts)
-    executor._run('worker:implementation', 'task', 'Test context routing', {}, str(root), IMPLEMENTATION)
+    executor._run('worker:implementation', 'task', 'Test context routing',
+                  {'large_evidence': 'x' * 25000}, str(root), IMPLEMENTATION)
     text = json.dumps(prompts[0])
     assert 'FASTAPI_ELIGIBLE' in text and 'COMMON_ONLY' in text
     assert 'JAVA_MUST_NOT_LOAD' not in text
-    assert prompts[0]['required']['project_skills']['count'] == 2
+    selection = prompts[0]['required']['project_skills']
+    assert (selection['selected'], selection['included'], selection['omitted']) == (3, 2, 1)
+    manifest = json.loads(Path(selection['file']).read_text())
+    large_record = next(r for r in manifest['skills'] if r['path'].endswith('/big.md'))
+    assert Path(large_record['file']).read_text().startswith('LARGE_SKILL_BODY')
     (root / '.harness/tech-stack.yaml').write_text('stack: {language: java}')
     git._git('add', '.harness/tech-stack.yaml')
     git._git('commit', '-qm', 'switch stack')
@@ -128,3 +147,38 @@ def test_profile_symlink_in_git_is_rejected(project):
     git._git('commit', '-qm', 'fixture symlink mode')
     with pytest.raises(ContractError, match='regular Git file'):
         project_context(git, artifacts, str(root), git._git('rev-parse', 'HEAD'))
+
+
+def test_selected_skill_symlink_is_rejected(project):
+    root, git, artifacts = project
+    path = '.harness/skills/_common/base.md'
+    blob = git._git('rev-parse', 'HEAD:' + path)
+    git._git('update-index', '--cacheinfo', f'120000,{blob},{path}')
+    git._git('commit', '-qm', 'fixture skill symlink mode')
+    with pytest.raises(ContractError, match='regular Git file'):
+        project_context(git, artifacts, str(root), git._git('rev-parse', 'HEAD'))
+
+
+def test_cli_legacy_import_preserves_extra_metadata_and_never_overwrites(tmp_path):
+    root = tmp_path / 'project'
+    (root / '.claude').mkdir(parents=True)
+    legacy = root / '.claude/tech-stack.yaml'
+    source = ('stack: {language: java, framework: springboot, version: 3.10, test_command: mvn}\n'
+              'database: {type: mysql, version: 5.7}\norm: mybatis\n'
+              'mobile: {framework: android}\n')
+    legacy.write_text(source)
+    script = Path(__file__).resolve().parents[1] / 'scripts/project_init.py'
+    env = {**os.environ, 'PYTHONPATH': str(script.parents[1] / 'src')}
+    argv = [sys.executable, str(script), str(root), '--from-claude']
+    first = subprocess.run(argv, env=env, capture_output=True, text=True)
+    assert first.returncode == 0, first.stderr
+    output = json.loads(first.stdout)['profile']
+    assert output['metadata']['legacy_fields']['database']['version'] == '5.7'
+    assert output['metadata']['stack_fields']['stack']['test_command'] == 'mvn'
+    assert output['metadata']['unmapped_stack_blocks']['mobile']['framework'] == 'android'
+    assert output['stacks'][0]['version'] == '3.10'
+    assert parse_profile((root / '.harness/tech-stack.yaml').read_text()) == output
+    assert legacy.read_text() == source
+    second = subprocess.run(argv, env=env, capture_output=True, text=True)
+    assert second.returncode == 2 and 'Traceback' not in second.stderr
+    assert json.loads(second.stderr)['error'] == 'FileExistsError'

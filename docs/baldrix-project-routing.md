@@ -54,3 +54,31 @@ invalid/duplicate YAML, packaged skill selection, non-overwriting init, committe
 configuration, Git symlink mode, and the actual Executor/compiler input with an instrumented
 runtime. That runtime test is not an actual Codex invocation. Claude review and actual
 candidate CLI canary are retained separately before any activation.
+
+## Claude review corrections
+
+Initial source review at 4fffd5c was conditionally accepted with required fixes:
+`sha256:04d7a4560cf5d460ac7998630daf6213ff5ac9e144184dd4dd43d8a88f4e3cd6`.
+
+The follow-up rejects unsupported explicit YAML tags, classifies excessive nesting,
+adds selected/included/omitted counts and actionable manifest/body file handles, and
+prioritizes selected skill content above the already-externalized raw task evidence.
+Counts reserve their maximum encoded width before compilation and are finalized with
+the shared packet seal, without increasing the context byte budget.
+
+Explicit `--from-claude` import now retains fields such as database, ORM, cache and
+per-stack annotations under canonical profile metadata. Blocks without language are
+preserved as unmapped metadata rather than invented language selections. This follows
+the actual `skills/_common/tech-stack-template.yaml` in Baldrix, which contains these
+extra fields. The original legacy file remains untouched. Native canonical profiles
+remain strict about unknown fields; use metadata for additional context.
+
+Root resolution and skill-manifest-bound session recovery prevent subdirectory scope
+mismatch and reuse of stale skills after a committed stack change or removal. Tests
+also cover selected-skill symlink mode, CLI legacy import, metadata preservation,
+expected CLI errors, and real-sized budget overflow. The standard no-profile path is
+covered by existing Executor regressions and explicit profile-removal continuation.
+
+Original tech-stack and scan-root tests were run unchanged in a read-only, networkless
+container: 25 passed, receipt
+`sha256:b4181f5fe5ba43f3bf39376c190657588076ed0a0f3f356aafbfb37bd5d65cf5`.

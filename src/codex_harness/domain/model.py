@@ -140,6 +140,11 @@ class ContextPacket:
                           "snapshot": self.snapshot, "required": self.required,
                           "evidence": self.evidence})
 
+    def seal(self):
+        self.estimated_tokens = len(self.render().encode())
+        self.manifest_hash = digest({'rendered': self.render(), 'omitted': self.omitted,
+                                     'compiler': self.compiler_version})
+
 
 def compile_context(agent: str, task: str, snapshot: str, required: dict,
                     items: list[ContextItem], window: int, reserved: int) -> ContextPacket:
@@ -164,9 +169,7 @@ def compile_context(agent: str, task: str, snapshot: str, required: dict,
         if len(packet.render().encode()) > budget:
             packet.evidence.pop()
             packet.omitted.append({"id": item.id, "reason": "budget", "source_ref": item.source_ref})
-    packet.estimated_tokens = len(packet.render().encode())
-    packet.manifest_hash = digest({"rendered": packet.render(), "omitted": packet.omitted,
-                                   "compiler": packet.compiler_version})
+    packet.seal()
     return packet
 
 

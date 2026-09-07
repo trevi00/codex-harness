@@ -14,7 +14,7 @@ def segment(value):
 
 def normalize_profile(value):
     require(isinstance(value, dict), 'Project profile must be a mapping')
-    require(set(value) <= {'schema_version', 'stacks', 'extensions', *BLOCKS},
+    require(set(value) <= {'schema_version', 'stacks', 'extensions', 'metadata', *BLOCKS},
             'Unknown project profile field')
     require(str(value.get('schema_version', '1')) == '1', 'Unsupported project profile version')
     require(not ('stacks' in value and any(k in value for k in BLOCKS)),
@@ -37,8 +37,10 @@ def normalize_profile(value):
         require(isinstance(extension, str), 'Extension path must be a string')
         for part in extension.split('/'):
             require(part == '_common' or bool(segment(part)), 'Invalid extension')
+    metadata = value.get('metadata', {})
+    require(isinstance(metadata, dict), 'Profile metadata must be a mapping')
     return {'schema_version': '1', 'stacks': normalized,
-            'extensions': list(dict.fromkeys(extensions))}
+            'extensions': list(dict.fromkeys(extensions)), 'metadata': metadata}
 
 
 def eligible_paths(profile):

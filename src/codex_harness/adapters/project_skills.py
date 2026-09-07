@@ -11,7 +11,10 @@ SKILLS = '.harness/skills/'
 
 
 class UniqueLoader(yaml.BaseLoader):
-    pass
+    def construct_object(self, node, deep=False):
+        require(node.tag in {'tag:yaml.org,2002:str', 'tag:yaml.org,2002:seq',
+                             'tag:yaml.org,2002:map'}, 'Unsupported YAML tag')
+        return super().construct_object(node, deep=deep)
 
 
 def unique_mapping(loader, node):
@@ -26,19 +29,48 @@ def unique_mapping(loader, node):
 UniqueLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
 
 
-def parse_profile(text):
+def load_yaml(text):
     require(len(text.encode('utf-8')) <= 65536, 'Project profile exceeds size limit')
     try:
         value = yaml.load(text, Loader=UniqueLoader)
-    except yaml.YAMLError as exc:
+    except (yaml.YAMLError, RecursionError) as exc:
         raise ContractError('Invalid project YAML') from exc
+    return value
+
+
+def parse_profile(text):
+    value = load_yaml(text)
     return normalize_profile(value)
 
 
-def initialize(root, text):
+def import_legacy_profile(text):
+    from codex_harness.domain.project_skills import BLOCKS
+
+    value = load_yaml(text)
+    require(isinstance(value, dict), 'Legacy profile must be a mapping')
+    stacks, stack_fields, unmapped = [], {}, {}
+    for role in BLOCKS:
+        if role not in value:
+            continue
+        block = value[role]
+        require(isinstance(block, dict), 'Invalid legacy stack block')
+        if not block.get('language'):
+            unmapped[role] = block
+            continue
+        stacks.append({k: v for k, v in block.items() if k in {'language', 'framework', 'version'}})
+        extra = {k: v for k, v in block.items() if k not in {'language', 'framework', 'version'}}
+        if extra:
+            stack_fields[role] = extra
+    extra = {k: v for k, v in value.items() if k not in {*BLOCKS, 'extensions'}}
+    return normalize_profile({'stacks': stacks, 'extensions': value.get('extensions', []),
+                              'metadata': {'legacy_fields': extra, 'stack_fields': stack_fields,
+                                           'unmapped_stack_blocks': unmapped}})
+
+
+def initialize(root, text, *, legacy=False):
     root = Path(root).resolve()
     require(root.is_dir(), 'Project root must exist')
-    profile = parse_profile(text)
+    profile = import_legacy_profile(text) if legacy else parse_profile(text)
     path = root / PROFILE
     require(path.resolve().is_relative_to(root), 'Project profile escapes project root')
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -54,7 +86,7 @@ def project_context(git, artifacts, cwd, revision):
     inventory = {entry.split('\t', 1)[1]: entry.split(' ', 1)[0]
                  for entry in raw.split('\0') if '\t' in entry}
     if PROFILE not in inventory and not any(p.startswith(SKILLS) for p in inventory):
-        return [], {'status': 'not_configured', 'count': 0}
+        return [], {'status': 'not_configured', 'selected': 0}
     if PROFILE in inventory:
         require(inventory[PROFILE] in {'100644', '100755'}, 'Profile must be a regular Git file')
     text = git._git('show', revision + ':' + PROFILE, cwd=cwd, strip=False) if PROFILE in inventory else None
@@ -67,9 +99,13 @@ def project_context(git, artifacts, cwd, revision):
         body = git._git('show', revision + ':' + path, cwd=cwd, strip=False)
         require(len(body.encode('utf-8')) <= 1024 * 1024, 'Skill exceeds input size limit')
         stored = artifacts.put(body, f'git:{revision}:{path}')
-        records.append({'path': path, 'content_ref': stored['ref'], 'revision': revision})
-        items.append(ContextItem('project-skill:' + path, body, stored['ref'], revision, 5))
+        records.append({'path': path, 'content_ref': stored['ref'], 'revision': revision,
+                        'file': str(artifacts.root / (stored['ref'][7:] + '.txt'))})
+        items.append(ContextItem('project-skill:' + path, body, stored['ref'], revision, 15))
     manifest = artifacts.put(canonical({'profile': profile, 'revision': revision, 'skills': records}),
                              'project-skill-selection')
     return items, {'status': 'configured' if text is not None else 'common_only',
-                   'count': len(items), 'manifest_ref': manifest['ref']}
+                   'selected': len(items), 'manifest_ref': manifest['ref'],
+                   'file': str(artifacts.root / (manifest['ref'][7:] + '.txt')),
+                   'instruction': 'Read the manifest with bounded reads for profile metadata and '
+                                  'skill file handles; read omitted skill bodies from those files.'}

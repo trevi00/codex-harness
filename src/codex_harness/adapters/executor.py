@@ -141,9 +141,17 @@ class Executor:
                     "file": str(self.artifacts.root / (receipt["ref"][7:] + ".txt"))}
                 recovery_items.append(ContextItem(receipt["ref"], body, receipt["ref"], digest(value), 20))
             packet = compile_context(agent, key, self.workflow.snapshot(),
-                {**required, "recovery": {"sources": recovery_refs,
+                {**required, 'project_skills': {**skill_selection,
+                    'included': skill_selection['selected'], 'omitted': skill_selection['selected']},
+                    "recovery": {"sources": recovery_refs,
                     "instruction": "Before repeating tools, inspect recovery sources using bounded reads."}},
                 items + recovery_items, 28000, 6000)
+            before_counts = packet.estimated_tokens
+            included = sum(item['id'].startswith('project-skill:') for item in packet.evidence)
+            packet.required['project_skills'].update(
+                included=included, omitted=skill_selection['selected'] - included)
+            packet.seal()
+            require(packet.estimated_tokens <= before_counts, 'Skill counts increased context size')
             context_ref = self.artifacts.put(canonical(asdict(packet)), "context:" + key)
             prompt = packet.render()
             if heartbeat:
