@@ -19,7 +19,8 @@
           "type": "string"
         },
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         }
       },
       "required": [
@@ -266,7 +267,8 @@
           "type": "boolean"
         },
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         }
       },
       "required": [
@@ -334,7 +336,8 @@
           "type": "string"
         },
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         }
       },
       "required": [
@@ -416,7 +419,8 @@
           "type": "string"
         },
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         }
       },
       "required": [
@@ -472,7 +476,8 @@
           "type": "string"
         },
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         }
       },
       "required": [
@@ -495,10 +500,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "SourceIdentity"
+          "const": "SourceIdentity",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/SourceIdentity"
@@ -515,10 +522,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "InventoryEntry"
+          "const": "InventoryEntry",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/InventoryEntry"
@@ -535,10 +544,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "PathDisposition"
+          "const": "PathDisposition",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/PathDisposition"
@@ -555,10 +566,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "SubsystemAnalysis"
+          "const": "SubsystemAnalysis",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/SubsystemAnalysis"
@@ -575,10 +588,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "ExecutionReceipt"
+          "const": "ExecutionReceipt",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/ExecutionReceipt"
@@ -595,10 +610,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "PartitionCheckpoint"
+          "const": "PartitionCheckpoint",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/PartitionCheckpoint"
@@ -615,10 +632,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "AdaptationProposal"
+          "const": "AdaptationProposal",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/AdaptationProposal"
@@ -635,10 +654,12 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "const": 1
+          "const": 1,
+          "type": "integer"
         },
         "kind": {
-          "const": "IndependentReview"
+          "const": "IndependentReview",
+          "type": "string"
         },
         "record": {
           "$ref": "#/$defs/IndependentReview"

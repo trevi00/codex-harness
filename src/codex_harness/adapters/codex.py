@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from codex_harness.adapters.commands import run_process
+from codex_harness.adapters.output_schema import preflight
 from codex_harness.domain.model import ContractError, canonical
 
 
@@ -34,6 +35,7 @@ class CodexRuntime:
                 "exit_code": result.returncode}
 
     def run(self, prompt: str, cwd: str, schema: dict, timeout: int = 120) -> dict:
+        preflight(schema)
         with tempfile.TemporaryDirectory(prefix="codex-harness-") as tmp:
             schema_path = Path(tmp) / "response.schema.json"
             output = Path(tmp) / "response.json"

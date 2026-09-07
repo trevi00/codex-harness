@@ -15,14 +15,20 @@ ROOT = Path(__file__).resolve().parents[1]
 HOOK_ID = 'hook-ab97ba09554daa5aec289867'
 
 
-def native_candidate(tmp_path):
+@pytest.fixture(params=[
+    (HOOK_ID, "codex-bubblewrap-namespace-creation-denied", "docker/linux/codex-read-only-review"),
+    ("hook-572b2b90cf311ed31d66b108", "codex-output-schema-version-missing-type",
+     "codex-harness/research-audit/output-schema"),
+])
+def native_candidate(tmp_path, request):
+    hook_id, cause, scope = request.param
     service = Harness(MemoryStore(), organization())
     # Fixture diagnosis only. No automatic cause confirmation from error text.
     for occurrence in ['review-one', 'review-two']:
         message = envelope('incident.report', 'lead:improvement', 'conductor', 'record_incident',
                            {'occurrence_id': occurrence,
-                            'root_cause': 'codex-bubblewrap-namespace-creation-denied',
-                            'scope': 'docker/linux/codex-read-only-review',
+                            'root_cause': cause,
+                            'scope': scope,
                             'evidence_refs': ['fixture:confirmed-diagnosis']}, 'fixture')
         service.record_incident(message)
         service.record_incident(message)
@@ -30,43 +36,43 @@ def native_candidate(tmp_path):
         assert command == 'show' and revision_path.startswith('fixture-revision:')
         return (ROOT / revision_path.split(':', 1)[1]).read_text()
     adapter = NativeHooks(service, SimpleNamespace(_git=git_show), FileArtifacts(str(tmp_path)))
-    spec = adapter.candidate(HOOK_ID, {'revision': 'fixture-revision', 'author': 'worker:implementation'})
-    return service, adapter, spec
+    spec = adapter.candidate(hook_id, {'revision': 'fixture-revision', 'author': 'worker:implementation'})
+    return service, adapter, spec, hook_id
 
 
-def test_native_activation_gates_canary_and_rollback_exclusion(tmp_path):
-    service, adapter, spec = native_candidate(tmp_path)
+def test_native_activation_gates_canary_and_rollback_exclusion(native_candidate):
+    service, adapter, spec, hook_id = native_candidate
     assert adapter.configuration() == {}
     with pytest.raises(ContractError):
-        service.activate(HOOK_ID)
+        service.activate(hook_id)
     for revision, spec_hash in [('stale', digest(spec)), ('fixture-revision', 'stale')]:
         with pytest.raises(ContractError, match='Stale review'):
-            service.review(HOOK_ID, 'lead:improvement', revision, spec_hash, True, 'fixture')
+            service.review(hook_id, 'lead:improvement', revision, spec_hash, True, 'fixture')
     for actor in ['conductor', 'lead:research', 'worker:implementation']:
         with pytest.raises(ContractError):
-            service.review(HOOK_ID, actor, 'fixture-revision', digest(spec), True, 'fixture')
+            service.review(hook_id, actor, 'fixture-revision', digest(spec), True, 'fixture')
     for actor in ['lead:improvement', 'conductor']:
-        service.review(HOOK_ID, actor, 'fixture-revision', digest(spec), True, 'fixture')
-    checks = adapter.canary(HOOK_ID)
+        service.review(hook_id, actor, 'fixture-revision', digest(spec), True, 'fixture')
+    checks = adapter.canary(hook_id)
     assert all(check['passed'] for check in checks.values())
     assert adapter.configuration() == {}
-    service.record_canary(HOOK_ID, 'fixture-revision', digest(spec),
+    service.record_canary(hook_id, 'fixture-revision', digest(spec),
                           {'reproduction': True, 'normal_case': True, 'cli_start': True})
-    service.activate(HOOK_ID)
+    service.activate(hook_id)
     configuration = adapter.configuration()
     assert configuration['SessionStart'][0]['matcher'] == spec['matcher']
-    service.rollback(HOOK_ID, 'fixture rollback through existing use case')
+    service.rollback(hook_id, 'fixture rollback through existing use case')
     assert NativeHooks(service, adapter.git, adapter.artifacts).configuration() == {}
-    assert service.get_hook(HOOK_ID)['status'] == 'rolled_back'
+    assert service.get_hook(hook_id)['status'] == 'rolled_back'
     with service.store.transaction() as tx:
         assert len(tx.scan('incidents')) == 2
 
 
-def test_materialization_checks_exact_git_content(tmp_path):
-    service, adapter, _ = native_candidate(tmp_path)
+def test_materialization_checks_exact_git_content(native_candidate):
+    service, adapter, _, hook_id = native_candidate
     adapter.git._git = lambda *a, **k: 'tampered'
     with pytest.raises(ContractError, match='Reviewed script changed'):
-        adapter.materialize(service.get_hook(HOOK_ID))
+        adapter.materialize(service.get_hook(hook_id))
 
 
 def test_manifest_replay_is_explicitly_not_native_failure_coverage():

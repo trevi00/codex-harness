@@ -212,3 +212,23 @@ def test_stale_session_generation_rejects_checkpoint(setup):
     with s.service.store.transaction() as tx:
         assert not tx.scan('outbox')
         assert tx.get('sessions', 'worker:github')['generation'] == 7
+
+
+def test_preflight_failure_uses_existing_execution_failure_reporting(setup):
+    from codex_harness.adapters.output_schema import CAUSE, preflight
+
+    s = setup
+
+    def reject_schema(stage):
+        preflight({'properties': {'version': {'const': 1}}})
+
+    s.config['callback'] = reject_schema
+    result = s.executor.execute_one('worker:github')
+    assert result['status'] == 'retry' and CAUSE in result['error']
+    with s.service.store.transaction() as tx:
+        failures = [r for r in tx.scan('decisions_pending') if r['phase'] == 'diagnose']
+        assert len(failures) == 1
+        receipt = s.artifacts.document(failures[0]['input']['evidence_ref'])
+        assert CAUSE in receipt['error']
+        assert receipt['task_id'] == s.task['id']
+        assert tx.get('tasks', s.task['id'])['status'] != 'succeeded'
