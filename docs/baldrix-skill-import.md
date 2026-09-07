@@ -24,8 +24,13 @@ Exact raw bytes (including invalid UTF-8) are retained in an immutable base64 ar
 Its canonical digest is verified against input before PostgreSQL writes. A transaction
 stores the prefix hash, byte/line cursor, cumulative counters, last 4000 projected events
 and source ref. Replays and concurrent identical deliveries make no cursor/data change.
+Event IDs are segment/line identifiers inside the project scope, not globally unique IDs.
 The current snapshot covers every committed prefix; previous source artifacts remain
 available. Projection never rewrites the input file or drops raw evidence.
+Identical snapshots reuse their content-addressed artifact. Growing snapshots currently
+store a full base64 copy each time: importing every small append can cost quadratic total
+archive bytes in segment length. Prefer importing completed copied segments. Incremental
+chunk archives and retention are follow-up work; this CLI is not a continuous tailer.
 
 Parsing is bounded to an 8-MiB snapshot and 64-KiB lines. Larger archives require explicit
 segmentation with unique IDs; no automatic truncation is accepted. Only LF-terminated
@@ -57,6 +62,13 @@ a separate evidence-backed mapping contract. `--dry-run` parses only, writes not
 and does not validate an existing database cursor. Actual import uses the existing global
 PostgreSQL transaction lock; source artifact writes happen before the transaction and
 may leave a retained artifact when a conflicting prefix is rejected.
+The CLI adapter persists the artifact before calling the application use case; direct
+application callers must honor that port contract. The use case verifies the receipt's
+digest, not filesystem availability. Audit echoes the stored ref; reading the artifact
+through FileArtifacts performs its integrity check. If the parser version changes, the
+old archive stays readable but cannot advance; use a new source ID (for example a parser
+generation suffix) to re-import under the new projection. Do not aggregate both copies as
+independent observations. Text reports explicitly identify legacy/unknown-version data.
 
 This does not import the user's original logs automatically. It does not implement the
 remaining calibration proposal/holdout/approval pipeline, all other Baldrix telemetry,

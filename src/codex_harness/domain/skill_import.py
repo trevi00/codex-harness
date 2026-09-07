@@ -36,16 +36,19 @@ def project_jsonl(data, source, *, start=0, line_offset=0):
     offset = start
     unknown_version = 'legacy-version-unknown:' + digest(source)
     # JSONL is delimited by LF only. A torn final append may become valid later.
-    for raw in data[start:].split(b'\n')[:-1]:
-        line = raw + b'\n'
-        offset += len(line)
+    while True:
+        end = data.find(b'\n', offset)
+        if end < 0:
+            break
+        line = data[offset:end + 1]
+        offset = end + 1
         counts['lines'] += 1
         number = line_offset + counts['lines']
-        if not line.strip():
-            counts['blank_lines'] += 1
-            continue
         try:
             require(len(line) <= MAX_LINE_BYTES, 'Oversized line')
+            if not line.strip():
+                counts['blank_lines'] += 1
+                continue
             record = json.loads(line.decode('utf-8'), parse_constant=lambda _: require(False, 'Non-finite JSON'))
             canonical(record).encode('utf-8')  # reject lone surrogates before PostgreSQL serialization
             pending = [record]
@@ -68,12 +71,14 @@ def project_jsonl(data, source, *, start=0, line_offset=0):
                 issues.append({'line': number, 'reason': 'invalid_or_oversized_record'})
             continue
         top = []
-        for entry in record['top']:
+        for index, entry in enumerate(record['top']):
             if (not isinstance(entry, dict) or not isinstance(entry.get('name'), str)
                     or not entry['name']
                     or not isinstance(entry.get('score'), int) or isinstance(entry['score'], bool)
                     or not 0 <= entry['score'] <= MAX_IMPORT_SCORE):
                 counts['invalid_entries'] += 1
+                if len(issues) < 20:
+                    issues.append({'line': number, 'entry': index, 'reason': 'invalid_top_entry'})
                 continue
             item = {'path': 'legacy-name:' + entry['name'], 'content_ref': unknown_version,
                     'score': entry['score'], 'legacy_name': entry['name']}
@@ -86,6 +91,8 @@ def project_jsonl(data, source, *, start=0, line_offset=0):
             top.append(item)
         if record['top'] and not top:
             counts['invalid_lines'] += 1
+            if len(issues) < 20:
+                issues.append({'line': number, 'reason': 'no_valid_top_entries'})
             continue
         events.append({'id': digest([source, number]),
                        'at': record.get('ts') if isinstance(record.get('ts'), str) else None, 'top': top,

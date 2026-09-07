@@ -59,6 +59,8 @@ def test_invalid_bytes_entries_dates_and_line_boundaries_are_explicit():
     assert parsed['events'][0]['at'] is None
     assert parsed['events'][1]['top'][0]['body_chars'] == 120
     assert parsed['events'][1]['top'][0]['content_ref'].startswith('legacy-version-unknown:')
+    assert any(issue['reason'] == 'invalid_top_entry' for issue in parsed['issues'])
+    assert any(issue['reason'] == 'no_valid_top_entries' for issue in parsed['issues'])
     duplicate = {'name': 'same.md', 'score': 1}
     assert len(project_jsonl(row(top=[duplicate, duplicate]), 'segment')['events'][0]['top']) == 2
 
@@ -123,5 +125,9 @@ def test_cli_preview_has_no_database_or_artifact_writes_and_audit_selects_legacy
     report = json.loads(capsys.readouterr().out)
     assert report['invocations'] == 3 and report['source_ref'].startswith('sha256:')
     assert store.data == before
+    assert audit_cli(['--github-repo', 'owner/repo', '--legacy-source', 'segment'], store=store) == 0
+    text = capsys.readouterr().out
+    assert 'LEGACY SOURCE: segment' in text and 'Historical skill version unknown' in text
+    assert report['source_ref'] in text
     assert audit_cli(['--github-repo', 'owner/repo', '--json'], store=store) == 0
     assert json.loads(capsys.readouterr().out)['invocations'] == 0

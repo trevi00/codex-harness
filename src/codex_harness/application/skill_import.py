@@ -26,7 +26,8 @@ class SkillImport:
             old = tx.get('legacy_skill_imports', key)
             start = old['consumed_bytes'] if old else 0
             if old:
-                require(old['version'] == IMPORT_VERSION, 'Import parser version changed')
+                require(old['version'] == IMPORT_VERSION,
+                        'Import parser version changed; preserve this archive and use a new source ID for re-import')
                 require(len(data) >= start and hashlib.sha256(data[:start]).hexdigest() == old['prefix_sha256'],
                         'Previously imported prefix changed; use a different ID for a new segment')
             batch = project_jsonl(data, source, start=start, line_offset=old['counts']['lines'] if old else 0)

@@ -19,6 +19,10 @@ from codex_harness.domain.skill_import import validate_source
 
 def render_text(report):
     lines = [f"=== skill telemetry audit ({report['invocations']} invocations) ==="]
+    if report.get('legacy_source'):
+        lines.extend([f"LEGACY SOURCE: {report['legacy_source']}",
+                      'Historical skill version unknown; findings do not identify current skill bytes.',
+                      f"Source artifact: {report.get('source_ref') or 'not imported'}"])
     if not report['skills']:
         lines.append('(no skill-match telemetry)')
     else:
