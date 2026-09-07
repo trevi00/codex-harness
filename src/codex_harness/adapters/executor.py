@@ -22,6 +22,7 @@ from codex_harness.domain.model import (
     utcnow,
 )
 from codex_harness.domain.policy import POLICY
+from codex_harness.domain.research import require_dispatch
 
 
 def object_schema(properties: dict) -> dict:
@@ -47,11 +48,15 @@ DIAGNOSIS = object_schema({"confirmed": {"type": "boolean"}, "root_cause": TEXT,
 class Executor:
     """Infrastructure composition for role-specific, independently executed Codex tasks."""
 
-    def __init__(self, service, git, artifacts, knowledge=None, research=None, release_runner=None):
+    def __init__(self, service, git, artifacts, knowledge=None, research=None, release_runner=None, audit_runner=None):
         self.service, self.git, self.artifacts = service, git, artifacts
         self.knowledge, self.research, self.release_runner = knowledge, research, release_runner
         self.workflow = Workflow(service.store, service.org)
         self.releases = Releases(service.store, service.org)
+        self.audit_execution = None
+        if audit_runner is not None:
+            from codex_harness.adapters.audit_execution import AuditExecution
+            self.audit_execution = AuditExecution(self, audit_runner)
 
     def _run(self, agent: str, key: str, objective: str, evidence: dict, cwd: str,
              schema: dict, read_only: bool = False, heartbeat=None, lease=None, stage=None) -> dict:
@@ -215,9 +220,16 @@ class Executor:
             message = task["message"]
             commands = []
             action, details = message["what"]["action"], message["what"]["details"]
+            if action in {"plan", "implement"}:
+                from codex_harness.application.audit_gate import inspect_approval
+                with self.service.store.transaction() as tx:
+                    inspect_approval(tx, details, self.artifacts)
             def heartbeat():
                 self.workflow.heartbeat(task)
-            if action == "research":
+            if action in {'audit_discovery', 'audit_acquire', 'audit_partition', 'audit_propose'}:
+                require(self.audit_execution is not None, 'Audit executor unavailable')
+                result = self.audit_execution.execute(task)
+            elif action == "research":
                 require(self.research is not None, "Research provider unavailable")
                 sources = self.research.collect(details.get("source", "github"))
                 if details.get("source", "github") == "github":
@@ -246,8 +258,8 @@ class Executor:
                         s for s in sources["items"] if s["url"] == selected),
                         "readme_excerpt": excerpt.encode("utf-8")[:10000].decode("utf-8", errors="ignore")}
                     result = self._run(agent, task["id"],
-                        "Evaluate the fetched repository evidence and propose exactly one grounded harness "
-                        "improvement. Declare the exact source_url and source_revision from research_context.",
+                        "Record a discovery-only candidate requiring exhaustive source audit before adoption. "
+                        "Declare the exact source_url and source_revision from research_context.",
                         evidence, str(self.git.repository), GITHUB_RESEARCH, True, heartbeat, task,
                         stage="final")
                     require(result.get("source_url") == selected, "Mismatched final research citation")
@@ -258,12 +270,17 @@ class Executor:
                     result["shortlist_execution_ref"] = shortlist["execution_ref"]
                     result["research_attempt"] = task["attempt"]
                 else:
-                    result = self._run(agent, task["id"], "Select exactly one grounded harness improvement", sources,
+                    result = self._run(agent, task["id"], "Record one discovery-only candidate; primary-source mapping and audit remain required", sources,
                                        str(self.git.repository), RESEARCH, True, heartbeat, task)
                     require(result["source_url"] in {s["url"] for s in sources["items"]}, "Unfetched research citation")
                 result["source_artifact"] = sources["artifact"]
+                result["coverage_status"] = "discovery_only"
+                result["adoption_eligible"] = False
             elif action == "plan":
-                result = self._run(agent, task["id"], "Create an implementable improvement plan", details,
+                result = self._run(agent, task["id"], "Create an implementable improvement plan. "
+                                   "Describe the future implementer's authorized changes. Current-turn "
+                                   "review/planning restrictions do not prohibit the downstream implementer "
+                                   "from editing its assigned workspace; do not copy them into the objective.", details,
                                    str(self.git.repository), PLAN, True, heartbeat, task)
                 result["origin"] = details
                 if details.get("plan", {}).get("origin", {}).get("hook"):
@@ -350,6 +367,9 @@ class Executor:
             phase, data = decision["phase"], decision["input"]
             lease = {**decision, "_bucket": "decisions_pending"}
             cwd = str(self.git.repository)
+            if phase == 'audit_review':
+                require(self.audit_execution is not None, 'Audit executor unavailable')
+                return self.audit_execution.review(lease)
             if phase.startswith("review_"):
                 candidate = data["candidate"]
                 inspected = self.git.inspect(candidate["revision"], candidate["base"])
@@ -392,11 +412,13 @@ class Executor:
                                     message["correlation_id"], message["message_id"])
                 self.service.record_incident(incident)
             elif phase == "research_lead" and result["accepted"]:
+                require_dispatch({"proposal": data})
                 result["proposal"] = data
                 next_message = envelope("review.result", agent, "conductor", "assess_research",
                                         {"decision_id": decision["id"], "result": result},
                                         message["correlation_id"], message["message_id"])
             elif phase == "proposal" and result["accepted"]:
+                require_dispatch({"proposal": data})
                 next_message = self.workflow._next(message, agent, "lead:improvement", "plan",
                                                    {"proposal": data, "approval": result})
                 next_message["where"]["revision"] = result["basis_revision"]

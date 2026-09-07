@@ -1,0 +1,88 @@
+Using CPython 3.13.15 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building codex-self-harness @ file:///runtime/workspaces/335c0bca-1fc4-4972-bd62-b1156cdd9d35
+      Built codex-self-harness @ file:///runtime/workspaces/335c0bca-1fc4-4972-bd62-b1156cdd9d35
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 55 packages in 1m 44s
+============================= test session starts ==============================
+platform linux -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /runtime/workspaces/335c0bca-1fc4-4972-bd62-b1156cdd9d35
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 43 items / 41 deselected / 2 selected
+
+tests/test_research_audits.py FF                                         [100%]
+
+=================================== FAILURES ===================================
+______ test_rollback_between_audit_releases_keeps_dispatch_paused[False] _______
+
+audit = (<codex_harness.application.research.ResearchAudits object at 0x7198c640e660>, {'id': '69e7d8aaddca1021b3e317c12fbdb61...6:00b0ae17309b65efb24828e06256c986734fa2cbadb0e233771b10abc6344862')], <function audit.<locals>.git at 0x7198c517d6c0>)
+legacy_control = False
+
+    @pytest.mark.parametrize('legacy_control', [False, True])
+    def test_rollback_between_audit_releases_keeps_dispatch_paused(audit, legacy_control):
+        from codex_harness.application.scheduling import schedule_audits
+    
+        service, record, _, _, _ = audit
+        service.partition(record['id'], 1)
+        releases, first = activate_fixture(service, revision='first')
+        _, second = activate_fixture(service, revision='second', expected=first['id'])
+        releases.rollback(second['id'], 'audit regression')
+        with service.store.transaction() as tx:
+            assert tx.get('deployment', 'active')['release_id'] == first['id']
+            control = tx.get('research_control', 'activation')
+            assert control['status'] == 'paused'
+            assert control['rolled_back_release'] == second['id']
+            if legacy_control:
+                control.pop('release_id', None)
+                control.pop('revision', None)
+                tx.put('research_control', 'activation', control)
+            retained = {table: tx.scan(table) for table in (
+                'research_audits', 'research_partitions', 'research_evidence_history',
+                'research_approvals', 'outbox', 'schedule')}
+        for _ in range(2):
+>           assert schedule_audits(service.workflow) == 0
+E           assert 4 == 0
+E            +  where 4 = <function schedule_audits at 0x7198c517f600>(<codex_harness.application.workflow.Workflow object at 0x7198c640e7b0>)
+E            +    where <codex_harness.application.workflow.Workflow object at 0x7198c640e7b0> = <codex_harness.application.research.ResearchAudits object at 0x7198c640e660>.workflow
+
+tests/test_research_audits.py:601: AssertionError
+_______ test_rollback_between_audit_releases_keeps_dispatch_paused[True] _______
+
+audit = (<codex_harness.application.research.ResearchAudits object at 0x7198c640b390>, {'id': 'a77846dc5853a93e25d429206989529...6:00b0ae17309b65efb24828e06256c986734fa2cbadb0e233771b10abc6344862')], <function audit.<locals>.git at 0x7198c517f100>)
+legacy_control = True
+
+    @pytest.mark.parametrize('legacy_control', [False, True])
+    def test_rollback_between_audit_releases_keeps_dispatch_paused(audit, legacy_control):
+        from codex_harness.application.scheduling import schedule_audits
+    
+        service, record, _, _, _ = audit
+        service.partition(record['id'], 1)
+        releases, first = activate_fixture(service, revision='first')
+        _, second = activate_fixture(service, revision='second', expected=first['id'])
+        releases.rollback(second['id'], 'audit regression')
+        with service.store.transaction() as tx:
+            assert tx.get('deployment', 'active')['release_id'] == first['id']
+            control = tx.get('research_control', 'activation')
+            assert control['status'] == 'paused'
+            assert control['rolled_back_release'] == second['id']
+            if legacy_control:
+                control.pop('release_id', None)
+                control.pop('revision', None)
+                tx.put('research_control', 'activation', control)
+            retained = {table: tx.scan(table) for table in (
+                'research_audits', 'research_partitions', 'research_evidence_history',
+                'research_approvals', 'outbox', 'schedule')}
+        for _ in range(2):
+>           assert schedule_audits(service.workflow) == 0
+E           assert 4 == 0
+E            +  where 4 = <function schedule_audits at 0x7198c517f600>(<codex_harness.application.workflow.Workflow object at 0x7198c640b250>)
+E            +    where <codex_harness.application.workflow.Workflow object at 0x7198c640b250> = <codex_harness.application.research.ResearchAudits object at 0x7198c640b390>.workflow
+
+tests/test_research_audits.py:601: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_audits.py::test_rollback_between_audit_releases_keeps_dispatch_paused[False]
+FAILED tests/test_research_audits.py::test_rollback_between_audit_releases_keeps_dispatch_paused[True]
+======================= 2 failed, 41 deselected in 4.74s =======================

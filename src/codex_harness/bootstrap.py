@@ -41,6 +41,7 @@ def build_executor(service=None):
     from pathlib import Path
 
     from codex_harness.adapters.artifacts import FileArtifacts
+    from codex_harness.adapters.audit_runner import AuditRunner
     from codex_harness.adapters.executor import Executor
     from codex_harness.adapters.git import GitWorkspace
     from codex_harness.adapters.knowledge import PostgresKnowledge
@@ -57,4 +58,5 @@ def build_executor(service=None):
                            if line.startswith("HARNESS_GITHUB_REPO=")), None)
     git = GitWorkspace(repository, str(runtime / "workspaces"), remote)
     return Executor(service or build(), git, artifacts, PostgresKnowledge(database_url()),
-                    ResearchSources(artifacts))
+                    ResearchSources(artifacts),
+                    audit_runner=AuditRunner(runtime / "audit-sources", artifacts))

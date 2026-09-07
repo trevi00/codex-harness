@@ -63,6 +63,11 @@ class GitWorkspace:
         require(len(manifests) <= 1, "Split independent hook updates into separate candidates")
         if manifests:
             candidate["hook_id"] = Path(manifests[0]).stem
+        definition = 'src/codex_harness/resources/audit-lifecycle.json'
+        if definition in self._git('ls-tree', '-r', '--name-only', revision, cwd=path).splitlines():
+            config = json.loads(self._git('show', revision + ':' + definition, cwd=path))
+            require(config == {'version': 1}, 'Unsupported audit lifecycle definition')
+            candidate['audit_lifecycle_version'] = 1
         return candidate
 
     def inspect(self, revision: str, base: str) -> dict:
