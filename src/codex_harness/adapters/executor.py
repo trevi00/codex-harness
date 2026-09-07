@@ -79,7 +79,7 @@ class Executor:
         if evidence.get("hook_contract"):
             task_contract["hook_contract"] = evidence["hook_contract"]
         items = [ContextItem(raw["ref"], canonical(evidence), raw["ref"], digest(evidence), 10)]
-        skill_items, skill_selection = project_context(self.git, self.artifacts, cwd, basis_revision)
+        skill_items, skill_selection = project_context(self.git, self.artifacts, cwd, basis_revision, objective)
         items.extend(skill_items)
         if self.knowledge:
             query = task_contract.get("objective", objective) if isinstance(task_contract, dict) else objective

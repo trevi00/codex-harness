@@ -88,7 +88,7 @@ def initialize(root, text, *, legacy=False):
     return {'path': str(path), 'profile': profile, 'commit_required': True}
 
 
-def project_context(git, artifacts, cwd, revision):
+def project_context(git, artifacts, cwd, revision, objective=None):
     cwd = git._git('rev-parse', '--show-toplevel', cwd=cwd)
     raw = git._git('ls-tree', '-rz', revision, '--', '.harness', '.claude/stages.yaml', cwd=cwd, strip=False)
     inventory = {entry.split('\t', 1)[1]: entry.split(' ', 1)[0]
@@ -121,11 +121,17 @@ def project_context(git, artifacts, cwd, revision):
                         'pipeline_boost': boost,
                         'file': str(artifacts.root / (stored['ref'][7:] + '.txt'))})
         items.append(ContextItem('project-skill:' + path, body, stored['ref'], revision, 15 + boost))
+    routing = {}
+    if objective is not None:
+        from codex_harness.adapters.skill_routing import route_skills
+
+        items, routing = route_skills(git, artifacts, cwd, revision, objective, items, records)
     manifest = artifacts.put(canonical({'profile': profile, 'revision': revision, 'skills': records,
-                                         'pipeline': pipeline}),
+                                         'pipeline': pipeline, 'routing': routing}),
                              'project-skill-selection')
     return items, {'status': 'configured' if text is not None else 'common_only',
-                   'selected': len(items), 'manifest_ref': manifest['ref'],
+                   'selected': len(items),
+                   'routing': {k: v for k, v in routing.items() if k != 'pattern_evidence'}, 'manifest_ref': manifest['ref'],
                    'pipeline': [{'language': r['language'], 'stage_id': r.get('stage', {}).get('id'),
                                  'phase': r.get('phase', ''), 'verified_complete': False}
                                 for r in pipeline['recommendations']],

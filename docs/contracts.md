@@ -58,3 +58,12 @@ upstream assets retain hashes and source provenance. Dirty/untracked outputs can
 advance recommendations. Pipeline priority cannot include a stack-ineligible skill.
 Full recommendation evidence lives in the project-skill manifest, whose digest also
 invalidates recovery after definition/output changes. Gate commands are inert data.
+
+
+## INV-SKILL-001
+
+Prompt relevance and pipeline boosts are recorded separately. A pipeline-only match
+cannot satisfy the full-body score threshold. Annotated skill content uses bounded
+full-body/pointer tiers; complete bytes remain in immutable artifacts. Pattern evidence
+comes only from regular files at the captured Git revision, never host paths or dirty
+files. Prompt identity is part of the skill manifest and session recovery binding.
