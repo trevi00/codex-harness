@@ -79,3 +79,77 @@ def test_manifest_replay_is_explicitly_not_native_failure_coverage():
     manifest = json.loads((ROOT / f'harness_hooks/{HOOK_ID}.json').read_text())
     assert manifest['spec']['event'] == 'SessionStart'
     assert all(c['input']['method'] == 'item/completed' for c in manifest['cases']['reproduction'])
+
+
+def test_recurrence_replacement_retains_incumbent_until_verified(native_candidate):
+    service, adapter, spec, hook_id = native_candidate
+    checks = {'reproduction': True, 'normal_case': True, 'cli_start': True}
+
+    def review(revision, candidate_spec):
+        for actor in ['lead:improvement', 'conductor']:
+            service.review(hook_id, actor, revision, digest(candidate_spec), True, 'fixture')
+
+    review('fixture-revision', spec)
+    service.record_canary(hook_id, 'fixture-revision', digest(spec), checks)
+    incumbent = service.activate(hook_id)
+    configuration = adapter.configuration()
+    message = envelope('incident.report', 'lead:improvement', 'conductor', 'record_incident',
+                       {'occurrence_id': 'after-activation', 'root_cause': incumbent['root_cause'],
+                        'scope': incumbent['scope'], 'evidence_refs': ['fixture:new-diagnosis']}, 'fixture')
+    service.record_incident(message)
+    required = service.get_hook(hook_id)
+    assert required['status'] == 'required'
+    assert required['previous_active'] == incumbent
+    service.record_incident(message)
+    redelivery = {**message, 'message_id': 'new-delivery-same-occurrence'}
+    service.record_incident(redelivery)
+    assert service.get_hook(hook_id) == required
+    assert adapter.configuration() == configuration
+
+    replacement = {**spec, 'matcher': '^startup$'}
+    pending = service.propose(hook_id, 'worker:implementation', replacement, 'fixture-pending')
+    service.review(hook_id, 'lead:improvement', 'fixture-pending', digest(replacement), True, 'fixture')
+    assert pending['version'] == incumbent['version'] + 1
+    assert adapter.configuration() == configuration
+    for revision, reject in [('fixture-revision-two', 'review'), ('fixture-revision-three', 'canary'),
+                             ('fixture-revision-four', None)]:
+        previous = service.get_hook(hook_id)
+        candidate = service.propose(hook_id, 'worker:implementation', replacement, revision)
+        assert candidate['version'] == previous['version'] + 1
+        assert candidate['reviews'] == [] and candidate['canary'] is None
+        assert adapter.configuration() == configuration
+        for stale_revision, stale_spec in [('fixture-revision', digest(replacement)), (revision, digest(spec))]:
+            with pytest.raises(ContractError, match='Stale review'):
+                service.review(hook_id, 'lead:improvement', stale_revision, stale_spec, True, 'fixture')
+        if reject == 'review':
+            service.review(hook_id, 'lead:improvement', revision, digest(replacement), False, 'fixture')
+        else:
+            review(revision, replacement)
+            for stale_revision, stale_spec in [('fixture-revision', digest(replacement)), (revision, digest(spec))]:
+                with pytest.raises(ContractError, match='Stale canary'):
+                    service.record_canary(hook_id, stale_revision, stale_spec, checks)
+            service.record_canary(hook_id, revision, digest(replacement),
+                                  {**checks, 'cli_start': reject is None})
+        if reject:
+            with pytest.raises(ContractError, match='not verified'):
+                service.activate(hook_id)
+            assert service.get_hook(hook_id)['status'] == 'rejected'
+        assert adapter.configuration() == configuration
+    # INV-RECURRENCE-001: even verified candidates retain the incumbent until activation.
+    service.activate(hook_id)
+    adapter.git._git = lambda command, path, **kw: (ROOT / path.split(':', 1)[1]).read_text()
+    assert adapter.configuration()['SessionStart'][0]['matcher'] == '^startup$'
+    service.rollback(hook_id, 'fixture replacement rollback')
+    assert service.get_hook(hook_id) == incumbent
+    assert adapter.configuration() == configuration
+
+
+@pytest.mark.parametrize('raw', [b'{', b'\xff', b'null', b'[]', b'"text"'])
+def test_schema_reminder_malformed_input_is_silent(raw):
+    import subprocess
+    import sys
+
+    result = subprocess.run([sys.executable, str(ROOT / 'harness_hooks/codex_output_schema_guard.py')],
+                            input=raw, capture_output=True, timeout=10)
+    assert result.returncode == 0
+    assert result.stdout == b'' and result.stderr == b''

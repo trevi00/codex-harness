@@ -5,7 +5,11 @@ import sys
 REMINDER = (
     "INV-RECURRENCE-001: research output schemas must retain integer type and const=1 "
     "on version fields, including nested definitions. The harness adapter preflight "
-    "rejects untyped constants before schema submission. This SessionStart hook cannot "
+    "rejects untyped constants before CLI or app-server submission. Preserve the schema "
+    "hash, offending path, revision and provider error when diagnosing a failure. "
+    "Confirm cause from schema bytes; other invalid_json_schema errors are separate "
+    "diagnoses, and retry/redelivery alone is not independent recurrence. "
+    "This SessionStart hook cannot "
     "inspect or repair outputSchema. Schema errors are failed executions, not accepted "
     "audits or reviews. INV-RELEASE-001 requires independent reviews and actual canaries."
 )
