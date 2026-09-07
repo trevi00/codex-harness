@@ -29,6 +29,7 @@ def test_path_boundaries_and_supplied_pattern_evidence():
         with pytest.raises(ContractError):
             score_skill({'min_score': value}, 'test', set(), {})
     assert score_skill({'keywords': '''["api", 'rest']'''}, 'api rest', set(), {})[1] == 2
+    assert score_skill({'keywords': '''["", '', api]'''}, 'nothing here', set(), {})[1] == 0
 
 
 def test_large_top_skill_cannot_bypass_shared_budget():

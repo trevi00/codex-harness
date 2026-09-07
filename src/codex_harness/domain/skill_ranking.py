@@ -15,7 +15,8 @@ def split_list_field(value: str) -> list[str]:
         return []
     if s.startswith('[') and s.endswith(']'):
         s = s[1:-1]
-        return [t.strip().rstrip(',').rstrip(';').strip('\"\'') for t in s.split(',') if t.strip().strip(',')]
+        values = [t.strip().rstrip(',').rstrip(';').strip('\"\'') for t in s.split(',')]
+        return [token for token in values if token]
     return s.split()
 
 _split_list_field = split_list_field
