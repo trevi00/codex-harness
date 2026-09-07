@@ -1,0 +1,41 @@
+# Historical thin-skill advisories
+
+Source: trevi00/baldrix b9586c59c062457a45018e41c2e753934b5ca6c9,
+scripts/lib/thin_skill_advisor.py, telemetry_read.py and the prompt handler's top-five
+skill-match event producer. The source predicate is retained: at least three samples,
+80% scoring <=2, and median <=2. Total score includes the pipeline boost, matching the
+source producer; base score is retained separately. This measures broad matching,
+not independently verified false-positive labels.
+
+Executor now reads prior history before compiling context and records an observation
+after successful compilation. Events represent compiled routing selections, not model
+execution, successful tools, approval or completed work. The top five matched skills
+are recorded, including pointer-only/external matches just as in upstream telemetry.
+History never becomes an authority to alter skill metadata or activate preventive hooks.
+
+Runtime state uses the existing Store interface (PostgreSQL in production). Project
+identity is the configured GitWorkspace repository path; worktrees share that identity.
+Skill identity includes full path and immutable content ref, so changed skill bodies do
+not inherit a predecessor's weak-match history. Recent history is capped at 4000 events
+per project. A separate small permanent dedup ledger prevents an evicted old task from
+becoming a fresh sample; this ledger grows with unique tasks and currently has no
+automatic retention deletion. Model bodies and full prompts remain in artifact storage.
+
+Observation IDs bind agent, task, objective and routing manifest. Transactional duplicate
+delivery is a no-op; changed replay payloads fail explicitly. Existing task ownership is
+checked in the same transaction before writes when a lease is present. An event excludes
+itself from prior-history assessment, so retry does not change its own classification.
+Concurrent tasks may see different snapshots; each retains its assessment ref and binds
+session recovery to it. No global model execution lock is introduced.
+
+Only currently full-body skills get advisory text. Body and advisory are one compiler
+item, admitted or omitted together under the final byte budget. The advisory wraps the
+already-budgeted body and retains the original source ref; it is not part of the 4000
+character body pool. Pointer-only skills are not warned as though fully injected. The
+assessment artifact records sample counts, rates, medians and content identities.
+
+Remaining migration includes the original passive audit CLI, historical event import,
+dashboard presentation, threshold calibration, all remaining Baldrix assets/subsystems,
+then all OMC and Ouroboros. This component does not implement autonomous threshold edits
+or declare full migration/deployment. The original implementation materialized the full
+JSONL before slicing; this adapter loads only the bounded project history document.

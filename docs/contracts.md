@@ -72,3 +72,11 @@ Cross-skill references are advisory one-hop links within the eligible inventory;
 cannot activate an excluded stack. Ambiguous/unavailable names remain explicit. Full
 reference evidence survives advisory truncation via immutable handles, and non-skill
 guidance never inflates selected/included/omitted skill counters.
+
+## INV-SKILL-HISTORY-001
+
+Skill-history observations are project/content-bound compiled selections, never success
+attestations. Retry delivery cannot add samples, including after hot-window eviction.
+Leased writes require current task ownership in the same transaction. A task excludes
+its own observation from historical assessment. Advisory text and its full skill body
+are included or omitted atomically; assessment provenance binds session recovery.

@@ -11,6 +11,7 @@ from codex_harness.adapters.app_server import AppServer
 from codex_harness.adapters.embeddings import LocalEmbeddings
 from codex_harness.adapters.hooks import NativeHooks
 from codex_harness.adapters.project_skills import project_context
+from codex_harness.adapters.skill_history import prepare_history
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import (
@@ -80,6 +81,9 @@ class Executor:
             task_contract["hook_contract"] = evidence["hook_contract"]
         items = [ContextItem(raw["ref"], canonical(evidence), raw["ref"], digest(evidence), 10)]
         skill_items, skill_selection = project_context(self.git, self.artifacts, cwd, basis_revision, objective)
+        skill_items, skill_observation = prepare_history(
+            self.service.store, self.artifacts, str(self.git.repository), agent, key, objective,
+            skill_selection, skill_items)
         items.extend(skill_items)
         if self.knowledge:
             query = task_contract.get("objective", objective) if isinstance(task_contract, dict) else objective
@@ -112,6 +116,8 @@ class Executor:
         binding = {"stage": stage, "evidence_ref": raw["ref"], "basis_revision": basis_revision}
         if skill_selection.get('manifest_ref'):
             binding['project_skills_ref'] = skill_selection['manifest_ref']
+        if skill_selection.get('history'):
+            binding['skill_history_ref'] = skill_selection['history']['ref']
         context_bound = bool(stage or skill_selection.get('manifest_ref'))
         if context_bound:
             required["research_context"] = {**binding, **evidence.get("provenance", {})}
@@ -153,6 +159,10 @@ class Executor:
             packet.seal()
             require(packet.estimated_tokens <= before_counts, 'Skill counts increased context size')
             context_ref = self.artifacts.put(canonical(asdict(packet)), "context:" + key)
+            if skill_observation:
+                history, project_key, event = skill_observation
+                history.record(project_key, {**event, 'context_ref': context_ref['ref']},
+                               (lambda tx: self.workflow._owned(tx, lease)) if lease else None)
             prompt = packet.render()
             if heartbeat:
                 heartbeat()
