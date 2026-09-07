@@ -8,11 +8,13 @@ from types import SimpleNamespace
 from codex_harness.adapters.skill_history import project_identity
 from codex_harness.adapters.store import PostgresStore
 from codex_harness.application.skill_history import SkillHistory
+from codex_harness.application.skill_import import SkillImport
 from codex_harness.bootstrap import database_url
 from codex_harness.domain.model import ContractError, digest, require
 from codex_harness.domain.project_skills import normalize_profile
 from codex_harness.domain.skill_audit import DIMENSIONS, duration_seconds
 from codex_harness.domain.skill_history import MIN_SAMPLES
+from codex_harness.domain.skill_import import validate_source
 
 
 def render_text(report):
@@ -55,10 +57,13 @@ def main(argv=None, *, store=None):
     parser.add_argument('--json', action='store_true')
     parser.add_argument('--since', default='')
     parser.add_argument('--min-samples', type=int, default=MIN_SAMPLES)
+    parser.add_argument('--legacy-source', help='Audit one explicitly imported log segment, separately from live history')
     args = parser.parse_args(argv)
     try:
         cutoff = time.time() - duration_seconds(args.since) if args.since else None
         require(args.min_samples > 0, 'Minimum samples must be positive')
+        if args.legacy_source is not None:
+            validate_source(args.legacy_source)
         selection = normalize_profile({'project_id': args.project_id}) if args.project_id else {}
         project = project_identity(selection, SimpleNamespace(remote=args.github_repo))
         require(project is not None, 'Invalid project identity')
@@ -66,8 +71,10 @@ def main(argv=None, *, store=None):
         print(json.dumps({'error': 'Invalid audit arguments'}), file=sys.stderr)
         return 2
     try:
-        history = SkillHistory(store if store is not None else PostgresStore(database_url()))
-        report = history.audit(digest(project), min_samples=args.min_samples, cutoff=cutoff)
+        backend = store if store is not None else PostgresStore(database_url())
+        options = {'min_samples': args.min_samples, 'cutoff': cutoff}
+        report = (SkillImport(backend).audit(digest(project), args.legacy_source, **options)
+                  if args.legacy_source else SkillHistory(backend).audit(digest(project), **options))
     except Exception as exc:
         print(json.dumps({'error': 'Audit unavailable', 'type': type(exc).__name__}), file=sys.stderr)
         return 1

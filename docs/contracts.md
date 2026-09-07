@@ -80,3 +80,10 @@ attestations. Retry delivery cannot add samples, including after hot-window evic
 Leased writes require current task ownership in the same transaction. A task excludes
 its own observation from historical assessment. Advisory text and its full skill body
 are included or omitted atomically; assessment provenance binds session recovery.
+# INV-SKILL-IMPORT-001
+
+Legacy skill telemetry imports bind exact raw bytes to a project/source segment and
+advance only a validated append-only prefix. Replays do not add observations; changed
+committed prefixes fail. Historical timestamps and unknown content versions are not
+replaced with import time or current skill identity. Imported archives do not mutate
+live history or become authority to activate skills, hooks, thresholds or releases.
