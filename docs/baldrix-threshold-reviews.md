@@ -29,11 +29,22 @@ threshold migration notes. Ordered leased assessment is the native replacement f
 the human-facing part of source calibration review; implementation/apply authorization,
 native performance evaluation and rollback remain separate unfinished work.
 
-The source binding now includes the two review modules and Executor (13 fixed files).
+The source binding includes review, lease, Git, command, artifact, store and runtime
+policy code plus the organization resource (20 fixed files).
 Older calculated policy snapshots must be recollected before current-policy review.
 Terminal requests are idempotent; retrying the request command does not start a new
 review round. Changed evidence/policy creates a new calculation/request identity.
 Transient execution errors use the existing bounded decision retry policy.
+Exhausted decisions mark the request failed rather than leaving it awaiting review.
+Terminal failure is not automatically re-queued; a new calculation basis creates a
+new request. An explicit operator-controlled repeat-round API remains future work.
+
+Each input bundle also binds the decision generation, so an older attempt's receipt
+cannot satisfy a newly claimed execution. Inspection-blocked status comes from the
+execution artifact, not a caller-declared flag; a blocked-and-interrupted execution
+can record its blockage, while an ordinary interrupted execution cannot complete.
+Evidence contains an artifact-root path for bounded reads, so moving that root changes
+input/recovery identity and requires fresh execution.
 
 Unit tests substitute model execution, while using actual Git checkouts and content
 artifacts. They cover ordered completion, rejected/blocked lead decisions, wrong

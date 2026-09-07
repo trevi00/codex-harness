@@ -56,7 +56,8 @@ class ThresholdReviews:
         row = self._row(tx, request['row_id'])
         require(digest(row) == request['binding'], 'Threshold review input changed')
         return current, request, {'request_id': request['id'], 'binding': request['binding'],
-            'record': row, 'prior_reviews': request['reviews'], 'scope': request['scope']}
+            'record': row, 'prior_reviews': request['reviews'], 'scope': request['scope'],
+            'execution': {'decision_id': current['id'], 'generation': current['generation']}}
 
     def prepare(self, lease):
         with self.store.transaction() as tx:
@@ -75,11 +76,14 @@ class ThresholdReviews:
                 and packet['required']['external_context']['ref'] == binding['evidence_ref']
                 and self.artifacts.document(binding['evidence_ref'])['review'] == bundle,
                 'Threshold execution receipt mismatch')
-        require(not receipt.get('interrupted'), 'Interrupted threshold review cannot complete')
-        require(not receipt.get('inspection_blocked') or
-                result.get('inspection_blocked') and result['accepted'] is False,
+        inspection_blocked = bool(receipt.get('inspection_blocked'))
+        require(bool(result.get('inspection_blocked')) == inspection_blocked,
+                'Threshold inspection status differs from execution')
+        require(not receipt.get('interrupted') or inspection_blocked,
+                'Interrupted threshold review cannot complete')
+        require(not inspection_blocked or result['accepted'] is False,
                 'Blocked threshold execution cannot approve')
-        if not result.get('inspection_blocked'):
+        if not inspection_blocked:
             require(all(result.get(key) == value for key, value in receipt['answer'].items()),
                     'Threshold assessment differs from execution')
         blocked = bool(result.get('blocked') or result.get('inspection_blocked'))
@@ -98,3 +102,11 @@ class ThresholdReviews:
             if request['status'] == 'awaiting_conductor':
                 self._queue(tx, request, 'conductor')
             return current
+
+    @staticmethod
+    def exhausted(tx, decision):
+        request = tx.get('threshold_review_requests', decision['input']['request_id'])
+        if request and request['status'] in {'awaiting_lead', 'awaiting_conductor'}:
+            request.update(status='failed', failure='decision_attempt_budget_exhausted',
+                           failed_decision=decision['id'], completed_at=utcnow())
+            tx.put('threshold_review_requests', request['id'], request)

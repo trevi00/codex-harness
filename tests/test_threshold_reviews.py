@@ -31,7 +31,8 @@ def setup_review(policy_repo, tmp_path):
     return executor, reviews, request
 
 
-def runtime(executor, calls, *, accepted=True, blocked=False, wrong_actor=False, intervene=None):
+def runtime(executor, calls, *, accepted=True, blocked=False, wrong_actor=False, intervene=None,
+            inspection_blocked=False, interrupted=False, spoof_blockage=False):
     def run(actor, key, objective, evidence, cwd, schema, read_only, **kwargs):
         assert read_only and kwargs['stage'] == 'threshold_review'
         calls.append((actor, evidence))
@@ -42,11 +43,15 @@ def runtime(executor, calls, *, accepted=True, blocked=False, wrong_actor=False,
             'task_id': key, 'required': {'external_context': {'ref': source['ref']}}}), 'fixture-context')
         revision = executor.git._git('rev-parse', 'HEAD', cwd=cwd)
         receipt = executor.artifacts.put(canonical({'answer': answer, 'context_ref': packet['ref'],
+            'inspection_blocked': inspection_blocked, 'interrupted': interrupted,
             'research_binding': {'stage': 'threshold_review', 'evidence_ref': 'sha256:' + digest(evidence),
                                  'basis_revision': revision}}), 'fixture-execution')
         if intervene:
             intervene(kwargs['lease'])
-        return {**answer, 'execution_ref': receipt['ref'], 'basis_revision': revision}
+        result = {**answer, 'execution_ref': receipt['ref'], 'basis_revision': revision}
+        if inspection_blocked or spoof_blockage:
+            result.update(accepted=False, inspection_blocked=True)
+        return result
     return run
 
 
@@ -109,3 +114,62 @@ def test_changed_basis_or_lease_during_execution_cannot_commit(policy_repo, tmp_
     with executor.service.store.transaction() as tx:
         assert tx.get('threshold_review_requests', request['id'])['reviews'] == []
         assert not any(row['actor'] == 'conductor' for row in tx.scan('decisions_pending'))
+
+
+@pytest.mark.parametrize('options,status', [({'inspection_blocked': True}, 'blocked'),
+    ({'inspection_blocked': True, 'interrupted': True}, 'blocked'),
+    ({'interrupted': True}, 'retry'), ({'spoof_blockage': True}, 'retry')])
+def test_execution_blockage_and_interruption_are_taken_from_receipt(policy_repo, tmp_path, monkeypatch, options, status):
+    executor, _, request = setup_review(policy_repo, tmp_path)
+    monkeypatch.setattr(executor, '_run', runtime(executor, [], **options))
+    assert executor.decide_one('lead:improvement')['status'] == status
+    assert executor.decide_one('conductor') is None
+    with executor.service.store.transaction() as tx:
+        state = tx.get('threshold_review_requests', request['id'])
+        assert state['status'] == ('blocked' if status == 'blocked' else 'awaiting_lead')
+        assert not state['activation_ready']
+
+
+def test_conductor_rejection_and_terminal_request_idempotence(policy_repo, tmp_path, monkeypatch):
+    executor, reviews, request = setup_review(policy_repo, tmp_path)
+    monkeypatch.setattr(executor, '_run', runtime(executor, []))
+    executor.decide_one('lead:improvement')
+    monkeypatch.setattr(executor, '_run', runtime(executor, [], accepted=False))
+    executor.decide_one('conductor')
+    terminal = reviews.request(request['row_id'])
+    assert terminal['status'] == 'rejected' and len(terminal['reviews']) == 2
+    assert executor.decide_one('lead:improvement') is None
+
+
+def test_attempt_exhaustion_is_visible_on_request(policy_repo, tmp_path):
+    from codex_harness.domain.policy import POLICY
+
+    executor, reviews, request = setup_review(policy_repo, tmp_path)
+    with executor.service.store.transaction() as tx:
+        decision, = tx.scan('decisions_pending')
+        decision['attempt'] = POLICY.max_attempts
+        tx.put('decisions_pending', decision['id'], decision)
+    assert executor.decide_one('lead:improvement') is None
+    failed = reviews.request(request['row_id'])
+    assert failed['status'] == 'failed' and failed['failure'] == 'decision_attempt_budget_exhausted'
+
+
+def test_receipt_from_previous_generation_is_not_reused(policy_repo, tmp_path, monkeypatch):
+    executor, _, request = setup_review(policy_repo, tmp_path)
+    cached = []
+    def lose_lease(lease):
+        with executor.service.store.transaction() as tx:
+            current = tx.get('decisions_pending', lease['id'])
+            current.update(status='retry', owner='replacement', lease_owner='replacement',
+                           generation=current['generation'] + 1)
+            tx.put('decisions_pending', current['id'], current)
+    original = runtime(executor, [], intervene=lose_lease)
+    def run(*args, **kwargs):
+        if not cached:
+            cached.append(original(*args, **kwargs))
+        return cached[0]
+    monkeypatch.setattr(executor, '_run', run)
+    assert executor.decide_one('lead:improvement')['status'] == 'retry'
+    assert executor.decide_one('lead:improvement')['status'] == 'retry'
+    with executor.service.store.transaction() as tx:
+        assert tx.get('threshold_review_requests', request['id'])['reviews'] == []

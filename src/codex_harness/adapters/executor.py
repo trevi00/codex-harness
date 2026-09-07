@@ -388,6 +388,10 @@ class Executor:
                 if row["attempt"] >= POLICY.max_attempts:
                     row["status"] = "failed"
                     tx.put("decisions_pending", row["id"], row)
+                    if row['phase'] == 'threshold_review':
+                        from codex_harness.application.threshold_reviews import ThresholdReviews
+
+                        ThresholdReviews.exhausted(tx, row)
                     continue
                 row.update(status="running", owner=owner, attempt=row["attempt"] + 1,
                            lease_owner=owner, generation=row.get("generation", 0) + 1,

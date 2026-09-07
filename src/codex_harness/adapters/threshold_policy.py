@@ -19,6 +19,13 @@ POLICY_PATHS = (
     'src/codex_harness/adapters/threshold_reviews.py',
     'src/codex_harness/application/threshold_reviews.py',
     'src/codex_harness/adapters/executor.py',
+    'src/codex_harness/application/workflow.py',
+    'src/codex_harness/adapters/git.py',
+    'src/codex_harness/adapters/commands.py',
+    'src/codex_harness/adapters/artifacts.py',
+    'src/codex_harness/adapters/store.py',
+    'src/codex_harness/domain/policy.py',
+    'src/codex_harness/resources/organization.json',
 )
 
 
