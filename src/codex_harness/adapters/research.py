@@ -75,4 +75,4 @@ class ResearchSources:
                 "license": (metadata.get("license") or {}).get("spdx_id"),
                 "default_branch": metadata["default_branch"], "archived": metadata["archived"],
                 "pushed_at": metadata["pushed_at"], "fetched_at": utcnow(),
-                "revision": commit, "readme_ref": receipt["ref"], "readme_excerpt": text[:10000]}
+                "revision": commit, "readme_ref": receipt["ref"], "readme_excerpt": text.encode("utf-8")[:10000].decode("utf-8", errors="ignore")}
