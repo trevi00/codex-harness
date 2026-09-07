@@ -27,6 +27,8 @@ POLICY_PATHS = (
     'src/codex_harness/resources/organization.json',
     'src/codex_harness/adapters/runtime_thresholds.py',
     'src/codex_harness/resources/threshold-policy.json',
+    'src/codex_harness/domain/skill_admission.py',
+    'src/codex_harness/adapters/native_routing_replay.py',
 )
 
 

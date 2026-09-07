@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 from codex_harness.adapters.artifacts import FileArtifacts
 from codex_harness.adapters.git import GitWorkspace
+from codex_harness.adapters.native_routing_replay import NativeRoutingReplay
 from codex_harness.adapters.skill_history import project_identity
 from codex_harness.adapters.store import PostgresStore
 from codex_harness.adapters.threshold_policy import current_policy
@@ -34,8 +35,9 @@ def main(argv=None, *, store=None):
         with tempfile.TemporaryDirectory(prefix='threshold-policy-') as workspaces:
             git = GitWorkspace(args.harness_repo, workspaces)
             policy = current_policy(git, args.revision)
+        artifacts = FileArtifacts(args.artifacts)
         service = ThresholdProposals(store if store is not None else PostgresStore(database_url()),
-            FileArtifacts(args.artifacts), lambda: policy)
+            artifacts, lambda: policy, NativeRoutingReplay(artifacts))
         run = service.collect(digest(project), legacy_source=args.legacy_source, min_sample=args.min_sample)
         print(json.dumps(run, ensure_ascii=True, allow_nan=False))
         return 0

@@ -8,8 +8,9 @@ from codex_harness.domain.threshold_proposals import propose_threshold_changes
 
 
 class ThresholdProposals:
-    def __init__(self, store, artifacts, policy_provider):
+    def __init__(self, store, artifacts, policy_provider, native_replay=None):
         self.store, self.artifacts, self.policy_provider = store, artifacts, policy_provider
+        self.native_replay = native_replay
 
     def collect(self, project, *, legacy_source=None, min_sample=10):
         if legacy_source is not None:
@@ -25,6 +26,10 @@ class ThresholdProposals:
         document = {'project_key': project, 'legacy_source': legacy_source,
             'source_ref': state.get('source_ref'), 'policy': policy, 'events': events,
             'min_sample': min_sample, 'proposals': proposals}
+        values = sorted({policy['values']['skill_match.FULL_BODY_MIN_SCORE'],
+                         *(row['value'] for proposal in proposals for row in proposal['alternatives'])})
+        document['native_routing'] = (self.native_replay.evaluate(events, values) if self.native_replay else
+            {'status': 'unavailable', 'reason': 'native_evaluator_not_configured', 'activation_ready': False})
         try:
             json.dumps(document, allow_nan=False)
         except (TypeError, ValueError, OverflowError, RecursionError) as exc:

@@ -4,14 +4,13 @@ from pathlib import PurePosixPath
 
 from codex_harness.adapters.runtime_thresholds import effective_policy
 from codex_harness.domain.model import ContextItem, canonical, digest, require
+from codex_harness.domain.skill_admission import ADMISSION_MODEL, select_bodies
 from codex_harness.domain.skill_ranking import (
     FULL_BODY_TOP_K,
     MAX_CONTEXT_CHARS,
     MAX_POINTERS,
     PER_BODY_CAP,
-    apply_token_budget,
     extract_paths_from_prompt,
-    fit_top_skill,
     score_skill,
 )
 
@@ -74,25 +73,19 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
         # rendered/truncated lengths cannot replay the upstream budget guard.
         record.update(base_score=base, score=score, dimensions=dims, body_chars=len(body),
                       description=meta.get('description', '')[:120],
-                      tier='unmatched', metadata=meta)
+                      tier='unmatched', metadata=meta, routing_eligible=bool(match or boost))
         if match or boost:
             ranked.append((score, path, dims, body))
         bodies[path] = body
     ranked.sort(key=lambda row: (-row[0], row[1]))
-    full = [row for row in ranked if by_path[row[1]]['base_score'] >= min_full_score][:FULL_BODY_TOP_K]
-    capped = []
-    truncated = False
-    for score, path, dims, body in full:
-        reduced, cut = fit_top_skill(body, PER_BODY_CAP)
-        capped.append((score, path, dims, reduced))
-        truncated = truncated or cut
-    fitted, budget_cut = apply_token_budget(capped, MAX_CONTEXT_CHARS)
-    truncated = truncated or budget_cut
+    fitted, truncated = select_bodies(ranked,
+        {path: record.get('base_score', 0) for path, record in by_path.items()}, min_full_score)
     output, full_paths = list(legacy), set()
     for score, path, dims, body in fitted:
         full_paths.add(path)
         record = by_path[path]
-        record.update(tier='full', rendered_characters=len(body), truncated=body != bodies[path])
+        record.update(tier='full', rendered_characters=len(body), rendered_hash=digest(body),
+                      truncated=body != bodies[path])
         output.append(ContextItem('project-skill:' + path, body, record['content_ref'], revision, 18))
     pointers = [row for row in ranked if row[1] not in full_paths]
     for index, (_, path, _, _) in enumerate(pointers):
@@ -101,7 +94,8 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
         if index < MAX_POINTERS:
             body = canonical({k: record[k] for k in ('path', 'description', 'score', 'file', 'content_ref')})
             output.append(ContextItem('project-skill:' + path, body, record['content_ref'], revision, 14))
-    return output, {'objective_hash': digest(objective), 'pattern_evidence': evidence_refs,
+    return output, {'admission_model': ADMISSION_MODEL,
+                    'objective_hash': digest(objective), 'pattern_evidence': evidence_refs,
                     'matched': len(ranked), 'full': len(full_paths),
                     'pointers': min(len(pointers), MAX_POINTERS),
                     'external_pointers': max(0, len(pointers) - MAX_POINTERS),
