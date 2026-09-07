@@ -78,3 +78,13 @@ Validation of 1cac973 (not a full migration or deployment):
 - Claude review remains REJECT;
   `sha256:11b920b4ee4042405dffe58550f6bcd9d2c8b51a07229ab64cf9f1a453843366`.
   A follow-up with complete project producer/initialization sources was requested.
+
+The complete-producer follow-up returned **ACCEPT** for the same code revision:
+`sha256:0246f49d2539bb7473dd35f035219f0df34264e606a1e0837e86e916b42c0ee3`.
+This supersedes the previous component verdict, not its retained evidence. The
+review confirmed accounting, serialization, stable project identity, best-effort
+behavior, recovery drift handling and real producer regression coverage. It noted
+that malformed observations fail closed under a lease, a conservative tradeoff,
+alongside global-lock/ledger retention debt. Acceptance is not proof of arbitrary
+UUID authenticity or tenant isolation: UUIDs are editable Git definitions. The
+dot-segment validator and diagnostic improvements identified above remain tracked.
