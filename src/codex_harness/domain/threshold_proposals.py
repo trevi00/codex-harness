@@ -18,7 +18,7 @@ from codex_harness.domain.threshold_replay import (
 
 HOLDOUT_FRACTION = 0.30
 HYSTERESIS_MARGIN = 0.02
-CALCULATION_VERSION = 1
+CALCULATION_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -119,16 +119,20 @@ def propose_threshold_changes(*, events_by_source, current_values, policy_revisi
             continue
         current = current_values[name]
         target = full_body_admit_precision(trailing, current)
-        accepted, rejected = [], []
+        accepted, rejected, alternatives = [], [], []
         for value in (current + entry.step, current - entry.step):
             if not finite_number(value) or not direction_allowed(entry, current, value):
                 continue
             proposed_target = full_body_admit_precision(trailing, value)
-            if proposed_target - target <= HYSTERESIS_MARGIN:
+            candidate = {'value': value, 'trailing_target': proposed_target,
+                         'trailing_gain': proposed_target - target, 'report': None,
+                         'passed_hysteresis': proposed_target - target > HYSTERESIS_MARGIN}
+            alternatives.append(candidate)
+            if not candidate['passed_hysteresis']:
                 continue
             report = replay_report(events, old_value=current, proposed_value=value,
                 holdout_boundary=boundary, min_corpus=min_sample)
-            candidate = {'value': value, 'trailing_target': proposed_target, 'report': report}
+            candidate['report'] = report
             (accepted if report['gate']['accept'] else rejected).append(candidate)
         if not accepted and not rejected:
             continue
@@ -147,5 +151,6 @@ def propose_threshold_changes(*, events_by_source, current_values, policy_revisi
             'advisory_only': True, 'activation_ready': False,
             'sample_size': len(events), 'trailing_size': len(trailing), 'holdout_size': len(held),
             'trailing_target_current': target, 'trailing_target_proposed': chosen['trailing_target'],
-            'report': chosen['report']})
+            'report': chosen['report'], 'alternatives': alternatives,
+            'selection_rule': 'highest_holdout_gain_raise_first_ties' if accepted else 'last_rejected_candidate'})
     return proposals

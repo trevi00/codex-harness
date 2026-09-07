@@ -42,12 +42,19 @@ def test_reference_proposal_generalizes_and_binds_effective_policy():
              holdout_boundary=proposal['holdout_boundary']) for value in [4, 2]]
     assert all(gate.accept for gate in gates)
     assert gates[0].target_delta_holdout == gates[1].target_delta_holdout
+    assert proposal['selection_rule'] == 'highest_holdout_gain_raise_first_ties'
+    assert [candidate['value'] for candidate in proposal['alternatives']] == [4, 2]
+    assert all(candidate['report']['gate']['accept'] for candidate in proposal['alternatives'])
 
 
 def test_missing_sizes_and_non_generalizing_improvements_cannot_offer_apply():
     missing, = propose(corpus(sized=False))
     assert missing['suggested'] is None and not missing['reference_accepted']
     assert missing['evaluated_value'] == 2  # source reports the last rejected candidate
+    assert missing['selection_rule'] == 'last_rejected_candidate'
+    assert len(missing['alternatives']) == 2
+    assert all(candidate['report']['gate']['reason'] == 'non_finite_metric'
+               for candidate in missing['alternatives'])
     assert missing['report']['gate']['reason'] == 'non_finite_metric'
     events = corpus()
     for event in events[28:]:
@@ -116,3 +123,14 @@ def test_hysteresis_suppresses_small_training_gain():
     events = corpus(5)
     events[0]['top'][0]['score'] = 3
     assert propose(events) == []  # 1/56 training gain is below 0.02
+
+
+def test_training_filtered_alternative_is_not_misrepresented_as_gate_rejection():
+    events = corpus()
+    for event in events:
+        event['top'] = [{'score': score, 'body_chars': 500} for score in [3, 4]]
+    proposal, = propose(events)
+    assert proposal['suggested'] == 2
+    raised, lowered = proposal['alternatives']
+    assert not raised['passed_hysteresis'] and raised['report'] is None
+    assert lowered['passed_hysteresis'] and lowered['report']['gate']['accept']
