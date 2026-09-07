@@ -1,0 +1,475 @@
+{
+  "spec": {
+    "kind": "native_hook",
+    "event": "SessionStart",
+    "matcher": "startup|resume|clear|compact",
+    "script_path": "harness_hooks/codex_namespace_guard.py",
+    "script_sha256": "8629a78b8e6c00adb5c737435ba3314ad4bbdbf0b5717ff8d90c3693d4c41d48"
+  },
+  "cases": {
+    "reproduction": [
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": {
+          "decision": "block",
+          "reason": "inspection-blocked: bwrap: No permissions to create a new namespace"
+        },
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751586029,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751586012,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc 'head -c 26000 /runtime/artifacts/faf951fe2e92dbb624703bd093f5486986d85a85d1aac1635555216089f14961.txt'",
+              "commandActions": [
+                {
+                  "command": "head -c 26000 /runtime/artifacts/faf951fe2e92dbb624703bd093f5486986d85a85d1aac1635555216089f14961.txt",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-efc50270-e88b-41c7-adbb-69de9ea3ae87",
+              "pluginId": null,
+              "processId": "36830",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": {
+          "decision": "block",
+          "reason": "inspection-blocked: bwrap: No permissions to create a new namespace"
+        },
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751345647,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751345635,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"pwd && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'compose.yaml' -g 'pyproject.toml' -g 'test*bus*' -g 'bus.py' -g 'test_integration.py'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'compose.yaml' -g 'pyproject.toml' -g 'test*bus*' -g 'bus.py' -g 'test_integration.py'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-8c7b7872-c61f-4548-a277-bed457480c61",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-246a1cb8-f6ed-460b-938f-880eb843420b",
+              "pluginId": null,
+              "processId": "89898",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e3-4290-75a2-865c-7e98dc991b6c",
+            "turnId": "01a079e3-4c5d-7743-a176-6df6e5a6d2ab"
+          }
+        },
+        "output": {
+          "decision": "block",
+          "reason": "inspection-blocked: bwrap: No permissions to create a new namespace"
+        },
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751345721,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751345709,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"sed -n '1,100p' /runtime/artifacts/8addb96d4b6ceab17512a17eab36e6b0c0b6b8fe6ea1b49530703beae981dc90.txt\"",
+              "commandActions": [
+                {
+                  "command": "sed -n '1,100p' /runtime/artifacts/8addb96d4b6ceab17512a17eab36e6b0c0b6b8fe6ea1b49530703beae981dc90.txt",
+                  "name": "8addb96d4b6ceab17512a17eab36e6b0c0b6b8fe6ea1b49530703beae981dc90.txt",
+                  "path": "/runtime/artifacts/8addb96d4b6ceab17512a17eab36e6b0c0b6b8fe6ea1b49530703beae981dc90.txt",
+                  "type": "read"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-8c7b7872-c61f-4548-a277-bed457480c61",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-d7a80b8a-a9a8-4a1a-b44a-007692808b64",
+              "pluginId": null,
+              "processId": "6474",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e3-4290-75a2-865c-7e98dc991b6c",
+            "turnId": "01a079e3-4c5d-7743-a176-6df6e5a6d2ab"
+          }
+        },
+        "output": {
+          "decision": "block",
+          "reason": "inspection-blocked: bwrap: No permissions to create a new namespace"
+        },
+        "exit_code": 0
+      }
+    ],
+    "normal_case": [
+      {
+        "input": {},
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": null,
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": [],
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "method": "item/completed",
+          "params": null
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "PostToolUse",
+          "tool_name": "Bash",
+          "tool_response": "bwrap: No permissions to create a new namespace"
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 0,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "completed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 0,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": null,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": true,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "Permission denied",
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": null,
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.\n",
+              "command": "/bin/bash -lc \"pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'\"",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "agentMessage"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "emittedAtMs": 1788751585987,
+          "method": "item/completed",
+          "params": {
+            "completedAtMs": 1788751585964,
+            "item": {
+              "aggregatedOutput": "",
+              "command": "bwrap: No permissions to create a new namespace",
+              "commandActions": [
+                {
+                  "command": "pwd && git status --short && git rev-parse HEAD && rg --files -g 'AGENTS.md' -g '*contract*' -g '*graph*' -g 'pyproject.toml' -g '*compaction*'",
+                  "type": "unknown"
+                }
+              ],
+              "cwd": "/runtime/workspaces/review-64c319c0-655a-4ebd-a198-52ba018551dd",
+              "durationMs": 0,
+              "exitCode": 1,
+              "id": "exec-ba3ccafa-bda9-425f-a434-8bdcc1cf41fd",
+              "pluginId": null,
+              "processId": "32876",
+              "scriptPath": null,
+              "source": "unifiedExecStartup",
+              "status": "failed",
+              "type": "commandExecution"
+            },
+            "threadId": "01a079e6-e8b4-7441-abd3-ea30db242562",
+            "turnId": "01a079e6-f3ba-70d3-81be-467086de73d9"
+          }
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "SessionStart",
+          "session_id": "fixture-session",
+          "cwd": "/workspace",
+          "source": "startup",
+          "transcript_path": null,
+          "model": "fixture",
+          "permission_mode": "dontAsk"
+        },
+        "output": {
+          "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": "Independent reviews require successful command inspection. If required inspection fails with bubblewrap namespace creation denied, report inspection-blocked and do not accept the review. Preserve command evidence. Do not change sandbox permissions, host sysctls, or container privileges. Detection does not confirm or fix the host cause."
+          }
+        },
+        "exit_code": 0
+      }
+    ]
+  }
+}

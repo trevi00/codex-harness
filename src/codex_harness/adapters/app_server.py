@@ -16,6 +16,26 @@ from codex_harness.adapters.codex import resolve_codex
 from codex_harness.domain.model import ContractError, canonical, require
 from codex_harness.domain.policy import POLICY
 
+NAMESPACE_DENIAL = "bwrap: No permissions to create a new namespace"
+
+
+def namespace_failure(event: object) -> bool:
+    """Inspect completed execution output only, never prompts or command arguments."""
+    if not isinstance(event, dict) or event.get("method") != "item/completed":
+        return False
+    params = event.get("params")
+    if (not isinstance(params, dict)
+            or not all(isinstance(params.get(k), str) and params[k]
+                       for k in ("threadId", "turnId"))):
+        return False
+    item = params.get("item")
+    return (isinstance(item, dict) and item.get("type") == "commandExecution"
+            and isinstance(item.get("id"), str) and bool(item["id"])
+            and item.get("status") == "failed"
+            and type(item.get("exitCode")) is int and item["exitCode"] != 0
+            and isinstance(item.get("aggregatedOutput"), str)
+            and NAMESPACE_DENIAL in item["aggregatedOutput"])
+
 
 def toml_literal(value):
     if isinstance(value, dict):
@@ -136,17 +156,34 @@ class AppServer:
         turn_id = turn["turn"]["id"]
         deadline = time.monotonic() + timeout
         events, answer_text, usage = [], "", None
+        inspection_failures = {}
         rotate, interrupted = False, False
         active_tools = set()
+
+        def blocked_result(error=None):
+            # INV-RELEASE-001: transport loss cannot erase observed inspection failure.
+            return {"answer": None, "model_answer_text": answer_text, "events": events,
+                    "thread_id": thread_id, "usage": usage, "rotate": False,
+                    "interrupted": False, "inspection_blocked": True,
+                    "inspection_failures": list(inspection_failures.values()),
+                    "termination_error": error}
+
         while time.monotonic() < deadline:
             if on_tick:
                 on_tick()
-            event = (self.notifications.popleft() if self.notifications
-                     else self._receive(min(5, deadline - time.monotonic()), poll=True))
+            try:
+                event = (self.notifications.popleft() if self.notifications
+                         else self._receive(min(5, deadline - time.monotonic()), poll=True))
+            except (ContractError, OSError) as exc:
+                if inspection_failures:
+                    return blocked_result(str(exc))
+                raise
             if not event:
                 continue
             method, params = event.get("method", ""), event.get("params", {})
             if params.get("threadId", thread_id) != thread_id:
+                continue
+            if params.get("turnId", turn_id) != turn_id:
                 continue
             events.append(event)
             if on_event:
@@ -161,10 +198,15 @@ class AppServer:
                 active_tools.add(item["id"])
             if method == "item/completed":
                 active_tools.discard(item.get("id"))
+                if read_only and namespace_failure(event):
+                    # INV-RECURRENCE-001: redelivery of one command is not a new incident.
+                    inspection_failures.setdefault(item["id"], event)
                 if item.get("type") == "agentMessage":
                     answer_text = item.get("text", "")
             if method == "turn/completed":
                 status = params["turn"]["status"]
+                if inspection_failures:
+                    return blocked_result()
                 require(status in {"completed", "interrupted"},
                         f"Codex turn failed: {params['turn'].get('error')}")
                 if status == "completed":
@@ -174,9 +216,11 @@ class AppServer:
                     answer = None
                 return {"answer": answer, "events": events, "thread_id": thread_id,
                         "usage": usage, "rotate": rotate, "interrupted": status == "interrupted"}
-            if rotate and not active_tools and not interrupted:
+            if rotate and not active_tools and not interrupted and not inspection_failures:
                 self.request("turn/interrupt", {"threadId": thread_id, "turnId": turn_id})
                 interrupted = True
+        if inspection_failures:
+            return blocked_result("Codex turn execution budget exceeded")
         raise ContractError("Codex turn execution budget exceeded")
 
     def __exit__(self, *_):
@@ -188,7 +232,15 @@ class AppServer:
                                capture_output=True, timeout=20)
             else:
                 os.killpg(self.process.pid, signal.SIGTERM)
-            self.process.wait(timeout=20)
+            try:
+                self.process.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                # INV-RESOURCE-001: reap a server that ignores graceful termination.
+                if os.name == "nt":
+                    self.process.kill()
+                else:
+                    os.killpg(self.process.pid, signal.SIGKILL)
+                self.process.wait(timeout=20)
         for reader in self.readers:
             reader.join(timeout=2)
         for stream in (self.process.stdin, self.process.stdout, self.process.stderr):

@@ -144,7 +144,8 @@ class PostgresKnowledge:
 
     def project_runtime(self, store, organization) -> dict:
         with store.transaction() as tx:
-            records = {bucket: tx.scan(bucket) for bucket in ("tasks", "hooks", "sessions", "releases")}
+            records = {bucket: tx.scan(bucket) for bucket in
+                       ("tasks", "hooks", "sessions", "releases", "decisions_pending")}
         nodes, edges = [], []
         snapshot = digest(records)
         for agent in organization.agents.values():
@@ -158,7 +159,7 @@ class PostgresKnowledge:
                 node_id = f"runtime:{bucket}:{key}"
                 nodes.append((node_id, bucket, canonical(row), f"postgres:{bucket}/{key}", digest(row),
                               {"authority": "PostgreSQL", "snapshot": snapshot}))
-                agent = row.get("agent") or row.get("agent_id") or row.get("author")
+                agent = row.get("agent") or row.get("agent_id") or row.get("author") or row.get("actor")
                 if agent:
                     edges.append(("runtime:agent:" + agent, node_id, "owns"))
                 if bucket == "tasks":

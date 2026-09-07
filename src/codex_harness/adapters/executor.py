@@ -126,9 +126,17 @@ class Executor:
                                                           "status": item.get("status"), "evidence": receipt["ref"]}
                         tx.put("execution_progress", key, previous)
 
-            with AppServer(hooks=NativeHooks(self.service, self.git, self.artifacts).configuration()) as runtime:
-                result = runtime.run(prompt, cwd, schema, POLICY.task_seconds if agent.startswith("worker:") else POLICY.decision_seconds,
-                                     on_event=observe, read_only=read_only, on_tick=lambda: observe(None))
+            result = None
+            try:
+                with AppServer(hooks=NativeHooks(self.service, self.git, self.artifacts).configuration()) as runtime:
+                    result = runtime.run(prompt, cwd, schema, POLICY.task_seconds if agent.startswith("worker:") else POLICY.decision_seconds,
+                                         on_event=observe, read_only=read_only, on_tick=lambda: observe(None))
+            except Exception as exc:
+                if result is None or not result.get("inspection_blocked"):
+                    raise
+                # INV-RELEASE-001 / INV-SESSION-001: cleanup cannot erase a known
+                # blocked result before its artifact and fenced checkpoint are saved.
+                result["cleanup_error"] = {"type": type(exc).__name__, "message": str(exc)}
             evidence_ref = self.artifacts.put(canonical(result), "execution:" + key)
             graph = ({"code": self.knowledge.index_python(cwd),
                       "runtime": self.knowledge.project_runtime(self.service.store, self.service.org)}
@@ -142,6 +150,11 @@ class Executor:
                      "handoff_reason": "context_threshold" if result["rotate"] else "task_boundary"}
             session = self.service.checkpoint(agent, generation, state, execution=lease)
             generation = session["generation"]
+            if result.get("inspection_blocked"):
+                return {"accepted": False, "inspection_blocked": True,
+                        "reason": "inspection-blocked: bubblewrap namespace creation denied; "
+                                  "required command inspection failed; host cause unconfirmed",
+                        "execution_ref": evidence_ref["ref"], "basis_revision": basis_revision}
             if not result["interrupted"]:
                 return {**result["answer"], "execution_ref": evidence_ref["ref"], "basis_revision": basis_revision}
             prompt = packet.render() + "\nContinue from this checkpoint, inspect current files before repeating tools:\n" + canonical(state)
@@ -273,6 +286,15 @@ class Executor:
                 require(not self.git._git("status", "--porcelain", cwd=cwd), "Reviewer modified its checkout")
                 require(self.git._git("rev-parse", "HEAD", cwd=cwd) == data["candidate"]["revision"],
                         "Reviewer changed its commit")
+            if result.get("inspection_blocked"):
+                # INV-RELEASE-001: blockage cannot create reviews or downstream effects.
+                result = {**result, "accepted": False}
+                with self.service.store.transaction() as tx:
+                    self.workflow._owned(tx, lease)
+                    current = tx.get("decisions_pending", decision["id"])
+                    current.update(status="inspection_blocked", result=result, completed_at=utcnow())
+                    tx.put("decisions_pending", decision["id"], current)
+                return current
             if result.get("blocked"):
                 require(not result["accepted"], "Blocked review cannot approve")
                 with self.service.store.transaction() as tx:
