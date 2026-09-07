@@ -57,3 +57,27 @@ body reduction and budget omission. They compare actual emitted hashes, lower/hi
 thresholds and empty selection; missing bodies, altered hashes, incompatible models,
 duplicate identities and eligibility changes cannot count as successful replay. The
 actual collection CLI test archives native comparisons alongside reference proposals.
+
+Claude accepted runtime `55cebf9b7c09809a34de19bd65d22c77c167ea09`
+(`sha256:4fe0db0a00ef579fe93e2f67147cd2c301d1be83edccc269cc3be2a9e1d94efc`).
+Remaining findings: structured reasons must distinguish missing evidence, incompatible
+models and baseline mismatches; an explicit reevaluation round is needed when the
+first retained evaluation was unavailable (for example, a wrong artifact root).
+Input identity includes manifest references through the corpus, but intentionally not
+the host artifact-root path. Current immutability also preserves unavailable results.
+Complete means reproduction coverage, not independent/diverse observations or quality.
+The emitted hashes are from the selector before guidance/history wrapping and final
+context composition. Upstream project/pipeline constructors remain outside the source
+binding list and materially influence selection inputs. A budget-algorithm fingerprint
+and bounded manifest read remain follow-up work; the model label must change with
+incompatible selection semantics. These limits continue to prohibit activation claims.
+
+Runtime verification at that revision: Ruff passed; Windows PostgreSQL/Redis had
+503 passing tests and 7 skipped (`sha256:3de72b0b6879ee76bd631a9b7039d0dd6fdb158e32511116ca2fa820feeead03`);
+Linux had 510 passing tests (`sha256:94b304af7904e3615798060012412e07dbe3c44245bad20fbff5c511307ad793`).
+Actual Codex CLI canary passed after all 98 packaged source/config/lock files matched
+the immutable image (`sha256:47e026d9c456326e6da2aacb55e90cd6dfdf7b010a9592b91b51279ec6658c8f`).
+An actual Git project_context -> collection CLI -> PostgreSQL canary reproduced all
+40 repeated synthetic observations (`sha256:96b5d869c9e528efac9c330bcaa3fa2bafd82f96506dfb2b5df549e786fdfe75`).
+It used one distinct manifest, not 40 independent workloads; no model-quality or
+production deployment claim follows from these checks.
