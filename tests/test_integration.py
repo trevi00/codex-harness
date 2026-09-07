@@ -255,3 +255,14 @@ def test_postgres_audit_checkpoint_reconnect_and_stale_write(pgstore, tmp_path):
     with pytest.raises(ContractError, match='Stale partition'):
         reconnected.checkpoint(task, partition, [], [])
     assert reconnected.coverage('fixture')['remaining_subsystems'] == ['core']
+
+
+def test_postgres_measurement_observations(pgstore, tmp_path):
+    from codex_harness.adapters.artifacts import FileArtifacts
+    from codex_harness.application.measurements import Measurements
+    results = Measurements(pgstore, FileArtifacts(str(tmp_path / 'artifacts'))).collect('a' * 40)
+    with pgstore.transaction() as tx:
+        rows = tx.scan('metric_observations')
+    assert len(rows) == 3
+    assert {r['metric_id'] for r in rows} == {r['metric_id'] for r in results}
+    assert all(r['repository_revision'] == 'a' * 40 for r in rows)

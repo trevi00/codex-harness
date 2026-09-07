@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /runtime/workspaces/d7472a03-b522-4978-b890-19829badc9ca
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1
+collected 258 items
+
+tests/test_app_server.py ...........                                     [  4%]
+tests/test_architecture.py ..                                            [  5%]
+tests/test_bus.py ........                                               [  8%]
+tests/test_context_recovery.py ..                                        [  8%]
+tests/test_core.py .................                                     [ 15%]
+tests/test_executor_research.py ......................                   [ 24%]
+tests/test_external_context.py ....                                      [ 25%]
+tests/test_git_workspace.py ....                                         [ 27%]
+tests/test_graph_topology.py .                                           [ 27%]
+tests/test_integration.py ssssssssssssssssssssssss                       [ 36%]
+tests/test_maintenance.py ..                                             [ 37%]
+tests/test_measurements.py ...............                               [ 43%]
+tests/test_monitoring.py ......                                          [ 45%]
+tests/test_namespace_guard.py ...............................            [ 57%]
+tests/test_native_hooks.py ...                                           [ 58%]
+tests/test_research_audits.py .......................................... [ 75%]
+....................                                                     [ 82%]
+tests/test_runtime_projection.py .                                       [ 83%]
+tests/test_workflow.py ...........................................       [100%]
+
+======================= 234 passed, 24 skipped in 16.91s =======================

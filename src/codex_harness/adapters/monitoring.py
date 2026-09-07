@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from codex_harness.adapters.bus import RedisBus
 from codex_harness.adapters.commands import run_process
+from codex_harness.application.measurements import Measurements
 from codex_harness.application.monitoring import Monitoring
 
 
@@ -166,7 +167,13 @@ def collect(service, artifacts, repository, redis_url):
         except Exception as exc:
             return {'status': 'unavailable', 'observed_at': datetime.now(timezone.utc).isoformat(),
                     'error': type(exc).__name__, 'data': None}
-    jobs = {'database': lambda: Monitoring(DatabaseFacts(service, artifacts)).snapshot(),
+    def database():
+        revision = run_process(['git', 'rev-parse', 'HEAD'], cwd=repository, timeout=15)
+        if revision.returncode:
+            raise RuntimeError('Measurement revision unavailable')
+        measurements = Measurements(service.store, artifacts).collect(revision.stdout.strip())
+        return {**Monitoring(DatabaseFacts(service, artifacts)).snapshot(), 'measurements': measurements}
+    jobs = {'database': database,
             'docker': lambda: docker_facts(repository),
             'redis': lambda: redis_facts(redis_url, service.org.agents)}
     with ThreadPoolExecutor(max_workers=3) as pool:

@@ -1,0 +1,30 @@
+[
+  {
+    "url": "https://sre.google/workbook/implementing-slos/",
+    "fetched_date": "2026-09-07",
+    "file": "source-1.html",
+    "sha256": "8abcc353bff1ad3052f3b620e432446cfd7760f31616879fea414604dd33c2cd",
+    "scope": "Documentation scope verification only; no repository adoption or upstream tests executed"
+  },
+  {
+    "url": "https://sre.google/workbook/alerting-on-slos/",
+    "fetched_date": "2026-09-07",
+    "file": "source-2.html",
+    "sha256": "5a2195ae9280d92489ec6c5be9781ef191d73137514da7c716ebabf5479cfcf5",
+    "scope": "Documentation scope verification only; no repository adoption or upstream tests executed"
+  },
+  {
+    "url": "https://docs.arc42.org/section-10/",
+    "fetched_date": "2026-09-07",
+    "file": "source-3.html",
+    "sha256": "324e9127096f94d5277b17e49ad330d2441a111a406fc75c8b367eaf36c31fe6",
+    "scope": "Documentation scope verification only; no repository adoption or upstream tests executed"
+  },
+  {
+    "url": "https://docs.arc42.org/section-9/",
+    "fetched_date": "2026-09-07",
+    "file": "source-4.html",
+    "sha256": "b76350419282f509b36ce1f74fb77e5f9980e60cd9cdb37c093dff00a3fe1790",
+    "scope": "Documentation scope verification only; no repository adoption or upstream tests executed"
+  }
+]

@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-WVF23W3');</script>
+    <meta charset="utf-8">
+    <meta content="initial-scale=1, minimum-scale=1, width=device-width" name="viewport">
+    <title>Google SRE - Prometheus Alerting: Turn SLOs into Alerts</title>
+      <meta name="description" content="Turn SLOs into actionable alerts on significant events using Prometheus alerting. Improve precision, recall, detection time, and time for alerting.">
+    <meta name="referrer" content="no-referrer" />
+    <link rel="canonical" href="https://sre.google/workbook/alerting-on-slos/">
+    <link rel="apple-touch-icon-precomposed" sizes="180x180" href="https://lh3.googleusercontent.com/Yf2DCX8RKda6r4Jml9DLMByS2zQCBFs3kQpvBfN8UgIh4YVWIYSYIQOoTxJriyuM26cT5PDjyEb5aynDQ0Xyz46yHKnfg8JlUbDW">
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Google+Sans:400|Roboto:400,400italic,500,500italic,700,700italic|Roboto+Mono:400,500,700|Material+Icons">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://lh3.googleusercontent.com/Yf2DCX8RKda6r4Jml9DLMByS2zQCBFs3kQpvBfN8UgIh4YVWIYSYIQOoTxJriyuM26cT5PDjyEb5aynDQ0Xyz46yHKnfg8JlUbDW">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://lh3.googleusercontent.com/Yf2DCX8RKda6r4Jml9DLMByS2zQCBFs3kQpvBfN8UgIh4YVWIYSYIQOoTxJriyuM26cT5PDjyEb5aynDQ0Xyz46yHKnfg8JlUbDW">
+    <link rel="shortcut icon" href="https://lh3.googleusercontent.com/Yf2DCX8RKda6r4Jml9DLMByS2zQCBFs3kQpvBfN8UgIh4YVWIYSYIQOoTxJriyuM26cT5PDjyEb5aynDQ0Xyz46yHKnfg8JlUbDW">
+    <link href="/sre-book/static/css/index.min.css?cache=6c30b59" rel="stylesheet">
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-75468017-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "/workbook/alerting-on-slos/"
+      },
+      "headline": "Alerting on SLOs",
+      "description": "This chapter explains how to turn your SLOs into actionable alerts on significant events. Both our first SRE book and this book talk about implementing SLOs. We believe that having good SLOs that measure the reliability of your platform, as experienced by your customers, provides the highest-quality indication for when an on-call engineer should respond.",
+        "image": "https://lh3.googleusercontent.com/mpK6cdpAGND9oCGaTETVhOmXF5TZegWCspB5h4p2JJmWmAgOgdEE8LVMSod2YSU5JGlMs0Ok7rKz7LvRwi48QrMRf0WTByDB4ynP",
+        "author": [
+            {
+              "@type": "Person",
+              "name": "Steven Thurgood"
+            },
+            {
+              "@type": "Person",
+              "name": "Jess Frame"
+            },
+            {
+              "@type": "Person",
+              "name": "Anthony Lenton"
+            },
+            {
+              "@type": "Person",
+              "name": "Carmela Quinito"
+            },
+            {
+              "@type": "Person",
+              "name": "Anton Tolchanov"
+            },
+            {
+              "@type": "Person",
+              "name": "Nejc Trdin"
+            }
+        ],
+      "publisher": {
+        "@type": "Organization",
+        "name": "Google SRE",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://lh3.googleusercontent.com/C3_YVnTdc7xzTDekhsGeZ2hEYUnAlp47Au-9C50vi5r44rfpJAgiycs1g6AFKWqIpw6KVPrZWLse1VUqgOqYht-RxV1iowdB0_IABUd966aDsDWW-65m"
+        }
+      }
+    }
+  </script>
+    <script src="/sre-book/static/js/detect.min.js?cache=4cb778b"></script>
+  </head>
+
+  <body>
+    <noscript><iframe class="no-script-iframe" src="https://www.googletagmanager.com/ns.html?id=GTM-WVF23W3"></iframe></noscript>
+    <main>
+  <div ng-controller= "HeaderCtrl as headerCtrl">
+    <div id="curtain" class="menu-closed"></div>
+      <div class="header clearfix">
+        <a id="burger-menu" class="expand"></a>
+        <h2 class="chapter-title">
+                Chapter 5 - Alerting on SLOs
+        </h2>
+      </div>
+      <div id="overlay-element" class="expands">
+        <div class="logo">
+          <a href="https://www.google.com"><img src="https://lh3.googleusercontent.com/YoVRtLOHMSRYQZ3OhFL8RIamcjFYbmQXX4oAQx02MRqqY9zlKNvsuZpS73khXiOqTH3qrFW27VrERJJIHTjPk-tAh46q8-Fd4w6qlw" alt="Google"></a>
+        </div>
+        <ol id="drop-down" class="dropdown-content hide">
+          <li><a class="menu-buttons" href="/workbook/table-of-contents/">Table of Contents</a></li>
+            <li>
+              <a href="/workbook/foreword-I/" class="menu-buttons">
+                  Foreword I
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/foreword-II/" class="menu-buttons">
+                  Foreword II
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/preface/" class="menu-buttons">
+                  Preface
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/how-sre-relates/" class="menu-buttons">
+                  1. How SRE Relates to DevOps
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/part-I-foundations/" class="menu-buttons">
+                  Part I - Foundations
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/implementing-slos/" class="menu-buttons">
+                  2. Implementing SLOs
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/slo-engineering-case-studies/" class="menu-buttons">
+                  3. SLO Engineering Case Studies
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/monitoring/" class="menu-buttons">
+                  4. Monitoring
+              </a>
+            </li>
+            <li class="active">
+              <a href="/workbook/alerting-on-slos/" class="menu-buttons">
+                  5. Alerting on SLOs
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/eliminating-toil/" class="menu-buttons">
+                  6. Eliminating Toil
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/simplicity/" class="menu-buttons">
+                  7. Simplicity
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/part-II-practices/" class="menu-buttons">
+                  Part II - Practices
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/on-call/" class="menu-buttons">
+                  8. On-Call
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/incident-response/" class="menu-buttons">
+                  9. Incident Response
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/postmortem-culture/" class="menu-buttons">
+                  10. Postmortem Culture: Learning from Failure
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/managing-load/" class="menu-buttons">
+                  11. Managing Load
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/non-abstract-design/" class="menu-buttons">
+                  12. Introducing Non-Abstract Large System Design
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/data-processing/" class="menu-buttons">
+                  13. Data Processing Pipelines
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/configuration-design/" class="menu-buttons">
+                  14. Configuration Design and Best Practices
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/configuration-specifics/" class="menu-buttons">
+                  15. Configuration Specifics
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/canarying-releases/" class="menu-buttons">
+                  16. Canarying Releases
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/part-III-processes/" class="menu-buttons">
+                  Part III - Processes
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/overload/" class="menu-buttons">
+                  17. Identifying and Recovering from Overload
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/engagement-model/" class="menu-buttons">
+                  18. SRE Engagement Model
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/reaching-beyond/" class="menu-buttons">
+                  19. SRE: Reaching Beyond Your Walls
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/team-lifecycles/" class="menu-buttons">
+                  20. SRE Team Lifecycles
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/organizational-change/" class="menu-buttons">
+                  21. Organizational Change Management in SRE
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/conclusion/" class="menu-buttons">
+                  Conclusion
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/slo-document/" class="menu-buttons">
+                  Appendix A. Example SLO Document
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/error-budget-policy/" class="menu-buttons">
+                  Appendix B. Example Error Budget Policy
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/postmortem-analysis/" class="menu-buttons">
+                  Appendix C. Results of Postmortem Analysis
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/index/" class="menu-buttons">
+                  Index
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/editors/" class="menu-buttons">
+                  About the Editors
+              </a>
+            </li>
+            <li>
+              <a href="/workbook/colophon/" class="menu-buttons">
+                  Colophon
+              </a>
+            </li>
+        </ol>
+      </div>
+    </div>
+
+  <div id="maia-main">
+    <div class="content" id="content">
+      <h1 class="heading jumptargets" id="alerting-on-slos">Alerting on SLOs</h1>
+
+<p class="byline author">By Steven Thurgood<br>with Jess Frame, Anthony Lenton,<br>Carmela Quinito, Anton Tolchanov, and Nejc Trdin</p>
+
+<p>
+This chapter explains how to turn your SLOs into actionable alerts on significant events. Both our <a href="https://sre.google/sre-book/table-of-contents/">first SRE book</a> and this book talk about implementing SLOs. We believe that having good SLOs that measure the reliability of your platform, as experienced by your customers, provides the highest-quality indication for when an on-call engineer should respond. Here we give specific guidance on how to turn those SLOs into alerting rules so that you can respond to problems before you consume too much of your error budget.
+</p>
+
+<p>
+Our examples present a series of increasingly complex implementations for alerting metrics and logic; we discuss the utility and shortcomings of each. While our examples use a simple request-driven service and <a href="https://prometheus.io/" target="_blank" rel="noopener noreferrer">Prometheus syntax</a>, you can apply this approach in any alerting framework.
+</p>
+
+<h2 class="heading jumptargets" id="alerting-considerations">Alerting Considerations</h2>
+
+<p>
+In order to generate alerts from service level indicators (SLIs) and an <a href="https://sre.google/workbook/implementing-slos/">error budget,</a> you need a way to combine these two elements into a specific rule. Your goal is to be notified for a <span class="italic">significant event</span>: an event that consumes a large fraction of the error budget.
+</p>
+
+<p>Consider the following attributes when evaluating an alerting strategy:</p>
+
+<p class="italic">Precision</p>
+
+<ul class="simplelist">
+<li>The proportion of events detected that were significant. Precision is 100% if every alert corresponds to a significant event. Note that alerting can become particularly sensitive to nonsignificant events during low-traffic periods (discussed in <a data-type="xref" href="#low-traffic-services-and-error-budget-alerting">Low-Traffic Services and Error Budget Alerting</a>).</li>
+</ul>
+
+<p class="italic">Recall</p>
+
+<ul class="simplelist">
+<li>The proportion of significant events detected. Recall is 100% if every significant event results in an alert.</li>
+</ul>
+
+<p class="italic">Detection time</p>
+
+<ul class="simplelist">
+<li>How long it takes to send notifications in various conditions. Long detection times can negatively impact the error budget.</li>
+</ul>
+
+<p class="italic">Reset time</p>
+
+<ul class="simplelist">
+<li>How long alerts fire after an issue is resolved. Long reset times can lead to confusion or to issues being ignored.</li>
+</ul>
+
+<h1 class="heading jumptargets" id="ways-to-alert-on-significant-events">Ways to Alert on Significant Events</h1>
+
+<p>
+Constructing alert <a href="https://sre.google/sre-book/service-level-objectives/">rules for your SLOs</a> can become quite complex. Here we present six ways to configure alerting on significant events, in order of increasing fidelity, to arrive at an option that offers good control over the four parameters of precision, recall, detection time, and reset time simultaneously. Each of the following approaches addresses a different problem, and some eventually solve multiple problems at the same time. The first three nonviable attempts work toward the latter three viable alerting strategies, with approach 6 being the most viable and most highly recommended option. The first method is simple to implement but inadequate, while the optimal method provides a complete solution to defend an SLO over both the long and the short term.
+</p>
+
+<p>
+For the purposes of this discussion, “error budgets” and “error rates” apply to all SLIs, not just those with “error” in their name. In the section <a href="/workbook/implementing-slos#what-to-measure-using-slis">What to Measure: Using SLIs</a>, we recommend using SLIs that capture the ratio of good events to total events. The error budget gives the number of allowed bad events, and the error rate is the ratio of bad events to total events.
+</p>
+
+<h5 class="subheaders jumptargets" id="1-target-error-rate-slo-threshold">1: Target Error Rate ≥ SLO Threshold</h5>
+
+<p>For the most trivial solution, you can choose a small time window (for example, 10 minutes) and alert if the error rate over that window exceeds the SLO.</p>
+
+<p>For example, if the SLO is 99.9% over 30 days, alert if the error rate over the previous 10 minutes is ≥ 0.1%:</p>
+
+<pre class="code-indentation">
+- alert: HighErrorRate
+  expr: job:slo_errors_per_request:ratio_rate10m{job="myjob"} >= 0.001
+</pre>
+
+<aside data-type="sidebar" class="highlight pagebreak-before note-highlight">
+<h6 class="subheaders-small jumptargets" id="note" align="center">Note</h6>
+<p class="note">This 10-minute average is calculated in Prometheus with a Recording rule:</p>
+<pre class="code-indentation note">
+record: job:slo_errors_per_request:ratio_rate10m
+expr:
+  sum(rate(slo_errors[10m])) by (job)
+    /
+  sum(rate(slo_requests[10m])) by (job)
+
+</pre>
+<p class="note">If you don’t export <code>slo_errors</code> and <code>slo_requests</code> from your job, you can create the time series by renaming a metric:</p>
+<pre class="code-indentation note">
+record: slo_errors
+expr: http_errors
+
+</pre>
+</aside>
+
+<p>Alerting when the recent error rate is equal to the SLO means that the system detects a budget spend of:</p>
+
+<p>
+  <div data-type="equation" id="id-dkSmTQILCQ"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-1-Frame" data-mathml="<math class=&quot;bump150&quot; xmlns=&quot;https://www.w3.org/1998/Math/MathML&quot;><mfrac><mi>alerting window size</mi><mi>reporting period</mi></mfrac></math>" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math bump150" id="MathJax-Span-1" style="width: 6.493em; display: inline-block;"><span style="display: inline-block; position: relative; width: 6.253em; height: 0px; font-size: 104%;"><span style="position: absolute; clip: rect(0.844em, 1006.25em, 2.828em, -999.997em); top: -2.1em; left: 0em;"><span class="mrow" id="MathJax-Span-2"><span class="mfrac" id="MathJax-Span-3"><span style="display: inline-block; position: relative; width: 6.013em; height: 0px; margin-right: 0.123em; margin-left: 0.123em;"><span style="position: absolute; clip: rect(3.368em, 1005.89em, 4.39em, -999.997em); top: -4.624em; left: 50%; margin-left: -2.942em;"><span class="mi" id="MathJax-Span-4" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">alerting window size</span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(3.368em, 1004.57em, 4.39em, -999.997em); top: -3.603em; left: 50%; margin-left: -2.281em;"><span class="mi" id="MathJax-Span-5" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">reporting period</span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(0.844em, 1006.01em, 1.265em, -999.997em); top: -1.319em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 6.013em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.085em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.106em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.622em; border-left: 0px solid; width: 0px; height: 1.816em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math class="bump150" xmlns="https://www.w3.org/1998/Math/MathML"></math></span></span><script type="math/mml" id="MathJax-Element-1"><math xmlns="https://www.w3.org/1998/Math/MathML" class="bump150"><mfrac><mi>alerting window size</mi><mi>reporting period</mi></mfrac></math></script></div>
+</p>
+
+<p>
+<a data-type="xref" href="#detection-time">Figure 5-1</a> shows the relationship between detection time and error rate for an example service with an alert window of 10 minutes and a 99.9% SLO.
+</p>
+
+<figure id="detection-time" class="horizontal vertical jumptarget">
+      <img src="https://lh3.googleusercontent.com/mpK6cdpAGND9oCGaTETVhOmXF5TZegWCspB5h4p2JJmWmAgOgdEE8LVMSod2YSU5JGlMs0Ok7rKz7LvRwi48QrMRf0WTByDB4ynP=s1325" alt="detection-time">
+      <figcaption><span class="label">Figure 5-1. </span>Detection time for an example service with an alert window of 10 minutes and a 99.9% SLO</figcaption>
+    </figure>
+
+<p>
+<a data-type="xref" href="#immediate-error-rate-is-too-high">Table 5-1</a> shows the benefits and disadvantages of alerting when the immediate error rate is too high.
+</p>
+
+<table id="immediate-error-rate-is-too-high">
+      <caption class="jumptarget"><span class="label">Table 5-1.</span>Pros and cons of alerting when the immediate error rate is too high</caption>
+      <thead>
+        <tr>
+          <th>Pros</th>
+          <th>Cons</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+             <p>Detection time is good: 0.6 seconds for a total outage.</p>
+             <p>This alert fires on any event that threatens the SLO, exhibiting good recall.</p>
+          </td>
+          <td><p>Precision is low: The alert fires on many events that do not threaten the SLO. A 0.1% error rate for 10 minutes would alert, while consuming <span class="italic">only 0.02% of the monthly error budget</span>.</p>
+               <p>Taking this example to an extreme, you could receive up to 144 alerts per day every day, not act upon any alerts, and still meet the SLO.</p></td>
+         </tr>
+     </tbody>
+    </table>
+
+<h5 class="subheaders jumptargets" id="2-increased-alert-window">2: Increased Alert Window</h5>
+
+<p>
+We can build upon the preceding example by changing the size of the alert window to improve precision. By increasing the window size, you spend a higher budget amount before triggering an alert.
+</p>
+
+<p>
+To keep the <a href="https://sre.google/sre-book/dealing-with-interrupts/">rate of alerts manageable</a>, you decide to be notified only if an event consumes 5% of the 30-day error budget—a 36-hour window:
+</p>
+
+<pre class="code-indentation">
+- alert: HighErrorRate
+   expr: job:slo_errors_per_request:ratio_rate36h{job="myjob"} > 0.001
+
+</pre>
+
+<p>Now, the detection time is:</p>
+
+<p>
+  <div data-type="equation" id="id-dkSECYfLCQ"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-2-Frame" data-mathml="<math xmlns=&quot;https://www.w3.org/1998/Math/MathML&quot;><mrow><mfrac><mrow><mn>1</mn><mo>&amp;#x2212;</mo><mi>SLO</mi></mrow><mi>error ratio</mi></mfrac><mo>&amp;#xD7;</mo><mi>alerting window size</mi></mrow></math>" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-6" style="width: 13.164em; display: inline-block;"><span style="display: inline-block; position: relative; width: 12.623em; height: 0px; font-size: 104%;"><span style="position: absolute; clip: rect(1.385em, 1012.62em, 3.188em, -999.997em); top: -2.581em; left: 0em;"><span class="mrow" id="MathJax-Span-7"><span class="mrow" id="MathJax-Span-8"><span class="mfrac" id="MathJax-Span-9"><span style="display: inline-block; position: relative; width: 2.948em; height: 0px; margin-right: 0.123em; margin-left: 0.123em;"><span style="position: absolute; clip: rect(3.368em, 1002.17em, 4.33em, -999.997em); top: -4.564em; left: 50%; margin-left: -1.079em;"><span class="mrow" id="MathJax-Span-10"><span class="mn" id="MathJax-Span-11" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">1</span><span class="mo" id="MathJax-Span-12" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">−</span><span class="mi" id="MathJax-Span-13" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">SLO</span></span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(3.368em, 1002.83em, 4.21em, -999.997em); top: -3.603em; left: 50%; margin-left: -1.439em;"><span class="mi" id="MathJax-Span-14" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">error ratio</span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(0.844em, 1002.95em, 1.265em, -999.997em); top: -1.319em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 2.948em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.085em;"></span></span></span></span><span class="mo" id="MathJax-Span-15" style="font-family: STIXGeneral-Regular; padding-left: 0.243em;">×</span><span class="mi" id="MathJax-Span-16" style="font-family: STIXGeneral-Regular; padding-left: 0.243em;">alerting window size</span></span></span><span style="display: inline-block; width: 0px; height: 2.587em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.497em; border-left: 0px solid; width: 0px; height: 1.628em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"></span></span><script type="math/mml" id="MathJax-Element-2"><math xmlns="https://www.w3.org/1998/Math/MathML"> <mrow> <mfrac> <mrow><mn>1</mn><mo>−</mo><mi>SLO</mi></mrow> <mi>error ratio</mi></mfrac> <mo>×</mo> <mi>alerting window size</mi></mrow> </math></script></div>
+</p>
+
+<p>
+<a data-type="xref" href="#error-rate-is-too-high-over-a-larger-window">Table 5-2</a> shows the benefits and disadvantages of alerting when the error rate is too high over a larger window of time.
+</p>
+
+<table id="error-rate-is-too-high-over-a-larger-window">
+      <caption class="jumptarget"><span class="label">Table 5-2.</span>Pros and cons of alerting when the error rate is too high over a larger window of time</caption>
+      <thead>
+        <tr>
+          <th>Pros</th>
+          <th>Cons</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+<p>Detection time is still good: 2 minutes and 10 seconds for a complete outage.</p>
+<p>Better precision than the previous example: by ensuring that the error rate is sustained for longer, an alert will likely represent a significant threat to the error budget.</p>
+</td>
+<td>
+<p>Very poor reset time: In the case of 100% outage, an alert will fire shortly after 2 minutes, and continue to fire for the next 36 hours.</p>
+ <p>Calculating rates over longer windows can be expensive in terms of memory or I/O operations, due to the large number of data points.</p></td>
+         </tr>
+     </tbody>
+    </table>
+
+<p>
+<a data-type="xref" href="#error-rate-over-a-36-hour-period">Figure 5-2</a> shows that while the error rate over a 36-hour period has fallen to a negligible level, the 36-hour average error rate remains above the threshold.
+</p>
+
+<figure id="error-rate-over-a-36-hour-period" class="horizontal vertical jumptarget">
+      <img src="https://lh3.googleusercontent.com/l5RR_VJmzwXDJfT-zuOj2YvfnRnSoOhGUzDvpQOE9Txq1fH3BUhJ1qHsw-dQBWOtoeIk6eTRu3QPyPFs9qOWVWCncFGu8ZwhxUvh=s1404" alt="error-rate-over-a-36-hour-period">
+      <figcaption><span class="label">Figure 5-2. </span>Error rate over a 36-hour period</figcaption>
+    </figure>
+
+<h5 class="subheaders jumptargets" id="3-incrementing-alert-duration">3: Incrementing Alert Duration</h5>
+
+<p>
+Most monitoring systems allow you to add a duration parameter to the alert criteria so the alert won’t fire unless the value remains above the threshold for some time. You may be tempted to use this parameter as a relatively inexpensive way to add longer windows:
+</p>
+
+<pre class="code-indentation">
+- alert: HighErrorRate
+    expr: job:slo_errors_per_request:ratio_rate1m{job="myjob"} > 0.001
+    for: 1h
+
+</pre>
+
+<p>
+<a data-type="xref" href="#benefits-and-disadvantages-of-using-a-duration">Table 5-3</a> shows the benefits and disadvantages of using a duration parameter for alerts.
+</p>
+
+<table id="benefits-and-disadvantages-of-using-a-duration">
+      <caption class="jumptarget"><span class="label">Table 5-3.</span>Pros and cons of using a duration parameter for alerts</caption>
+      <thead>
+        <tr>
+          <th>Pros</th>
+          <th>Cons</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><p>Alerts can be higher precision. Requiring a sustained error rate before firing means that alerts are more likely to correspond to a significant event.</p></td>
+          <td>
+<p>Poor recall and poor detection time: Because the duration does not scale with the severity of the incident, a <a href="https://sre.google/workbook/error-budget-policy/">100% outage alerts</a> after one hour, the same detection time as a 0.2% outage. The 100% outage would consume 140% of the 30-day budget in that hour.</p>
+<p>If the metric even momentarily returns to a level within SLO, the duration timer resets. An SLI that fluctuates between missing SLO and passing SLO may never alert.</p>
+</td>
+        </tr>
+       </tbody>
+    </table>
+
+<p>
+For the reasons listed in <a data-type="xref" href="#benefits-and-disadvantages-of-using-a-duration">Table 5-3</a>, we do not recommend using durations as part of your SLO-based alerting criteria.<sup><a class="jumptarget" data-type="noteref" id="ch05fn1-marker" href="#ch05fn1">1</a></sup>
+</p>
+
+<p>
+<a data-type="xref" href="#service_with_100percent_error_spikes_ever">Figure 5-3</a> shows the average error rate over a 5-minute window of a service with a 10-minute duration before the alert fires. A series of 100% error spikes lasting 5 minutes every 10 minutes never triggers an alert, despite consuming 35% of the error budget.
+</p>
+
+<figure id="service_with_100percent_error_spikes_ever" class="horizontal vertical jumptarget">
+      <img src="https://lh3.googleusercontent.com/v1je8P1Sp24yIu1v3EJuy2aH47hCpZksaQ7q2zbK9yWEY8cKeExMYi0jSdvqxlUAIGzDfiQm0-EDUqDOpiIt8iknFKJgRFzvE-NhDg=s1461" alt="service_with_100percent_error_spikes_ever">
+      <figcaption><span class="label">Figure 5-3. </span>A service with 100% error spikes every 10 minutes</figcaption>
+    </figure>
+
+<p>Each spike consumed almost 12% of the 30-day budget, yet the alert never triggered.</p>
+
+<h5 class="subheaders jumptargets" id="4-alert-on-burn-rate">4: Alert on Burn Rate</h5>
+
+<p>
+To improve upon the previous solution, you want to create an alert with good detection time and high precision. To this end, you can introduce a burn rate to reduce the size of the window while keeping the alert budget spend constant.
+</p>
+
+<p>
+<span class="italic">Burn rate</span> is how fast, relative to the SLO, the service consumes the error budget. <a data-type="xref" href="#error_budgets_relative_to_burn_rates">Figure 5-4</a> shows the relationship between burn rates and error budgets.
+</p>
+
+<p>
+The example service uses a burn rate of 1, which means that it’s consuming error budget at a rate that leaves you with exactly 0 budget at the end of the SLO’s time window (see <a href="https://sre.google/sre-book/service-level-objectives/">Chapter 4</a> in our first book). With an SLO of 99.9% over a time window of 30 days, a constant 0.1% error rate uses exactly all of the error budget: a burn rate of 1.
+</p>
+
+<figure id="error_budgets_relative_to_burn_rates" class="horizontal vertical jumptarget">
+      <img src="https://lh3.googleusercontent.com/XG34GssRWHMFGz0S5QjVsihHR444ZARuk9ynjq6fFCOmWwPrs7boARO7QncJ33JhTte9j6qGkj8Xag8Cz7i89kjxTLZZQ6q9ydOPRA=s1372" alt="error_budgets_relative_to_burn_rates">
+      <figcaption><span class="label">Figure 5-4. </span>Error budgets relative to burn rates</figcaption>
+    </figure>
+
+<p>
+<a data-type="xref" href="#burn_rates_and_time_to_complete_budget_ex">Table 5-4</a> shows burn rates, their corresponding error rates, and the time it takes to exhaust the SLO budget.
+</p>
+
+<table id="burn_rates_and_time_to_complete_budget_ex">
+      <caption class="jumptarget"><span class="label">Table 5-4.</span>Burn rates and time to complete budget exhaustion</caption>
+      <thead>
+        <tr>
+          <th>Burn rate</th>
+          <th>Error rate for a 99.9% SLO</th>
+           <th>Time to exhaustion</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><p>1</p></td>
+          <td><p>0.1%</p></td>
+          <td><p>30 days</p></td>
+        </tr>
+        <tr>
+               <td><p>2</p></td>
+               <td><p>0.2%</p></td>
+               <td><p>15 days</p></td>
+         </tr>
+          <tr>
+               <td><p>10</p></td>
+               <td><p>1%</p></td>
+               <td><p>3 days</p></td>
+         </tr>
+          <tr>
+               <td><p>1,000</p></td>
+               <td><p>100%</p></td>
+               <td><p>43 minutes</p></td>
+         </tr>
+     </tbody>
+    </table>
+
+<p>By keeping the alert window fixed at one hour and deciding that a 5% error budget spend is significant enough to notify someone, you can derive the burn rate to use for the alert.</p>
+
+<p>For burn rate–based alerts, the time taken for an alert to fire is:</p>
+
+<p>
+  <div data-type="equation" id="id-K5S9SQTnCO"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-3-Frame" data-mathml="<math xmlns=&quot;https://www.w3.org/1998/Math/MathML&quot;><mrow><mfrac><mrow><mn>1</mn><mo>&amp;#x2212;</mo><mi>SLO</mi></mrow><mi>error ratio</mi></mfrac><mo>&amp;#xD7;</mo><mi> alerting window size</mi><mo>&amp;#xD7;</mo><mi>burn rate</mi></mrow></math>" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-17" style="width: 18.092em; display: inline-block;"><span style="display: inline-block; position: relative; width: 17.371em; height: 0px; font-size: 104%;"><span style="position: absolute; clip: rect(1.385em, 1017.37em, 3.188em, -999.997em); top: -2.581em; left: 0em;"><span class="mrow" id="MathJax-Span-18"><span class="mrow" id="MathJax-Span-19"><span class="mfrac" id="MathJax-Span-20"><span style="display: inline-block; position: relative; width: 2.948em; height: 0px; margin-right: 0.123em; margin-left: 0.123em;"><span style="position: absolute; clip: rect(3.368em, 1002.17em, 4.33em, -999.997em); top: -4.564em; left: 50%; margin-left: -1.079em;"><span class="mrow" id="MathJax-Span-21"><span class="mn" id="MathJax-Span-22" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">1</span><span class="mo" id="MathJax-Span-23" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">−</span><span class="mi" id="MathJax-Span-24" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">SLO</span></span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(3.368em, 1002.83em, 4.21em, -999.997em); top: -3.603em; left: 50%; margin-left: -1.439em;"><span class="mi" id="MathJax-Span-25" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">error ratio</span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(0.844em, 1002.95em, 1.265em, -999.997em); top: -1.319em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 2.948em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.085em;"></span></span></span></span><span class="mo" id="MathJax-Span-26" style="font-family: STIXGeneral-Regular; padding-left: 0.243em;">×</span><span class="mi" id="MathJax-Span-27" style="font-family: STIXGeneral-Regular; padding-left: 0.243em;"> alerting window size</span><span class="mo" id="MathJax-Span-28" style="font-family: STIXGeneral-Regular; padding-left: 0.243em;">×</span><span class="mi" id="MathJax-Span-29" style="font-family: STIXGeneral-Regular; padding-left: 0.243em;">burn rate</span></span></span><span style="display: inline-block; width: 0px; height: 2.587em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.497em; border-left: 0px solid; width: 0px; height: 1.628em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"></span></span><script type="math/mml" id="MathJax-Element-3"><math xmlns="https://www.w3.org/1998/Math/MathML"> <mrow> <mfrac> <mrow><mn>1</mn><mo>−</mo><mi>SLO</mi></mrow> <mi>error ratio</mi></mfrac> <mo>×</mo> <mi> alerting window size</mi> <mo>×</mo> <mi>burn rate</mi></mrow> </math></script></div>
+</p>
+
+<p>The error budget consumed by the time the alert fires is:</p>
+
+<p>
+  <div data-type="equation" id="id-naSxsnTyCQ"><span class="MathJax_Preview" style="color: inherit; display: none;"></span><span class="MathJax" id="MathJax-Element-4-Frame" data-mathml="<math class=&quot;bump150&quot; xmlns=&quot;https://www.w3.org/1998/Math/MathML&quot;><mfrac><mrow><mi>burn rate</mi><mo>&amp;#xD7;</mo><mi>alerting window size</mi></mrow><mi>period</mi></mfrac></math>" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math bump150" id="MathJax-Span-30" style="width: 9.618em; display: inline-block;"><span style="display: inline-block; position: relative; width: 9.258em; height: 0px; font-size: 104%;"><span style="position: absolute; clip: rect(0.844em, 1009.26em, 2.828em, -999.997em); top: -2.1em; left: 0em;"><span class="mrow" id="MathJax-Span-31"><span class="mfrac" id="MathJax-Span-32"><span style="display: inline-block; position: relative; width: 9.017em; height: 0px; margin-right: 0.123em; margin-left: 0.123em;"><span style="position: absolute; clip: rect(3.368em, 1008.84em, 4.39em, -999.997em); top: -4.624em; left: 50%; margin-left: -4.444em;"><span class="mrow" id="MathJax-Span-33"><span class="mi" id="MathJax-Span-34" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">burn rate </span><span class="mo" id="MathJax-Span-35" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">×</span><span class="mi" id="MathJax-Span-36" style="font-size: 70.7%; font-family: STIXGeneral-Regular;"> alerting window size</span></span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(3.368em, 1001.81em, 4.39em, -999.997em); top: -3.603em; left: 50%; margin-left: -0.898em;"><span class="mi" id="MathJax-Span-37" style="font-size: 70.7%; font-family: STIXGeneral-Regular;">period</span><span style="display: inline-block; width: 0px; height: 4.029em;"></span></span><span style="position: absolute; clip: rect(0.844em, 1009.02em, 1.265em, -999.997em); top: -1.319em; left: 0em;"><span style="display: inline-block; overflow: hidden; vertical-align: 0em; border-top: 1.3px solid; width: 9.017em; height: 0px;"></span><span style="display: inline-block; width: 0px; height: 1.085em;"></span></span></span></span></span><span style="display: inline-block; width: 0px; height: 2.106em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.622em; border-left: 0px solid; width: 0px; height: 1.816em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"></span></span><script type="math/mml" id="MathJax-Element-4"><math xmlns="https://www.w3.org/1998/Math/MathML" class="bump150"> <mfrac> <mrow><mi>burn rate</mi><mo>×</mo><mi>alerting window size</mi></mrow> <mi>period</mi> </mfrac> </math></script></div>
+</p>
+
+<p>Five percent of a 30-day error budget spend over one hour requires a burn rate of 36. The alerting rule now becomes:</p>
+
+<pre class="code-indentation">
+- alert: HighErrorRate
+  expr: job:slo_errors_per_request:ratio_rate1h{job="myjob"} > 36 * 0.001
+
+</pre>
+
+<p>
+<a data-type="xref" href="#pros_and_cons_of_alerting_based_on_burn_r">Table 5-5</a> shows the benefits and limitations of alerting based on burn rate.
+</p>
+
+<table id="pros_and_cons_of_alerting_based_on_burn_r">
+      <caption class="jumptarget"><span class="label">Table 5-5.</span>Pros and cons of alerting based on burn rate</caption>
+      <thead>
+        <tr>
+          <th>Pros</th>
+          <th>Cons</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+             <p>Good precision: This strategy chooses a significant portion of error budget spend upon which to alert.</p>
+              <p>Shorter time window, which is cheaper to calculate.</p>
+              <p>Good detection time.</p>
+              <p>Better reset time: 58 minutes.</p>
+          </td>
+          <td>
+<p>Low recall: A 35x burn rate never alerts, but consumes all of the 30-day error budget in 20.5 hours.</p>
+<p>Reset time: 58 minutes is still too long.</p>
+</td>
+        </tr>
+     </tbody>
+    </table>
+
+<h5 class="subheaders jumptargets" id="5-multiple-burn-rate-alerts">5: Multiple Burn Rate Alerts</h5>
+
+<p>
+Your alerting logic can use multiple burn rates and time windows, and fire alerts when burn rates surpass a specified threshold. This option retains the benefits of alerting on burn rates and ensures that you don’t overlook lower (but still significant) error rates.
+</p>
+
+<p>
+It’s also a good idea to set up ticket notifications for incidents that typically go unnoticed but can exhaust your error budget if left unchecked—for example, a 10% budget consumption in three days. This rate of errors catches significant events, but since the rate of budget consumption provides adequate time to address the event, you don’t need to page someone.
+</p>
+
+<p>
+We recommend 2% budget consumption in one hour and 5% budget consumption in six hours as reasonable starting numbers for paging, and 10% budget consumption in three days as a good baseline for ticket alerts. The appropriate numbers depend on the service and the baseline page load. For busier services, and depending on on-call responsibilities over weekends and holidays, you may want ticket alerts for the six-hour window.
+</p>
+
+<p>
+<a data-type="xref" href="#recommended_time_windows_and_burn_rates_f">Table 5-6</a> shows the corresponding burn rates and time windows for percentages of SLO budget consumed.
+</p>
+
+<table id="recommended_time_windows_and_burn_rates_f">
+      <caption class="jumptarget"><span class="label">Table 5-6.</span>Recommended time windows and burn rates for percentages of SLO budget consumed </caption>
+      <thead>
+        <tr>
+          <th>SLO budget consumption</th>
+          <th>Time window</th>
+           <th>Burn rate</th>
+           <th>Notification</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><p>2%</p></td>
+          <td><p>1 hour</p></td>
+          <td><p>14.4</p></td>
+           <td><p>Page</p></td>
+        </tr>
+        <tr>
+              <td><p>5%</p></td>
+          <td><p>6 hours</p></td>
+          <td><p>6</p></td>
+           <td><p>Page</p></td>
+         </tr>
+           <tr>
+             <td><p>10%</p></td>
+          <td><p>3 days</p></td>
+          <td><p>1</p></td>
+           <td><p>Ticket</p></td>
+         </tr>
+     </tbody>
+    </table>
+
+<p>The alerting configuration may look like something like:</p>
+
+<pre class="code-indentation">
+expr: (
+        job:slo_errors_per_request:ratio_rate1h{job="myjob"} > (14.4*0.001)
+      or
+        job:slo_errors_per_request:ratio_rate6h{job="myjob"} > (6*0.001)
+      )
+severity: page
+
+expr: job:slo_errors_per_request:ratio_rate3d{job="myjob"} > 0.001
+severity: ticket
+
+</pre>
+
+<p>
+<a data-type="xref" href="#recommended_time_windows_and_burn_rates_f">Figure 5-5</a> shows the detection time and alert type according to the error rate.
+</p>
+
+<figure id="recommended_time_windows_and_burn_rates_f" class="horizontal vertical jumptarget">
+      <img src="https://lh3.googleusercontent.com/SLw760xP6lIoejFO8BA7L3QhNg6IohTR0a8qzX8NnrUyxqtReRPOrLm5NEPK1VhU14tMUK5chuKvPGDAdnGwnwsw4fjUGH1AwAm5ew=s1378" alt="recommended_time_windows_and_burn_rates_f">
+      <figcaption><span class="label">Figure 5-5. </span>Error rate, detection time, and alert notification</figcaption>
+    </figure>
+
+<p>Multiple burn rates allow you to adjust the alert to give appropriate priority based on how quickly you have to respond. If an issue will exhaust the error budget within hours or a few days, sending an active notification is appropriate. Otherwise, a ticket-based notification to address the alert the next working day is more appropriate.<sup><a class="jumptarget" data-type="noteref" id="ch05fn2-marker" href="#ch05fn2">2</a></sup></p>
+
+<p>
+<a data-type="xref" href="#pros_and_cons_of_using_multiple_burn_rate">Table 5-7</a> lists the benefits and disadvantages of using multiple burn rates.
+</p>
+
+<table id="pros_and_cons_of_using_multiple_burn_rate">
+      <caption class="jumptarget"><span class="label">Table 5-7.</span>Pros and cons of using multiple burn rates </caption>
+<thead>
+        <tr>
+          <th>Pros</th>
+          <th>Cons</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+ <td>
+<p>Ability to adapt the monitoring configuration to many situations according to criticality: alert quickly if the error rate is high; alert eventually if the error rate is low but sustained.</p>
+<p>Good precision, as with all fixed-budget portion alert approaches.</p>
+<p>Good recall, because of the three-day window.</p>
+<p>Ability to choose the most appropriate alert type based upon how quickly someone has to react to defend the SLO.</p>
+</td>
+ <td>
+<p>More numbers, window sizes, and thresholds to manage and reason about.</p>
+<p>An even longer reset time, as a result of the three-day window.</p>
+<p>To avoid multiple alerts from firing if all conditions are true, you need to implement alert suppression. For example: 10% budget spend in five minutes also means that 5% of the budget was spent in six hours, and 2% of the budget was spent in one hour. This scenario will trigger three notifications unless the monitoring system is smart enough to prevent it from doing so.</p>
+</td>
+        </tr>
+        </tbody>
+    </table>
+
+<h5 class="subheaders jumptargets" id="6-multiwindow-multi-burn-rate-alerts">6: Multiwindow, Multi-Burn-Rate Alerts</h5>
+
+<p>
+We can enhance the multi-burn-rate alerts in iteration 5 to notify us only when we’re <span class="italic">still</span> actively burning through the budget—thereby reducing the number of false positives. To do this, we need to add another parameter: a shorter window to check if the error budget is still being consumed as we trigger the alert.
+</p>
+
+<p>
+A good guideline is to make the short window 1/12 the duration of the long window, as shown in <a data-type="xref" href="#short_and_long_windows_for_alerting">Figure 5-6</a>. The graph shows both alerting threshold. After experiencing 15% errors for 10 minutes, the short window average goes over the alerting threshold immediately, and the long window average goes over the threshold after 5 minutes, at which point the alert starts firing. The short window average drops below the threshold 5 minutes after the errors stop, at which point the alert stops firing. The long window average drops below the threshold 60 minutes after the errors stop.
+</p>
+
+<figure id="short_and_long_windows_for_alerting" class="horizontal vertical jumptarget">
+      <img src="https://lh3.googleusercontent.com/zXV7tBjExfvf6CKjs_v4orEQFED7kEJHq7bS6TcOhogGFcjDNTrlUhyp2L0fOE8IuASrBQ9yvE6-vs6Rc8Upzr15RGfYKwcIvcAnkw=s1410" alt="short_and_long_windows_for_alerting">
+      <figcaption><span class="label">Figure 5-6. </span>Short and long windows for alerting</figcaption>
+    </figure>
+
+<p>
+For example, you can send a page-level alert when you exceed the 14.4x burn rate over both the previous one hour and the previous five minutes. This alert fires only once you’ve consumed 2% of the budget, but exhibits a better reset time by ceasing to fire five minutes later, rather than one hour later:
+</p>
+
+<pre class="code-indentation">
+expr: (
+        job:slo_errors_per_request:ratio_rate1h{job="myjob"} > (14.4*0.001)
+      and
+        job:slo_errors_per_request:ratio_rate5m{job="myjob"} > (14.4*0.001)
+      )
+    or
+      (
+        job:slo_errors_per_request:ratio_rate6h{job="myjob"} > (6*0.001)
+      and
+        job:slo_errors_per_request:ratio_rate30m{job="myjob"} > (6*0.001)
+      )
+severity: page
+
+expr: (
+        job:slo_errors_per_request:ratio_rate24h{job="myjob"} > (3*0.001)
+      and
+        job:slo_errors_per_request:ratio_rate2h{job="myjob"} > (3*0.001)
+      )
+    or
+      (
+        job:slo_errors_per_request:ratio_rate3d{job="myjob"} > 0.001
+      and
+        job:slo_errors_per_request:ratio_rate6h{job="myjob"} > 0.001
+      )
+severity: ticket
+
+</pre>
+
+<p>We recommend the parameters listed in <a data-type="xref" href="#recommended_parameters_for_an_slo_based_a">Table 5-8</a> as the starting point for your SLO-based alerting configuration.
+</p>
+
+<table id="recommended_parameters_for_an_slo_based_a">
+      <caption class="jumptarget"><span class="label">Table 5-8.</span>Recommended parameters for a 99.9% SLO alerting configuration</caption>
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Long window</th>
+           <th>Short window</th>
+           <th>Burn rate</th>
+            <th>Error budget consumed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><p>Page</p></td>
+          <td><p>1 hour</p></td>
+          <td><p>5 minutes</p></td>
+           <td><p>14.4</p></td>
+           <td><p>2%</p></td>
+        </tr>
+        <tr>
+           <td><p>Page</p></td>
+          <td><p>6 hours</p></td>
+          <td><p>30 minutes</p></td>
+           <td><p>6</p></td>
+           <td><p>5%</p></td>
+         </tr>
+           <tr>
+             <td><p>Ticket</p></td>
+          <td><p>3 days</p></td>
+          <td><p>6 hours</p></td>
+           <td><p>1</p></td>
+           <td><p>10%</p></td>
+         </tr>
+     </tbody>
+    </table>
+
+<p>We have found that alerting based on multiple burn rates is a powerful way to implement SLO-based alerting.</p>
+
+<p><a data-type="xref" href="#pros_and_cons_of_using_multiple_b-id00013">Table 5-9</a> shows the benefits and limitations of using multiple burn rates and window sizes.
+</p>
+
+<table id="pros_and_cons_of_using_multiple_b-id00013">
+      <caption class="jumptarget"><span class="label">Table 5-9.</span>Pros and cons of using multiple burn rates and window sizes</caption>
+<thead>
+        <tr>
+          <th>Pros</th>
+          <th>Cons</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+<p>A flexible alerting framework that allows you to control the type of alert according to the severity of the incident and the requirements of the organization.</p>
+<p>Good precision, as with all fixed-budget portion alert approaches.</p>
+<p>Good recall, because of the three-day window.</p>
+</td>
+ <td>
+<p>Lots of parameters to specify, which can make alerting rules hard to manage. For more on managing alerting rules, see <a data-type="xref" href="#alerting_at_scale">Alerting at Scale</a>.</p>
+</td>
+</tr>
+         </tbody>
+    </table>
+
+<h1 class="heading jumptargets" id ="low-traffic-services-and-error-budget-alerting" class="heading">Low-Traffic Services and Error Budget Alerting</h1>
+
+<p>
+The multiwindow, multi-burn-rate approach just detailed works well when a sufficiently high rate of incoming requests provides a meaningful signal when an issue arises. However, these approaches can cause problems for systems that receive a low rate of requests. If a system has either a low number of users or natural low-traffic periods (such as nights and weekends), you may need to alter your approach.
+</p>
+
+<p>
+It’s harder to automatically distinguish unimportant events in low-traffic services. For example, if a system receives 10 requests per hour, then a single failed request results in an hourly error rate of 10%. For a 99.9% SLO, this request constitutes a 1,000x burn rate and would page immediately, as it consumed 13.9% of the 30-day error budget. This scenario allows for only seven failed requests in 30 days. Single requests can fail for a large number of ephemeral and uninteresting reasons that aren’t necessarily cost-effective to solve in the same way as large systematic outages.
+</p>
+
+<p>The best solution depends on the nature of the service: what is the impact<sup><a class="jumptarget" data-type="noteref" id="ch05fn3-marker" href="#ch05fn3">3</a></sup> of a single failed request? A high-availability target may be appropriate if failed requests are one-off, high-value requests that aren’t retried. It may make sense from a business perspective to investigate every single failed request. However, in this case, the alerting system notifies you of an error too late.
+</p>
+
+<p>We recommend a few key options to handle a low-traffic service:</p>
+
+<ul>
+<li>Generate artificial traffic to compensate for the lack of signal from real users.</li>
+<li>Combine smaller services into a larger service for monitoring purposes.</li>
+<li>Modify the product so that either:</li>
+       <ul>
+             <li>It takes more requests to qualify a single incident as a failure.</li>
+              <li>The impact of a single failure is lower.</li>
+       </ul>
+</ul>
+
+<h5 class="subheaders jumptargets" id="generating-artificial-traffic">Generating Artificial Traffic</h5>
+
+<p>
+A system can synthesize user activity to check for potential errors and high-latency requests. In the absence of real users, your monitoring system can detect synthetic errors and requests, so your on-call engineers can respond to issues before they impact too many actual users.
+</p>
+
+<p>
+Artificial traffic provides more signals to work with, and allows you to reuse your existing monitoring logic and SLO values. You may even already have most of the necessary traffic-generating components, such as black-box probers and integration tests.
+</p>
+
+<p>
+Generating artificial load does have some downsides. Most services that warrant SRE support are complex, and have a large system control surface. Ideally, the system should be designed and built for monitoring using artificial traffic. Even for a nontrivial service, you can synthesize only a small portion of the total number of user request types. For a stateful service, the greater number of states exacerbates this problem.
+</p>
+
+<p>
+Additionally, if an issue affects real users but doesn’t affect artificial traffic, the successful artificial requests hide the real user signal, so you aren’t notified that users see errors.
+</p>
+
+<h5 class="subheaders jumptargets" id="combining-services">Combining Services</h5>
+
+<p>
+If multiple low-traffic services contribute to one overall function, combining their requests into a single higher-level group can detect significant events more precisely and with fewer false positives. For this approach to work, the services must be related in some way—you can combine microservices that form part of the same product, or multiple request types handled by the same binary.
+</p>
+
+<p>
+A downside to combining services is that a complete failure of an individual service may not count as a significant event. You can increase the likelihood that a failure will affect the group as a whole by choosing services with a shared failure domain, such as a common backend database. You can still use longer-period alerts that eventually catch these 100% failures for individual services.
+</p>
+
+<h5 class="subheaders jumptargets" id="making-service-and-infrastructure-changes">Making Service and Infrastructure Changes</h5>
+
+<p>
+Alerting on significant events aims to provide sufficient notice to mitigate problems before they exhaust the entire error budget. If you can’t adjust the monitoring to be less sensitive to ephemeral events, and generating synthetic traffic is impractical, you might instead consider changing the service to reduce the user impact of a single failed request. For example, you might:
+</p>
+
+<ul>
+<li>Modify the client to retry, with exponential backoff and jitter.<sup><a class="jumptarget" data-type="noteref" id="ch05fn4-marker" href="#ch05fn4">4</a></sup></li>
+<li>Set up fallback paths that capture the request for eventual execution, which can take place on the server or on the client.</li>
+</ul>
+
+<p>
+These changes are useful for high-traffic systems, but even more so for low-traffic systems: they allow for more failed events in the error budget, more signal from monitoring, and more time to respond to an incident before it becomes significant.
+</p>
+
+<h5 class="subheaders jumptargets" id="lowering-the-slo-or-increasing-the-window">Lowering the SLO or Increasing the Window</h5>
+
+<p>
+You might also want to reconsider if the impact of a single failure on the error budget accurately reflects its impact on users. If a small number of errors causes you to lose error budget, do you really need to page an engineer to fix the issue immediately? If not, users would be equally happy with a lower SLO. With a lower SLO, an engineer is notified only of a larger sustained outage.
+</p>
+
+<p>
+Once you have negotiated lowering the SLO with the service’s stakeholders (for example, lowering the SLO from 99.9% to 99%), implementing the change is very simple: if you already have systems in place for reporting, monitoring, and alerting based upon an SLO threshold, simply add the new SLO value to the relevant systems.
+</p>
+
+<p>
+Lowering the SLO does have a downside: it involves a product decision. Changing the SLO affects other aspects of the system, such as expectations around system behavior and when to enact the error budget policy. These other requirements may be more important to the product than avoiding some number of low-signal alerts.
+</p>
+
+<p>
+In a similar manner, increasing the time window used for the alerting logic ensures alerts that trigger pages are more significant and worthy of attention.
+</p>
+
+<p>
+In practice, we use some combination of the following methods to alert for low-traffic services:
+</p>
+
+<ul>
+<li>Generating fake traffic, when doing so is possible and can achieve good coverage</li>
+<li>Modifying clients so that ephemeral failures are less likely to cause user harm</li>
+<li>Aggregating smaller services that share some failure mode</li>
+<li>Setting SLO thresholds commensurate with the actual impact of a failed request</li>
+</ul>
+
+<h1 class="heading jumptargets" id="extreme-availability-goals">Extreme Availability Goals</h1>
+
+<p>
+Services with an extremely low or an extremely high availability goal may require special consideration. For example, consider a service that has a 90% availability target. <a data-type="xref" href="#recommended_parameters_for_an_slo_based_a">Table 5-8</a> says to page when 2% of the error budget in a single hour is consumed. Because a 100% outage consumes only 1.4% of the budget in that hour, this alert could never fire. If your error budgets are set over long time periods, you may need to tune your alerting parameters.
+</p>
+
+<p>
+For services with an extremely high availability goal, the time to exhaustion for a 100% outage is extremely small. A 100% outage for a service with a target monthly availability of 99.999% would exhaust its budget in 26 seconds—which is smaller than the metric collection interval of many monitoring services, let alone the end-to-end time to generate an alert and pass it through notification systems like email and SMS. Even if the alert goes straight to an automated resolution system, the issue may entirely consume the error budget before you can mitigate it.
+</p>
+
+<p>
+Receiving notifications that you have only 26 seconds of budget left isn’t necessarily a bad strategy; it’s just not useful for defending the SLO. The only way to defend this level of reliability is to design the system so that the chance of a 100% outage is extremely low. That way, you can fix issues before consuming the budget. For example, if you initially roll out that change to only 1% of your users, and burn your error budget at the same rate of 1%, you now have 43 minutes before you exhaust your error budget. See <a href="https://sre.google/workbook/canarying-releases/">Canarying Releases</a> for tactics on designing such a system.
+</p>
+
+<h1 id="alerting_at_scale" class="heading jumptargets">Alerting at Scale</h1>
+
+<p>
+When you scale your service, make sure that your alerting strategy is likewise scalable. You might be tempted to specify custom alerting parameters for individual services. If your service comprises 100 microservices (or equivalently, a single service with 100 different request types), this scenario very quickly accumulates toil and cognitive load that does not scale.
+</p>
+
+<p>
+In this case, we strongly advise against specifying the alert window and burn rate parameters independently for each service, because doing so quickly becomes overwhelming.<sup><a class="jumptarget" data-type="noteref" id="ch05fn5-marker" href="#ch05fn5">5</a></sup> Once you decide on your alerting parameters, apply them to all your services.
+</p>
+
+<p>
+One technique for managing a large number of SLOs is to group request types into buckets of approximately similar availability requirements. For example, for a service with availability and latency SLOs, you can group its request types into the following buckets:
+</p>
+
+<p><code><span class="italic">CRITICAL</span></code></p>
+
+<ul class="simplelist">
+<li>For request types that are the most important, such as a request when a user logs in to the service.</li>
+</ul>
+
+<p><code><span class="italic">HIGH_FAST</span></code></p>
+
+<ul class="simplelist">
+<li>For requests with high availability and low latency requirements. These requests involve core interactive functionality, such as when a user clicks a button to see how much money their advertising inventory has made this month.</li>
+</ul>
+
+<p><code><span class="italic">HIGH_SLOW</span></code></p>
+
+<ul class="simplelist">
+<li>For important but less latency-sensitive functionality, such as when a user clicks a button to generate a report of all advertising campaigns over the past few years, and does not expect the data to return instantly. </li>
+</ul>
+
+<p><code><span class="italic">LOW</span></code></p>
+
+<ul class="simplelist">
+<li>For requests that must have some availability, but for which outages are mostly invisible to users—for example, polling handlers for account notifications that can fail for long periods of time with no user impact.</li>
+</ul>
+
+<p><code><span class="italic">NO_SLO</span></code></p>
+
+<ul class="simplelist">
+<li>For functionality that is completely invisible to the user—for example, dark launches or alpha functionality that is explicitly outside of any SLO.</li>
+</ul>
+
+<p>By grouping requests rather than placing unique availability and latency objectives on all request types, you can group requests into five buckets, like the example in <a data-type="xref" href="#request_class_buckets_according_to_simila">Table 5-10</a>.</p>
+
+<table id="request_class_buckets_according_to_simila">
+      <caption class="jumptarget"><span class="label">Table 5-10.</span>Request class buckets according to similar availability requirements and thresholds</caption>
+      <thead>
+        <tr>
+          <th>Request class</th>
+          <th>Availability</th>
+           <th>Latency @ 90%<sup><a class="jumptarget" data-type="noteref" id="ch05fn6-marker" href="#ch05fn6">6</a></sup></th>
+           <th>Latency @ 99%</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><p><code>CRITICAL</code></p></td>
+          <td><p>99.99%</p></td>
+          <td><p>100 ms</p></td>
+           <td><p>200 ms</p></td>
+        </tr>
+        <tr>
+          <td><p><code>HIGH_FAST</code></p></td>
+          <td><p>99.9%</p></td>
+          <td><p>100 ms</p></td>
+           <td><p>200 ms</p></td>
+        </tr>
+           <tr>
+             <td><p><code>HIGH_SLOW</code></p></td>
+            <td><p>99.9%</p></td>
+            <td><p>1,000 ms</p></td>
+            <td><p>5,000 ms</p></td>
+          </tr>
+            <tr>
+             <td><p><code>LOW</code></p></td>
+            <td><p>99%</p></td>
+            <td><p>None</p></td>
+            <td><p>None</p></td>
+          </tr>
+           <tr>
+             <td><p><code>NO_SLO</code></p></td>
+            <td><p>None</p></td>
+            <td><p>None</p></td>
+            <td><p>None</p></td>
+          </tr>
+     </tbody>
+    </table>
+
+<p>
+These buckets provide sufficient fidelity for protecting user happiness, but entail less toil than a system that is more complicated and expensive to manage that <span class="italic">probably</span> maps more precisely to the user experience.
+</p>
+
+<h1 class="heading jumptargets" id="conclusion">Conclusion</h1>
+
+<p>
+If you set SLOs that are meaningful, understood, and represented in metrics, you can configure alerting to notify an on-caller only when there are actionable, specific threats to the error budget.
+</p>
+
+<p>
+The techniques for alerting on significant events range from alerting when your error rate goes above your SLO threshold to using multiple levels of burn rate and window sizes. In most cases, we believe that the multiwindow, multi-burn-rate alerting technique is the most appropriate approach to defending your application’s SLOs.
+</p>
+
+<p>
+We hope we have given you the context and tools required to make the right configuration decisions for your own application and organization.
+</p>
+
+<div data-type="footnotes" class="footnotes">
+<p data-type="footnote" id="ch05fn1"><sup><a class="jumptargets" href="#ch05fn1-marker">1</a></sup>Duration clauses can occasionally be useful when you are filtering out ephemeral noise over very short durations. However, you still need to be aware of the cons listed in this section.
+</p>
+<p data-type="footnote" id="ch05fn2"><sup><a class="jumptargets" href="#ch05fn2-marker">2</a></sup>As described in the <a href="https://sre.google/sre-book/introduction/">introduction</a> to <span class="italic">Site Reliability Engineering</span>, pages and tickets are the only valid ways to get a human to take action.
+</p>
+<p data-type="footnote" id="ch05fn3"><sup><a class="jumptargets" href="#ch05fn3-marker">3</a></sup>The section <a href="https://sre.google/workbook/implementing-slos#what-to-measure-using-slis">What to Measure: Using SLIs</a> recommends a style of SLI that scales according to the impact on the user.
+</p>
+<p data-type="footnote" id="ch05fn4"><sup><a class="jumptargets" href="#ch05fn4-marker">4</a></sup>See <a href="https://sre.google/sre-book/service-best-practices#id-AnCKIZFpUej">“Overloads and Failure”</a> in <span class="italic">Site Reliability Engineering</span>.
+</p>
+<p data-type="footnote" id="ch05fn5"><sup><a class="jumptargets" href="#ch05fn5-marker">5</a></sup>With the exception of temporary changes to alerting parameters, which are necessary when you’re fixing an ongoing outage and you don’t need to receive notifications during that period.
+</p>
+<p data-type="footnote" id="ch05fn6"><sup><a class="jumptargets" href="#ch05fn6-marker">6</a></sup>Ninety percent of requests are <a href="https://sre.google/sre-book/service-level-objectives#id-9nCjSvF4t4iN">faster than this threshold</a>.
+</p>
+</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="maia-aux">
+      <div class="previous">
+          <a href="/workbook/monitoring/">
+            <p class="footer-caption">Previous</p>
+            <p class="chapter-link">
+                Chapter 4 - Monitoring
+            </p>
+          </a>
+      </div>
+      <div class="next">
+          <a href="/workbook/eliminating-toil/">
+            <p class="footer-caption">Next</p>
+            <p class="chapter-link">
+                Chapter 6 - Eliminating Toil
+            </p>
+          </a>
+      </div>
+        <p class="footer-link">Copyright © 2018 Google, Inc. Published by O'Reilly Media, Inc. Licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="noopener noreferrer" target="_blank">CC BY-NC-ND 4.0</a></p>
+    </div>
+  </div>
+    </main>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-animate.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-touch.min.js"></script>
+    <script src="/sre-book/static/js/index.min.js?cache=5b7f90b"></script>
+
+  </body>
+</html>

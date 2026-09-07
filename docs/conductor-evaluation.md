@@ -2,7 +2,7 @@
 
 Source expansion and harness-specific candidate metrics: [metric-source-catalog.md](metric-source-catalog.md).
 
-Status: implementation specification, not deployed metric enforcement. The current VERDICT uses
+Status: stage-one measurement candidate implemented below; not deployed metric enforcement. The current VERDICT uses
 free-text SRE and arc42 assessments. Source audit work strengthens provenance but does not complete
 the measurement and decision framework described here.
 
@@ -64,3 +64,60 @@ each gate passed/failed and show it with its observation window on the local mon
 
 Verify reference scope from primary sources during implementation. Retain their URLs and the fetched
 content/version evidence in the dossier; do not treat this specification as upstream source code analysis.
+
+## Stage one candidate implementation
+
+Definitions are versioned dataclasses in `domain/measurements.py` (version/query version 1).
+The host monitor calls the application `Measurements` use case through the existing `Store`
+and `ArtifactStore` ports. Production uses PostgreSQL `documents` under `metric_observations`;
+no schema migration is needed. Content-addressed snapshots retain inputs and exact definitions;
+each observation includes their hash, collector repository HEAD, window, reason and evidence reference.
+The monitor shows measurements with drill-down provenance. These observations have no release authority.
+The deployed workload may differ from collector HEAD: HEAD identifies the measuring implementation,
+not an assertion that every sampled task ran on that revision.
+
+Population semantics:
+
+- Reliability uses tasks created in the trailing 24-hour half-open interval `[start,end)`.
+  First-attempt success divides successful first outcomes by resolved first outcomes, including
+  failures, cancellations during attempt one and recorded lease expiry. Unstarted and unresolved
+  attempts are outside that denominator. A lease expiry is recorded when the scheduler reclaims
+  work, not inferred as an actual process failure by the monitor. Missing legacy first outcomes
+  invalidate that metric rather than being reconstructed from a later success.
+- Terminal logical success counts each task ID once and includes failed, cancelled and expired
+  terminal tasks, including cancellation/expiry before execution. Queued/running/retry tasks are
+  excluded until terminal. Retries share an ID; a separate rebase/rework assignment is a separate
+  logical task. Duplicate input IDs invalidate the population. Delivery retries do not create IDs.
+- All persisted task classes are included, including maintenance and synthetic assignments if
+  submitted as tasks. There is no reliable synthetic discriminator in legacy records. Independent
+  decision records and standalone CLI canaries are excluded from reliability; these ratios must
+  not be represented as production-only reliability or a canary success rate.
+- Capacity is an instantaneous count of running task AND decision records with leases strictly
+  after observation time. Expired leases are excluded. It measures scheduler leases, not operating
+  system process concurrency. Its sole target comes from `POLICY.max_active_executions` (currently 2).
+- Freshness is 120 seconds; minimum samples is one (one snapshot for capacity). These are initial
+  measurement configuration choices, not SRE-certified thresholds or statistical confidence.
+  Zero reliability population is unknown; a complete empty capacity snapshot is a valid zero.
+  Both reliability targets are undefined, so values retain status unknown with an observational
+  reason. No baseline/candidate comparison is available in stage one.
+
+Workflow outcome history is appended inside the existing authorized, lease-fenced transactions.
+Failed attempt details survive later success. No historical errors are backfilled. Source snapshots
+are written outside the DB transaction to preserve the artifact-maintenance lock order, then all
+three observation records commit together. Artifact failure or DB failure yields unavailable monitor
+collection; it cannot yield approval. An orphan artifact from a failed DB write is eligible for the
+existing unreferenced-artifact collector. Referenced observations/evidence are retained; observation
+compaction and long-term sampling/storage budgets are pending.
+
+Primary documentation scope was verified on 2026-09-07. Fetched pages and SHA-256 manifests are in
+`docs/evidence/measurement-stage-one/`. Google SRE supports explicit good/eligible-event SLIs and
+stakeholder-defined SLOs, with alerting tied to defined error budgets. arc42 describes measurable
+quality scenarios and architecture decision documentation. These inform the specification; this is
+not a source repository adoption audit or full standards implementation.
+
+Pending: approved SLOs/error budgets/burn rates, latency/queue/recovery and CLI measurements,
+architecture scenarios and dependency analysis, GraphRAG impact and revision checks, CPU/memory,
+tokens/cost/idle/wake telemetry, incident recurrence and self-improvement benefit comparisons.
+Independent incumbent lead/conductor review, actual candidate CLI canaries and production validation
+remain required. Rollback uses the existing release path; appended measurement/history fields are
+additive and do not require destructive schema downgrade.

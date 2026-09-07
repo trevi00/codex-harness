@@ -30,3 +30,9 @@ Audit wire schema: `src/codex_harness/resources/research.schema.json`.
 Dormant seed definitions: `src/codex_harness/resources/research-backlog.json`.
 Remaining integration work is explicit in `docs/research-standard.md`; these invariant definitions
 must not be read as evidence that pending execution or rollout integrations exist.
+
+## Bounded conductor measurements
+
+| ID | Contract |
+|---|---|
+| INV-METRIC-001 | Git versions metric populations and formulas; PostgreSQL retains observations bound to immutable inputs and repository revision. Retries retain failed attempt outcomes. Missing, invalid, stale, future or insufficient evidence is unknown. Undefined targets remain observational. Measurements never authorize promotion or replace independent reviews and actual CLI canaries. |
