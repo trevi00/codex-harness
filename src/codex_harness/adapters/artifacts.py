@@ -53,6 +53,13 @@ class FileArtifacts:
         require(isinstance(value, dict), "Evidence document must be an object")
         return value
 
+    def text(self, reference: str, max_bytes: int) -> str:
+        """One integrity-checked bounded document read for mechanical consumers."""
+        require(type(max_bytes) is int and 0 < max_bytes <= 1024 * 1024, 'Invalid text budget')
+        body = self._body(reference)
+        require(len(body.encode('utf-8')) <= max_bytes, 'Artifact exceeds text budget')
+        return body
+
     def read(self, reference: str, start: int = 0, length: int = 8000) -> str:
         require(start >= 0 and 0 < length <= 32000, "Artifact read exceeds budget")
         return self._body(reference)[start:start + length]

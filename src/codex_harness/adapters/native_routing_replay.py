@@ -32,9 +32,7 @@ class NativeRoutingReplay:
             if not row['routing_eligible']:
                 continue
             ref_body = row['content_ref']
-            size = self.artifacts.inspect(ref_body)['characters']
-            require(size <= 1024 * 1024, 'Replay body exceeds bound')
-            text = ''.join(self.artifacts.read(ref_body, start, 32000) for start in range(0, size, 32000))
+            text = self.artifacts.text(ref_body, 1024 * 1024)
             meta, body = frontmatter(text)
             require(meta is not None and len(body) == row['body_chars'], 'Body evidence mismatch')
             ranked.append((row['score'], row['path'], row['dimensions'], body))
@@ -56,19 +54,21 @@ class NativeRoutingReplay:
     def evaluate(self, events, values):
         require(all(finite_number(value) for value in values), 'Invalid native replay values')
         cache, observations = {}, []
-        for event in events:
+        for index, event in enumerate(events):
             ref = event.get('manifest_ref') if isinstance(event, dict) else None
             if not isinstance(ref, str):
-                observations.append({'status': 'unavailable', 'reason': 'manifest_required'})
+                observations.append({'event_index': index, 'status': 'unavailable', 'reason': 'manifest_required'})
                 continue
             if ref not in cache:
                 try:
                     cache[ref] = self._manifest(ref, values)
-                except (ContractError, OSError, ValueError, KeyError, TypeError) as exc:
+                except (ContractError, OSError, ValueError, KeyError, TypeError, RecursionError) as exc:
                     cache[ref] = {'manifest_ref': ref, 'status': 'unavailable', 'reason': type(exc).__name__}
-            observations.append(cache[ref])
-        return {'model': ADMISSION_MODEL, 'values': values, 'observations': observations,
-                'replayed_events': sum(row['status'] == 'replayed' for row in observations),
+            observations.append({'event_index': index, 'manifest_ref': ref, 'status': cache[ref]['status']})
+        replayed = sum(row['status'] == 'replayed' for row in observations)
+        return {'status': 'complete' if replayed == len(events) and events else 'partial' if replayed else 'unavailable',
+                'model': ADMISSION_MODEL, 'values': values, 'observations': observations,
+                'manifests': cache, 'distinct_manifests': len(cache), 'replayed_events': replayed,
                 'total_events': len(events), 'activation_ready': False,
                 'limitations': ['Reuses recorded matching scores; does not rerun matching against a changed prompt.',
                     'Full-body selection only; excludes legacy bodies, pointers, advice and final context compilation.',

@@ -112,7 +112,7 @@ definition. Only implemented, unlocked registry consumers accept finite numeric
 overrides. Invalid definitions fail explicitly. Resolved values and definition
 identity accompany routing evidence; a calculated or assessed proposal cannot write
 the active definition. Candidate promotion and rollback retain release authority.
-# INV-NATIVE-REPLAY-001
+## INV-NATIVE-REPLAY-001
 
 Native comparison uses the live admission/budget function and immutable full routing
 inputs. Recorded full-body hashes, count and truncation must reproduce before any

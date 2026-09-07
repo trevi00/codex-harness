@@ -24,6 +24,17 @@ reported unavailable rather than counted as a successful replay. Repeated manife
 reads are cached within one evaluation; repeated events remain distinct observations,
 not proof of statistically independent samples.
 
+Review follow-up: the first committed comparison is reused for an identical input
+basis (project, full policy, corpus, source identity, sample floor and evaluator mode).
+This prevents later artifact loss or restoration from silently creating duplicate
+proposal runs. Concurrent collectors resolve to the first committed run. A new
+policy/corpus basis is required for reevaluation; an explicit refresh API remains
+future work. Reuse returns the retained historical result, not a fresh integrity
+check of all transitive files. Review/execution must still obtain the required evidence.
+Distinct manifests are archived once and event-indexed observations reference them.
+Reports expose complete/partial/unavailable status and distinct-manifest counts;
+incomplete evaluation adds a blocker. Body reads hash/decode once per bounded read.
+
 The collection CLI supplies this evaluator to the application use case and archives
 the result in the same immutable corpus document as the reference proposals. Embedded
 callers without an evaluator explicitly record unavailability. This is an optional

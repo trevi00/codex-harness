@@ -56,6 +56,7 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
         evidence_refs[path] = artifacts.put(head, f'git:{revision}:{normalized}:head')['ref']
     bodies, ranked, legacy = {}, [], []
     by_path = {record['path']: record for record in records}
+    require(len(by_path) == len(records), 'Duplicate routing identity')
     for item in items:
         path = item.id.removeprefix('project-skill:')
         record = by_path[path]

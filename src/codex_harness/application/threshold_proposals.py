@@ -21,9 +21,17 @@ class ThresholdProposals:
         with self.store.transaction() as tx:
             state = tx.get(bucket, key) or {'events': []}
         events = state['events'][-MAX_EVENTS:]
+        basis = digest({'project': project, 'policy': policy, 'events': events, 'legacy_source': legacy_source,
+                        'source_ref': state.get('source_ref'), 'min_sample': min_sample,
+                        'native_evaluator': self.native_replay is not None, 'collection_version': 2})
+        with self.store.transaction() as tx:
+            previous = tx.get('threshold_collection_inputs', basis)
+            if previous:
+                return tx.get('threshold_proposal_runs', previous['run_id'])
         proposals = propose_threshold_changes(events_by_source={'skill-match': events},
             current_values=policy['values'], policy_revision=policy['revision'], min_sample=min_sample)
         document = {'project_key': project, 'legacy_source': legacy_source,
+            'collection_basis': basis,
             'source_ref': state.get('source_ref'), 'policy': policy, 'events': events,
             'min_sample': min_sample, 'proposals': proposals}
         values = sorted({policy['values']['skill_match.FULL_BODY_MIN_SCORE'],
@@ -40,6 +48,8 @@ class ThresholdProposals:
         for proposal in proposals:
             partitions = proposal['report']['partitions']
             blockers = ['native_task_success_and_release_review_required']
+            if document['native_routing'].get('status') != 'complete':
+                blockers.append('native_replay_incomplete')
             if not proposal['reference_accepted']:
                 blockers.append('reference_gate_rejected')
             if not partitions or any(part['proposed_admitted_entries'] == 0 for part in partitions.values()):
@@ -50,6 +60,10 @@ class ThresholdProposals:
                 'project_key': project, 'proposal': proposal, 'evidence_ref': receipt['ref'],
                 'status': 'calculated', 'activation_ready': False, 'activation_blockers': blockers})
         with self.store.transaction() as tx:
+            # INV-NATIVE-REPLAY-001: first committed evaluation is immutable for this input basis.
+            previous_input = tx.get('threshold_collection_inputs', basis)
+            if previous_input:
+                return tx.get('threshold_proposal_runs', previous_input['run_id'])
             previous = tx.get('threshold_proposal_runs', run_id)
             if previous:
                 return previous
@@ -57,6 +71,7 @@ class ThresholdProposals:
                 'evidence_ref': receipt['ref'], 'proposals': rows, 'status': 'calculated',
                 'activation_ready': False, 'created_at': utcnow()}
             tx.put('threshold_proposal_runs', run_id, run)
+            tx.put('threshold_collection_inputs', basis, {'run_id': run_id})
             for row in rows:
                 tx.put('threshold_proposals', row['id'], row)
         return run

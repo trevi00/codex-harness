@@ -30,8 +30,8 @@ the human-facing part of source calibration review; implementation/apply authori
 native performance evaluation and rollback remain separate unfinished work.
 
 The source binding includes review, lease, Git, command, artifact, store and runtime
-policy code plus the organization and threshold resources (22 fixed files; see
-`baldrix-runtime-thresholds.md` for the shared resolver added after initial assessment verification).
+policy code plus the organization and threshold resources (24 fixed files; see
+`baldrix-runtime-thresholds.md` and `native-routing-replay.md` for additions after initial verification).
 Older calculated policy snapshots must be recollected before current-policy review.
 Terminal requests are idempotent; retrying the request command does not start a new
 review round. Changed evidence/policy creates a new calculation/request identity.

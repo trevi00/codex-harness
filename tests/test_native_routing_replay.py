@@ -44,7 +44,7 @@ def routed(tmp_path):
 def test_replay_matches_actual_bodies_and_uses_base_instead_of_boosted_score(tmp_path):
     artifacts, _, ref, output = routed(tmp_path)
     report = NativeRoutingReplay(artifacts).evaluate([{'manifest_ref': ref}], [1, 3, 5])
-    result, = report['observations']
+    result = report['manifests'][ref]
     assert result['status'] == 'replayed'
     actual = {item.id.removeprefix('project-skill:'): digest(item.body)
               for item in output if item.priority == 18}
@@ -94,3 +94,29 @@ def test_real_collection_cli_archives_native_comparison_with_reference_proposals
     native = document['native_routing']
     assert native['replayed_events'] == 40 and native['values'] == [2, 3, 4]
     assert not run['activation_ready'] and not native['activation_ready']
+    assert native['distinct_manifests'] == 1 and len(native['manifests']) == 1
+    # Losing transitive files cannot create another run for the same input basis.
+    native_ref = native['manifests'][ref]['body_refs'][0]
+    (artifacts.root / (native_ref[7:] + '.txt')).unlink()
+    assert main(['--github-repo', 'owner/repo', '--harness-repo', str(root),
+                 '--artifacts', str(artifacts.root)], store=store) == 0
+    assert json.loads(capsys.readouterr().out) == run
+
+
+def test_actual_project_context_manifest_reproduces(policy_repo, tmp_path):
+    from codex_harness.adapters.project_skills import project_context
+
+    root, git = policy_repo
+    path = root / '.harness/skills/_common/fixture.md'
+    path.parent.mkdir(parents=True)
+    path.write_text('---\nkeywords: alpha beta gamma\n---\nREAL BODY', encoding='utf-8')
+    git._git('add', '.')
+    git._git('commit', '-qm', 'project skill fixture')
+    revision = git._git('rev-parse', 'HEAD')
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    output, selection = project_context(git, artifacts, str(root), revision, 'alpha beta gamma')
+    report = NativeRoutingReplay(artifacts).evaluate([{'manifest_ref': selection['manifest_ref']}], [3, 4])
+    assert report['status'] == 'complete'
+    replayed = report['manifests'][selection['manifest_ref']]
+    assert replayed['baseline']['selected'] == {
+        item.id.removeprefix('project-skill:'): digest(item.body) for item in output if item.priority == 18}
