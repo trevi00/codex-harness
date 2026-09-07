@@ -299,6 +299,53 @@ def test_missing_execution_and_unresolved_subsystems_stay_remaining(audit):
     assert service.coverage(record['id'])['remaining_subsystems'] == ['core']
 
 
+@pytest.mark.parametrize('with_receipt', [False, True])
+def test_unexecuted_subsystem_persists_but_cannot_complete_or_adopt(audit, with_receipt):
+    from codex_harness.domain.research import SubsystemAnalysis
+    service, record, source, _, _ = audit
+    activate_fixture(service)
+    proposal = complete_fixture_audit(service, record, source)
+    with service.store.transaction() as tx:
+        part = next(p for p in tx.scan('research_partitions') if p['subsystems'])
+    message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_partition',
+        {'audit_id': record['id'], 'partition_id': part['partition_id']}, 'partial-tests')
+    service.workflow.submit(message)
+    task = service.workflow.claim('worker:github', 'fixture')
+    assert task is not None
+    service.propose(record['id'], proposal)
+    approve_fixture(service, 'lead:research')
+    approve_fixture(service, 'conductor')
+    assert service.coverage(record['id'])['adoption_eligible']
+    ref = service.artifacts.put('tests could not run', 'fixture')['ref']
+    receipts = []
+    if with_receipt:
+        receipts = [service.execute(task, record['id'], ['source-list'])['id']]
+    analysis = SubsystemAnalysis('core', [record['inventory'][0]['path']], ['contract'], ['main'],
+        ['impl'], ['caller'], ['config'], ['git'], ['failure'], [], receipts, [ref], [], [],
+        [{'test': 'upstream test suite', 'reason': 'isolation unavailable',
+          'follow_up': 'run in verified runner'}])
+    checkpoint = replace(PartitionCheckpoint(**part), remaining_subsystems=['core'])
+    saved = service.checkpoint(task, checkpoint, [], [analysis])
+    with service.store.transaction() as tx:
+        row = next(r for r in tx.scan('research_subsystems') if r['audit_id'] == record['id'])
+        assert row['record'] == asdict(analysis)
+        assert any(r['record'] == asdict(analysis) for r in tx.scan('research_evidence_history'))
+    coverage = service.coverage(record['id'])
+    assert coverage['remaining_paths'] == []
+    assert coverage['remaining_subsystems'] == ['core']
+    assert not coverage['adoption_eligible']
+    with pytest.raises(ContractError, match='Remaining work does not reconcile'):
+        service.checkpoint(task, replace(PartitionCheckpoint(**saved), remaining_subsystems=[]), [], [analysis])
+    with pytest.raises(ContractError, match='Audit coverage incomplete'):
+        service.propose(record['id'], proposal)
+    with pytest.raises(ContractError, match='Missing subsystem trace: tests'):
+        replace(analysis, tests_not_run=[]).validate()
+    for field in ('test', 'reason', 'follow_up'):
+        unexplained = {**analysis.tests_not_run[0], field: ''}
+        with pytest.raises(ContractError, match='Unexplained test not run'):
+            replace(analysis, tests_not_run=[unexplained]).validate()
+
+
 def test_checkpoint_history_retains_transitive_evidence(audit):
     import os
 
