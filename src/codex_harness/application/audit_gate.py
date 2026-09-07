@@ -77,17 +77,19 @@ def inspect_approval(tx, details, artifacts):
         return
     import re
 
-    from codex_harness.domain.model import ContractError
     references = set()
-    def collect(value):
+    def collect(value, reference_slot=False):
         if isinstance(value, dict):
-            for child in value.values():
-                collect(child)
+            for key, child in value.items():
+                # INV-RESEARCH-003: Docker digests and command output are not artifact edges.
+                collect(child, key == 'ref' or key.endswith(('_ref', '_refs')))
         elif isinstance(value, list):
             for child in value:
-                collect(child)
-        elif isinstance(value, str):
-            references.update(re.findall(r'sha256:[0-9a-f]{64}', value))
+                collect(child, reference_slot)
+        elif isinstance(value, str) and reference_slot:
+            require(re.fullmatch(r'sha256:[0-9a-f]{64}', value) is not None,
+                    'Invalid declared artifact reference')
+            references.add(value)
     def approval_ids(value):
         if isinstance(value, dict):
             return ([value['audit_approval']] if 'audit_approval' in value else []) + [
@@ -108,6 +110,7 @@ def inspect_approval(tx, details, artifacts):
         artifacts.inspect(ref)
         # Full document traversal is mechanical validation; model context stays bounded.
         try:
-            collect(artifacts.document(ref))
-        except (ValueError, ContractError):
-            pass
+            document = artifacts.document(ref)
+        except ValueError:
+            continue  # Plain text has no declared structured reference edges.
+        collect(document)

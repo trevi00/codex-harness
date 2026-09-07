@@ -80,6 +80,11 @@ successful command-execution receipts. Descriptive test names without execution 
 `tests_not_run` with a reason and follow-up. Inert source listing/reading never establishes test
 execution. Result consumption rechecks task authority, activation and deployment after completion.
 
+Structured evidence declares transitive artifact edges through `ref`, `*_ref` or `*_refs` fields.
+These must contain complete artifact handles; missing or corrupted declared children block adoption.
+Image digests, argv values and text mentioning SHA-256 identities are data rather than artifact edges.
+Custom evidence documents must name their dependent artifacts explicitly with these fields.
+
 Completed coverage and resolved partition questions permit adaptation proposals. Independent research
 lead and conductor decisions use separate fenced leases and successful command inspection. Their
 bindings include the source, coverage, referenced execution receipts, proposal, current deployed

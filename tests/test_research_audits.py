@@ -305,7 +305,7 @@ def test_checkpoint_history_retains_transitive_evidence(audit):
     service, record, _, entries, _ = audit
     task, checkpoint = assigned_partition(service, record)
     leaf = service.artifacts.put('original evidence', 'fixture')['ref']
-    parent = service.artifacts.put(canonical({'original': leaf}), 'fixture')['ref']
+    parent = service.artifacts.put(canonical({'original_ref': leaf}), 'fixture')['ref']
     p = PathDisposition(checkpoint.paths[0], 'semantic', [parent], ['symbol'], 'trace', [], '', [])
     service.checkpoint(task, replace(checkpoint, remaining_paths=[], cursor='next'), [p], [])
     for path in service.artifacts.root.glob('*.txt'):
@@ -420,6 +420,36 @@ def test_positive_lifecycle_dispatch_revalidation_and_rollback(audit, predecesso
     assert schedule_audits(service.workflow) == 0
     with service.store.transaction() as tx:
         assert tx.scan('research_evidence_history') and tx.scan('research_approvals')
+
+
+@pytest.mark.parametrize('damage', ['missing', 'corrupt'])
+def test_host_output_digests_are_not_artifact_edges_but_declared_children_are(audit, monkeypatch, damage):
+    from codex_harness.adapters.source_execution import DockerSourceRunner
+    service, record, source, _, _ = audit
+    activate_fixture(service)
+    child = service.artifacts.put('retained child evidence', 'fixture')['ref']
+    def fixture_process(argv, timeout):
+        return subprocess.CompletedProcess(argv, 0, 'fixture process; not an actual Docker execution', '')
+    monkeypatch.setattr('codex_harness.adapters.source_execution.bounded_command', fixture_process)
+    monkeypatch.setattr('codex_harness.adapters.source_execution.run_process', fixture_process)
+    def structured_output(self, source, command):
+        image = 'sha256:' + 'a' * 64
+        receipt = DockerSourceRunner(self.artifacts.root.parent / 'host', self.artifacts).execute(
+            source, command, image)
+        output = {**self.artifacts.document(receipt.output_ref), 'artifact_refs': [child]}
+        return replace(receipt, output_ref=self.artifacts.put(canonical(output), 'host-format-fixture')['ref'])
+    monkeypatch.setattr(FixtureRunner, 'execute', structured_output)
+    proposal = complete_fixture_audit(service, record, source)
+    service.propose(record['id'], proposal)
+    approve_fixture(service, 'lead:research')
+    approve_fixture(service, 'conductor')
+    assert service.coverage(record['id'])['adoption_eligible']
+    path = service.artifacts.root / (child[7:] + '.txt')
+    if damage == 'missing':
+        path.unlink()
+    else:
+        path.write_text('changed evidence')
+    assert not service.coverage(record['id'])['adoption_eligible']
 
 
 @pytest.mark.parametrize('change', ['graph', 'evidence', 'receipt', 'review_receipt', 'policy', 'revision'])
