@@ -24,8 +24,9 @@ class DatabaseFacts:
     def read(self):
         with self.service.store.transaction() as tx:
             data = {name: tx.scan(name) for name in ('tasks', 'decisions_pending', 'sessions',
-                    'execution_progress', 'hooks', 'releases', 'events')}
+                    'execution_progress', 'hooks', 'releases', 'events', 'reference_audits')}
             active, health = tx.get('deployment', 'active'), tx.get('health', 'latest')
+        progress_by_id = {p['id']: p for p in data['execution_progress']}
         def work(row, decision=False):
             message = row.get('message', {})
             details = message.get('what', {}).get('details', {})
@@ -37,7 +38,10 @@ class DatabaseFacts:
                     'correlation': message.get('correlation_id'), 'parent': message.get('causation_id'),
                     'attempt': row.get('attempt', 0), 'lease_until': row.get('lease_until'),
                     'created_at': row.get('created_at') or message.get('when', {}).get('created_at'),
-                    'completed_at': row.get('completed_at'), 'error': safe_text(row.get('error')),
+                    'completed_at': row.get('completed_at'),
+                    'progress_at': progress_by_id.get(row['id'], {}).get('at'),
+                    'release_id': result.get('release_id'),
+                    'error': safe_text(row.get('error')),
                     'reason': safe_text(result.get('reason')), 'accepted': result.get('accepted'),
                     'evidence': result.get('execution_ref'), 'revision': result.get('candidate', {}).get('revision')}
         tasks = [work(row) for row in data['tasks']]
@@ -87,7 +91,10 @@ class DatabaseFacts:
                 'reviews': [{k: r.get(k) for k in ('actor', 'accepted', 'evidence')} for r in row.get('reviews', [])],
                 'checks': {name: {'passed': check.get('passed'), 'evidence': check.get('evidence')}
                            for name, check in row.get('checks', {}).items()}})
+        audits = [{k: row.get(k) for k in ('id', 'repository', 'revision', 'status', 'files', 'manifest_ref')}
+                  for row in data['reference_audits']]
         return {'agents': agents, 'tasks': tasks, 'decisions': decisions, 'hooks': hooks, 'releases': releases,
+                'audits': audits,
                 'active': {k: (active or {}).get(k) for k in ('release_id', 'revision', 'at')},
                 'health': {k: (health or {}).get(k) for k in ('status', 'checked_at')},
                 'events': [{k: row.get(k) for k in ('type', 'at', 'task_id', 'hook_id', 'release_id')}

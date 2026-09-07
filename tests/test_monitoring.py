@@ -7,7 +7,35 @@ from types import SimpleNamespace
 
 from codex_harness.adapters.monitoring import safe_text
 from codex_harness.adapters.monitoring_web import handler
-from codex_harness.application.monitoring import Monitoring
+from codex_harness.application.monitoring import Monitoring, initiatives
+
+
+def test_completed_implementation_does_not_hide_blocked_review():
+    now = datetime.now(timezone.utc)
+    facts = {'tasks': [{'id': 'impl', 'correlation': 'goal', 'phase': 'implement',
+                       'status': 'succeeded', 'created_at': now.isoformat(), 'objective': 'Improve'}],
+             'decisions': [{'id': 'review', 'correlation': 'goal', 'phase': 'review_lead',
+                           'status': 'blocked', 'reason': 'Cannot inspect candidate',
+                           'created_at': now.isoformat()}], 'releases': []}
+    result = initiatives(facts, now)[0]
+    assert result['status'] == 'attention'
+    assert result['reason'] == 'Cannot inspect candidate'
+    assert result['stages'][-1]['status'] == 'waiting'
+    facts['decisions'] = []
+    assert initiatives(facts, now)[0]['status'] == 'awaiting_next_stage'
+
+
+def test_failed_canary_and_expired_lease_are_attention_states():
+    now = datetime.now(timezone.utc)
+    facts = {'tasks': [{'id': 'impl', 'correlation': 'goal', 'phase': 'implement',
+                       'status': 'running', 'revision': 'abc',
+                       'lease_until': (now - timedelta(seconds=1)).isoformat()}],
+             'decisions': [], 'releases': [{'id': 'release', 'revision': 'abc', 'status': 'rejected',
+                                          'checks': {'cli': {'passed': False}}}]}
+    result = initiatives(facts, now)[0]
+    assert result['status'] == 'attention'
+    assert result['stages'][1]['status'] == 'lease_expired'
+    assert result['stages'][-2]['status'] == 'failed'
 
 
 def test_expired_execution_and_stale_health_are_not_live():
