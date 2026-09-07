@@ -12,6 +12,9 @@ from codex_harness.domain.skill_history import MAX_EVENTS, TOP_MATCHES
 MAX_INPUT_BYTES = 8 * 1024 * 1024
 MAX_LINE_BYTES = 64 * 1024
 MAX_IMPORT_SCORE = 2**31 - 1
+MAX_NAME_BYTES = 512
+MAX_DIMENSIONS = 128
+MAX_DIMENSION_BYTES = 512
 IMPORT_VERSION = 1
 
 
@@ -80,9 +83,16 @@ def project_jsonl(data, source, *, start=0, line_offset=0):
                 if len(issues) < 20:
                     issues.append({'line': number, 'entry': index, 'reason': 'invalid_top_entry'})
                 continue
+            dims = entry.get('dims')
+            if (len(entry['name'].encode('utf-8')) > MAX_NAME_BYTES
+                    or (isinstance(dims, list) and (len(dims) > MAX_DIMENSIONS
+                        or any(isinstance(d, str) and len(d.encode('utf-8')) > MAX_DIMENSION_BYTES for d in dims)))):
+                counts['invalid_entries'] += 1
+                if len(issues) < 20:
+                    issues.append({'line': number, 'entry': index, 'reason': 'oversized_top_entry'})
+                continue
             item = {'path': 'legacy-name:' + entry['name'], 'content_ref': unknown_version,
                     'score': entry['score'], 'legacy_name': entry['name']}
-            dims = entry.get('dims')
             if isinstance(dims, list):
                 item['dimensions'] = [d if isinstance(d, str) else 'unknown' for d in dims]
             size = entry.get('body_chars')

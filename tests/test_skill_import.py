@@ -92,6 +92,32 @@ def test_unbounded_integer_score_is_retained_only_in_raw_source():
     assert parsed['counts']['invalid_lines'] == 1 and parsed['counts']['events'] == 1
 
 
+@pytest.mark.parametrize('entry', [
+    {'name': 'x' * 513, 'score': 1},
+    {'name': 'x', 'score': 1, 'dims': ['kw:x'] * 129},
+    {'name': 'x', 'score': 1, 'dims': ['x' * 513]},
+])
+def test_oversized_projected_fields_are_counted(entry):
+    result = project_jsonl(row(top=[entry]), 'segment')
+    assert result['counts']['invalid_entries'] == 1 and result['events'] == []
+    assert result['issues'][0]['reason'] == 'oversized_top_entry'
+
+
+def test_wrong_category_does_not_claim_source_and_pending_snapshot_refs_are_distinct(tmp_path):
+    store, artifacts = MemoryStore(), FileArtifacts(str(tmp_path / 'artifacts'))
+    path = tmp_path / 'source.jsonl'
+    path.write_bytes(b'{"name":"hook-latency","duration":5}\n')
+    with pytest.raises(ContractError, match='input log category'):
+        import_file(path, 'project', 'source', store, artifacts)
+    assert store.data == {}
+    path.write_bytes(row())
+    committed = import_file(path, 'project', 'source', store, artifacts)
+    path.write_bytes(row() + b'{"partial":')
+    pending = import_file(path, 'project', 'source', store, artifacts)
+    assert not pending['changed']
+    assert pending['source_ref'] == committed['source_ref'] != pending['input_ref']
+
+
 def test_concurrent_reimport_and_retention_keep_one_cursor(monkeypatch):
     monkeypatch.setattr('codex_harness.application.skill_import.MAX_EVENTS', 2)
     store = MemoryStore()

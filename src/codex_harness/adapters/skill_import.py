@@ -54,7 +54,10 @@ def main(argv=None):
         else:
             report = import_file(args.file, digest(project), args.source_id,
                                  PostgresStore(database_url()), FileArtifacts(args.artifacts))
-    except (ContractError, ValueError) as exc:
+    except ContractError as exc:
+        print(json.dumps({'error': 'ContractError', 'message': str(exc)}), file=sys.stderr)
+        return 2
+    except ValueError as exc:
         print(json.dumps({'error': type(exc).__name__}), file=sys.stderr)
         return 2
     except Exception as exc:

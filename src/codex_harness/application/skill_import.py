@@ -31,8 +31,11 @@ class SkillImport:
                 require(len(data) >= start and hashlib.sha256(data[:start]).hexdigest() == old['prefix_sha256'],
                         'Previously imported prefix changed; use a different ID for a new segment')
             batch = project_jsonl(data, source, start=start, line_offset=old['counts']['lines'] if old else 0)
+            require(old is not None or batch['counts']['events'] > 0 or batch['counts']['invalid_lines'] == 0,
+                    'No valid skill records found; verify the input log category before importing')
             counts = {k: v + (old['counts'][k] if old else 0) for k, v in batch['counts'].items()}
             state = {'version': IMPORT_VERSION, 'project_key': project, 'source_id': source,
+                     'created_at': old.get('created_at', old['at']) if old else utcnow(),
                      'consumed_bytes': batch['consumed_bytes'], 'prefix_sha256': batch['prefix_sha256'],
                      'counts': counts, 'events': ((old['events'] if old else []) + batch['events'])[-MAX_EVENTS:],
                      'source_ref': source_ref, 'at': utcnow()}
@@ -42,7 +45,8 @@ class SkillImport:
             return {'project_key': project, 'source_id': source, 'changed': changed,
                     'added': batch['counts'], 'total': counts, 'retained_events': len(state['events']),
                     'pending_bytes': batch['pending_bytes'], 'issues': batch['issues'],
-                    'source_ref': source_ref, 'consumed_bytes': batch['consumed_bytes']}
+                    'source_ref': state['source_ref'] if changed else old['source_ref'],
+                    'input_ref': source_ref, 'consumed_bytes': batch['consumed_bytes']}
 
     def audit(self, project, source, **options):
         validate_source(source)

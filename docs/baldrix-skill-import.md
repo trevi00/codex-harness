@@ -41,6 +41,9 @@ are counted and skipped in projection, with up to 20 issue examples per invocati
 Projected scores must be non-negative 32-bit signed integers; larger values stay in
 the raw archive and are counted as invalid entries rather than overflowing median
 calculations. This is an explicit import boundary, not a claim about an upstream cap.
+Names are capped at 512 UTF-8 bytes; at most 128 dimensions, each at most 512 bytes,
+are projected per entry. Oversized entries are counted and remain in the raw archive.
+The total original prefix remains bounded by the 8-MiB segment limit across appends.
 The immutable source keeps every skipped byte. Valid empty top lists remain invocations;
 wholly invalid top lists do not become empty successful observations. Partially valid
 top lists retain valid entries and count invalid ones.
@@ -52,6 +55,12 @@ documented time-filter behavior. Dimensions and valid body sizes are retained; n
 score, skill version or omitted metadata is invented. Other source fields remain in the
 raw artifact. Duplicate display names remain duplicate top entries as in upstream;
 name collisions cannot be resolved retrospectively.
+An initial snapshot with invalid lines and no valid skill events fails without claiming
+a database cursor, so a wrong-category input can be corrected. Empty/blank or wholly
+pending snapshots are allowed. CLI contract errors include their actionable reason.
+Replies distinguish `source_ref` (the committed snapshot) from `input_ref` (the exact
+file inspected this call); a pending-only change does not replace the committed ref.
+State retains both `created_at` and last-advance `at`, separate from source event times.
 
 Imported records live in `legacy_skill_imports`, scoped by project plus source ID. Their
 identity is explicitly `legacy-name:*` / `legacy-version-unknown:*`. The audit can inspect
