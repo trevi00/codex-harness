@@ -1,5 +1,6 @@
 """Bounded hot history, permanent small deduplication ledger, transactional writes."""
 from codex_harness.domain.model import digest, require, utcnow
+from codex_harness.domain.skill_audit import audit_history
 from codex_harness.domain.skill_history import MAX_EVENTS, TOP_MATCHES, assess_history
 
 
@@ -11,6 +12,11 @@ class SkillHistory:
         with self.store.transaction() as tx:
             state = tx.get('skill_history', project) or {'events': []}
         return assess_history(state['events'], current, exclude)
+
+    def audit(self, project, **options):
+        with self.store.transaction() as tx:
+            state = tx.get('skill_history', project) or {'events': []}
+        return {'project_key': project, **audit_history(state['events'], **options)}
 
     def record(self, project, event, guard=None):
         require(all(isinstance(event.get(key), str) and event[key]
@@ -24,9 +30,16 @@ class SkillHistory:
                     and item['score'] >= 0, 'Invalid skill score')
             require(all(isinstance(item.get(key), str) and item[key]
                         for key in ('path', 'content_ref')), 'Invalid skill identity')
+            require(isinstance(item.get('dimensions', []), list)
+                    and all(isinstance(dim, str) for dim in item.get('dimensions', [])),
+                    'Invalid skill dimensions')
         require(len({(r['path'], r['content_ref']) for r in event['top']}) == len(event['top']),
                 'Duplicate skill identity in observation')
-        fingerprint = digest({key: event[key] for key in ('id', 'top', 'manifest_ref')})
+        # INV-SKILL-HISTORY-001: richer passive diagnostics do not create a new
+        # observation or conflict with pre-audit retries of the same selection.
+        scoring = [{key: item[key] for key in ('path', 'content_ref', 'score', 'base_score')
+                    if key in item} for item in event['top']]
+        fingerprint = digest({'id': event['id'], 'top': scoring, 'manifest_ref': event['manifest_ref']})
         key = digest([project, event['id']])
         with self.store.transaction() as tx:
             if guard:
@@ -36,7 +49,7 @@ class SkillHistory:
                 require(prior['fingerprint'] == fingerprint, 'Conflicting skill observation replay')
                 return False
             state = tx.get('skill_history', project) or {'events': []}
-            state['events'] = (state['events'] + [event])[-MAX_EVENTS:]
+            state['events'] = (state['events'] + [{**event, 'at': utcnow()}])[-MAX_EVENTS:]
             tx.put('skill_history', project, state)
             tx.put('skill_observations', key, {'fingerprint': fingerprint,
                    'context_ref': event['context_ref'], 'at': utcnow()})

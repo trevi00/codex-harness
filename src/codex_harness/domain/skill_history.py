@@ -8,6 +8,10 @@ MAX_EVENTS = 4000
 TOP_MATCHES = 5
 
 
+def is_candidate(count, thin_rate, middle, min_samples=MIN_SAMPLES):
+    return count >= min_samples and thin_rate >= FP_THIN_RATE and middle <= THIN_SCORE_CEILING
+
+
 def assess_history(events, current, exclude=None):
     identities = {(record['path'], record['content_ref']) for record in current}
     scores = {}
@@ -24,6 +28,5 @@ def assess_history(events, current, exclude=None):
         middle = median(values)
         result.append({'path': path, 'content_ref': content_ref, 'count': len(values),
                        'median': middle, 'thin_rate': thin_rate,
-                       'candidate': len(values) >= MIN_SAMPLES and thin_rate >= FP_THIN_RATE
-                                    and middle <= THIN_SCORE_CEILING})
+                       'candidate': is_candidate(len(values), thin_rate, middle)})
     return result
