@@ -29,8 +29,11 @@ lexicographically; source `ts` is mapped to native `at`, and unknown dates remai
 the trailing partition. Minimum sample counts must be positive. Boolean/nonfinite
 scores and boolean sizes are excluded. New native observations preserve Unicode
 body character counts before rendering or truncation. Missing historical sizes are
-not invented. Size enrichment does not change observation identity or overwrite a
-previously recorded event on retry (INV-SKILL-HISTORY-001).
+not invented. At the record API boundary, adding size metadata to an event with
+the same ID and manifest does not change its fingerprint or overwrite that event
+(INV-SKILL-HISTORY-001). Across a producer upgrade, enriched manifest bytes change
+the manifest reference and therefore the generated event ID: an old logical task
+can be sampled again. Cross-version logical deduplication remains unresolved.
 
 Tests cover numerical rejection and acceptance, missing sizes, temporal boundaries,
 immutable replay evidence, no database mutation, producer sizing before truncation,
@@ -72,3 +75,47 @@ the observation bound. Unchecked lease ownership still fails closed intentionall
 The diagnostic read currently uses the shared transactional lock; lock-free reads
 remain future infrastructure work. Malformed runtime documents fail with a structured
 unavailable error rather than being silently interpreted as empty evidence.
+
+The next trace also read `scripts/lib/threshold_policy.py`, the full tuning test
+file and locked-registry validator. Call sites found in
+`scripts/cli/calibration_review.py` and `scripts/cli/threshold_override.py` were then
+read in full. The unchanged upstream tuning tests (16) and locked-registry
+tests (3) ran with an isolated write home and all passed:
+`sha256:bf095df2e280641dfd1572acf4cb74a394487ca1304b58566fd2d4469c650f73`.
+
+Source-policy gaps to address in the native integration: apply checks readiness file
+existence but does not compare the recorded suggested/current values or corpus;
+policy file writes and readiness consumption are not one atomic operation; the
+proposer starts from the registry default instead of the currently resolved override.
+Native proposals must bind current Git policy revision, candidate value and evidence;
+the approval/apply path must reject stale or mismatched proposals and preserve audit
+history. These are integration requirements, not claims of implemented controls.
+
+The calibration CLI combines critic, breaker and numeric threshold proposals. Its
+numeric exception handler turns any failure into an empty proposal list, and its
+"dry-run" invocation can still emit readiness files through the proposer. Preserve
+proposal aggregation but surface unavailable sources explicitly in the native CLI;
+distinguish diagnostic reads, staging writes and approved policy application. Critic
+and breaker dependencies need their own complete trace and migration.
+
+Final runtime verification at `2f351af8c91fea01dbfbd3be5b72e5b6c2cae1f9`:
+
+- Windows: 442 passed, 7 skipped;
+  `sha256:83ae116f07f41dba9a05b02a1a09bfa9dd378ca13c1aab6421cc5c7a1bb95449`.
+- Linux: 449 passed, no skips;
+  `sha256:b86e1c514f27492f491b26cc37d329ace67cf8adca2f5432435518ccf969b743`.
+- Actual CLI canary and 88-file immutable image binding:
+  `sha256:758520e2de62c4b579c9e5c9f20a274b021ba84f2b3364c0950c83a8a6d6b203`.
+- PostgreSQL CLI and 1,000 upstream metric comparisons:
+  `sha256:9d3ee7d3117a6927438e2aaab7733a71ec536a2a8dbbc2358b2a70633034822e`.
+- Actual Claude follow-up ACCEPT:
+  `sha256:066ca39151a7d91a9902d0ee73c9f41a468e018aa678ee7327a17bacce424bf7`.
+
+Follow-up review identified remaining work: cross-version manifest/event identity
+above; distinguish observation conflicts from backend unavailability; expose split
+sample counts; directly test legacy-import-to-replay integration; and make numeric
+range exclusions explicit. Integers outside finite floating-point range are excluded
+by replay even though the live record API currently accepts them. Ordinary native
+scores do not approach that range. The reference budget constants are pinned source
+values, not guarantees of native router equivalence. Acceptance of this component
+does not close these gaps or approve policy activation.
