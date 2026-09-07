@@ -91,7 +91,7 @@ def test_composed_budget_fills_lower_rank_and_bounds_pointer_tail(tmp_path):
 
     artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
     items, records = [], []
-    bodies = {'top': 'x' * 3500 + '\n## ???? ??\n' + 'logic' * 12000,
+    bodies = {'top': 'x' * 3500 + '\n## 의사결정 트리\n' + 'logic' * 12000,
               'second': 'SECOND', 'legacy': 'LEGACY'}
     bodies.update({f'weak{i}': 'HIDDEN' for i in range(10)})
     for name, body in bodies.items():

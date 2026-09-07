@@ -40,8 +40,8 @@ stack filtering remains authoritative. Full prompt identity and pattern referenc
 in the manifest, invalidating session recovery when objective/evidence changes.
 
 This component covers score calculation and body/pointer tiers, not every renderer or
-consumer. Cross-skill requires recommendations, phase guidance, Codex tool hints, sensor
-reminders, thin-skill historical advisories, runtime threshold tuning/calibration, all
+consumer. Cross-skill references, phase/tool guidance and sensor reminders are now
+connected by baldrix-skill-guidance.md. Thin-skill historical advisories, runtime threshold tuning/calibration, all
 skill assets and the rest of Baldrix remain open before OMC and Ouroboros. No full source
 migration or production activation claim follows from component acceptance.
 

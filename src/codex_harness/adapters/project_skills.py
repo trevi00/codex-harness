@@ -121,16 +121,23 @@ def project_context(git, artifacts, cwd, revision, objective=None):
                         'pipeline_boost': boost,
                         'file': str(artifacts.root / (stored['ref'][7:] + '.txt'))})
         items.append(ContextItem('project-skill:' + path, body, stored['ref'], revision, 15 + boost))
-    routing = {}
+    routing, guidance_summary = {}, {}
     if objective is not None:
         from codex_harness.adapters.skill_routing import route_skills
 
         items, routing = route_skills(git, artifacts, cwd, revision, objective, items, records)
+        from codex_harness.adapters.skill_guidance import guidance_context
+
+        guidance_item, guidance_summary = guidance_context(
+            artifacts, revision, objective, records, pipeline)
+        items.append(guidance_item)
     manifest = artifacts.put(canonical({'profile': profile, 'revision': revision, 'skills': records,
-                                         'pipeline': pipeline, 'routing': routing}),
+                                         'pipeline': pipeline, 'routing': routing,
+                                         'guidance': guidance_summary}),
                              'project-skill-selection')
     return items, {'status': 'configured' if text is not None else 'common_only',
-                   'selected': len(items),
+                   'selected': sum(item.id.startswith('project-skill:') for item in items),
+                   'guidance': guidance_summary,
                    'routing': {k: v for k, v in routing.items() if k != 'pattern_evidence'}, 'manifest_ref': manifest['ref'],
                    'pipeline': [{'language': r['language'], 'stage_id': r.get('stage', {}).get('id'),
                                  'phase': r.get('phase', ''), 'verified_complete': False}

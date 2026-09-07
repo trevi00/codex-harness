@@ -67,3 +67,8 @@ cannot satisfy the full-body score threshold. Annotated skill content uses bound
 full-body/pointer tiers; complete bytes remain in immutable artifacts. Pattern evidence
 comes only from regular files at the captured Git revision, never host paths or dirty
 files. Prompt identity is part of the skill manifest and session recovery binding.
+
+Cross-skill references are advisory one-hop links within the eligible inventory; they
+cannot activate an excluded stack. Ambiguous/unavailable names remain explicit. Full
+reference evidence survives advisory truncation via immutable handles, and non-skill
+guidance never inflates selected/included/omitted skill counters.
