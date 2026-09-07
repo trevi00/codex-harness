@@ -78,7 +78,9 @@ in the read-only tree. No unavailable or failed execution establishes complete a
 Subsystem `tests` records executed tests as JSON strings encoding exact argv arrays, matched to
 successful command-execution receipts. Descriptive test names without execution belong verbatim in
 `tests_not_run` with a reason and follow-up. Inert source listing/reading never establishes test
-execution. Result consumption rechecks task authority, activation and deployment after completion.
+execution. A subsystem with no executed tests can be checkpointed with justified `tests_not_run`,
+but remains incomplete and blocks adoption until the outstanding tests are resolved.
+Result consumption rechecks task authority, activation and deployment after completion.
 
 Structured evidence declares transitive artifact edges through `ref`, `*_ref` or `*_refs` fields.
 These must contain complete artifact handles; missing or corrupted declared children block adoption.

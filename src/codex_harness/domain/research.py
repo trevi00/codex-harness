@@ -100,8 +100,10 @@ class SubsystemAnalysis:
 
     def validate(self):
         for field in ('name', 'paths', 'contracts', 'entry_points', 'implementations', 'callers',
-                      'configuration', 'storage_authority', 'failure_paths', 'tests', 'evidence_refs'):
+                      'configuration', 'storage_authority', 'failure_paths', 'evidence_refs'):
             require(bool(getattr(self, field)), 'Missing subsystem trace: ' + field)
+        # INV-RESEARCH-003: justified unexecuted tests are persistable, incomplete evidence.
+        require(bool(self.tests or self.tests_not_run), 'Missing subsystem trace: tests')
         for ref in self.evidence_refs:
             reference(ref)
         require(bool(self.receipt_ids or self.tests_not_run),
