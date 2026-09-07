@@ -47,6 +47,9 @@ def test_framework_ranges_and_conflicts_are_evidence_not_fake_exact_versions(tmp
     assert info['signals'][0]['sha256'] == hashlib.sha256(data).hexdigest()
     assert [r['spec'] for r in info['declarations']['react']] == ['^18.2', '19.0.0-beta.1']
     assert 'typescript/react-18.2' not in eligible_paths(profile)
+    assert info['declarations']['typescript'] == [{'field': 'devDependencies', 'spec': '~5.0'}]
+    assert info['root'] == '.'
+    assert str(tmp_path) not in json.dumps(profile)
 
 
 @pytest.mark.parametrize('text', ['{', '[]', '{"dependencies": []}',
@@ -97,3 +100,27 @@ def test_cli_detect_preview_initialize_and_existing_profile(tmp_path):
     assert json.loads(applied.stdout)['commit_required'] is True
     repeated = subprocess.run(command, env=env, capture_output=True, text=True)
     assert repeated.returncode == 2 and 'FileExistsError' in repeated.stderr
+
+
+def test_unknown_cli_preview_remains_available_but_does_not_freeze_empty_profile(tmp_path):
+    script = Path(__file__).resolve().parents[1] / 'scripts/project_init.py'
+    env = {**os.environ, 'PYTHONPATH': str(script.parents[1] / 'src')}
+    command = [sys.executable, str(script), str(tmp_path), '--detect']
+    preview = subprocess.run(command + ['--preview'], env=env, capture_output=True, text=True)
+    assert preview.returncode == 0
+    assert json.loads(preview.stdout)['profile']['metadata']['detection']['status'] == 'unknown'
+    applied = subprocess.run(command, env=env, capture_output=True, text=True)
+    assert applied.returncode == 2 and 'No project signals' in applied.stderr
+    assert not (tmp_path / '.harness').exists()
+
+
+def test_manifest_signal_names_match_original_exact_directory_membership(tmp_path):
+    (tmp_path / 'dockerfile').write_text('FROM scratch')
+    assert detect_project(tmp_path)['metadata']['detection']['status'] == 'unknown'
+
+
+def test_workflow_file_is_reported_as_type_error(tmp_path):
+    (tmp_path / '.github').mkdir()
+    (tmp_path / '.github/workflows').write_text('not a directory')
+    with pytest.raises(ContractError, match='regular directory'):
+        detect_project(tmp_path)

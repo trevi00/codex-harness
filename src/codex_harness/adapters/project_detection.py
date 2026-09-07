@@ -32,11 +32,12 @@ def unique_json(pairs):
 def detect_project(root):
     root = Path(root).resolve()
     require(root.is_dir(), 'Project root must exist')
-    require(root != Path.home().resolve(), 'Home directory is not an implicit project')
+    require(not root.samefile(Path.home()), 'Home directory is not an implicit project')
     signals, types, contents = [], set(), {}
+    entries = {entry.name for entry in root.iterdir()}
     for filename, kind in FILE_SIGNALS.items():
         path = root / filename
-        if not path.exists() and not path.is_symlink():
+        if filename not in entries:
             continue
         require(not path.is_symlink() and path.is_file(), 'Manifest must be a regular file: ' + filename)
         require(path.resolve().is_relative_to(root), 'Manifest escapes project root')
@@ -48,9 +49,10 @@ def detect_project(root):
         types.add(kind)
         contents[filename] = data
     workflows = root / '.github/workflows'
-    if workflows.exists():
-        require(workflows.resolve().is_relative_to(root) and workflows.is_dir()
-                and not workflows.is_symlink(), 'Workflow directory escapes project root')
+    if workflows.exists() or workflows.is_symlink():
+        require(not workflows.is_symlink() and workflows.is_dir(),
+                'Workflow signal must be a regular directory')
+        require(workflows.resolve().is_relative_to(root), 'Workflow directory escapes project root')
         types.add('github-actions')
         signals.append({'path': '.github/workflows', 'project_type': 'github-actions',
                         'observation': 'directory presence; workflow contents not inspected'})
@@ -75,6 +77,8 @@ def detect_project(root):
         if not frameworks:
             stacks.append({'language': language})
         declarations = {name: dependencies[name] for name, _ in frameworks}
+        if 'typescript' in dependencies:
+            declarations['typescript'] = dependencies['typescript']
     if 'pyproject.toml' in contents:
         try:
             pyproject = tomllib.loads(contents['pyproject.toml'].decode('utf-8-sig'))
@@ -87,7 +91,7 @@ def detect_project(root):
     for kind in sorted(types - {'node', 'docker', 'github-actions'}):
         stacks.append({'language': kind})
     return normalize_profile({'stacks': stacks, 'metadata': {'detection': {
-        'root': str(root), 'project_types': sorted(types), 'signals': signals,
+        'root': '.', 'project_types': sorted(types), 'signals': signals,
         'status': 'detected' if types else 'unknown',
         'declarations': declarations,
         'confidence': 'provisional manifest presence and declared dependencies; not runtime verification',

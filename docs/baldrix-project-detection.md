@@ -1,4 +1,4 @@
-﻿# Project detection and initialization
+# Project detection and initialization
 
 Scope: Baldrix b9586c59 `skill_match.PROJECT_FILE_SIGNALS`, `PROJECT_DIR_SIGNALS`,
 and `detect_project_type`, adapted to explicit-root initialization. All 17 filename
@@ -21,12 +21,15 @@ Detection reads bounded regular files without evaluating setup.py, Gradle, Gemfi
 package scripts or installation commands. Signal metadata records exact content hashes.
 The result is provisional: filename presence and declared dependencies do not establish
 that a framework is installed or used at runtime. Unknown roots retain empty stacks and
-an explicit unknown detection status. Docker/CI signals are metadata, not programming
+an explicit unknown detection status in preview; initialization refuses unknown roots
+and directs the caller to preview or explicit configuration. Detection stores a relative
+root marker, never the machine-specific absolute path. Signal names use exact directory
+membership, matching upstream on case-insensitive filesystems too. Docker/CI signals are metadata, not programming
 languages. All other source categories become language candidates.
 
 Node projects distinguish TypeScript by tsconfig.json or declared typescript; otherwise
 the JavaScript toolchain is inferred. Known framework declarations produce framework
-candidates. All observed dependency scopes/ranges for those frameworks are retained,
+candidates. All observed dependency scopes/ranges for those frameworks and TypeScript are retained,
 including conflicting declarations; no exact skill version is invented from a range.
 Python requires-python is retained as a declaration, not an installed interpreter.
 Malformed package/pyproject data, duplicate JSON keys, oversized or non-regular manifest
