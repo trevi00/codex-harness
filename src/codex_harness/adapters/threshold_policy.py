@@ -1,8 +1,7 @@
 """Bind currently loaded threshold constants to inspected Git source text."""
 from pathlib import Path
 
-from codex_harness.adapters import skill_routing
-from codex_harness.domain import skill_ranking
+from codex_harness.adapters.runtime_thresholds import effective_policy, resolve_policy
 from codex_harness.domain.model import digest, require
 
 POLICY_PATHS = (
@@ -26,6 +25,8 @@ POLICY_PATHS = (
     'src/codex_harness/adapters/store.py',
     'src/codex_harness/domain/policy.py',
     'src/codex_harness/resources/organization.json',
+    'src/codex_harness/adapters/runtime_thresholds.py',
+    'src/codex_harness/resources/threshold-policy.json',
 )
 
 
@@ -44,8 +45,9 @@ def current_policy(git, revision='HEAD'):
         loaded = (root / path.removeprefix('src/codex_harness/')).read_text(encoding='utf-8')
         require(committed == loaded, 'Loaded threshold source differs from selected Git revision')
         sources[path] = {'text': committed, 'hash': digest(committed)}
-    require(skill_routing.FULL_BODY_MIN_SCORE == skill_ranking.FULL_BODY_MIN_SCORE,
+    policy = effective_policy()
+    require(policy == resolve_policy(sources['src/codex_harness/resources/threshold-policy.json']['text']),
             'Loaded routing threshold differs from definition')
-    return {'revision': commit, 'values': {'skill_match.FULL_BODY_MIN_SCORE': skill_ranking.FULL_BODY_MIN_SCORE},
-            'sources': sources, 'kind': 'current_native_source_constants',
+    return {'revision': commit, 'values': policy['values'],
+            'sources': sources, 'kind': 'current_native_git_policy',
             'encoding': 'UTF-8 text with normalized newlines'}

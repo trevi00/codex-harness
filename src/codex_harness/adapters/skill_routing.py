@@ -2,9 +2,9 @@
 import re
 from pathlib import PurePosixPath
 
+from codex_harness.adapters.runtime_thresholds import effective_policy
 from codex_harness.domain.model import ContextItem, canonical, digest, require
 from codex_harness.domain.skill_ranking import (
-    FULL_BODY_MIN_SCORE,
     FULL_BODY_TOP_K,
     MAX_CONTEXT_CHARS,
     MAX_POINTERS,
@@ -32,6 +32,8 @@ def frontmatter(text):
 
 
 def route_skills(git, artifacts, cwd, revision, objective, items, records):
+    threshold_policy = effective_policy()
+    min_full_score = threshold_policy['values']['skill_match.FULL_BODY_MIN_SCORE']
     prompt = objective.lower()
     mentioned = extract_paths_from_prompt(objective)
     raw = git._git('ls-tree', '-rz', revision, cwd=cwd, strip=False)
@@ -77,7 +79,7 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
             ranked.append((score, path, dims, body))
         bodies[path] = body
     ranked.sort(key=lambda row: (-row[0], row[1]))
-    full = [row for row in ranked if by_path[row[1]]['base_score'] >= FULL_BODY_MIN_SCORE][:FULL_BODY_TOP_K]
+    full = [row for row in ranked if by_path[row[1]]['base_score'] >= min_full_score][:FULL_BODY_TOP_K]
     capped = []
     truncated = False
     for score, path, dims, body in full:
@@ -104,5 +106,6 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
                     'pointers': min(len(pointers), MAX_POINTERS),
                     'external_pointers': max(0, len(pointers) - MAX_POINTERS),
                     'legacy': len(legacy), 'truncated': truncated,
-                    'policy': {'min_full_score': FULL_BODY_MIN_SCORE, 'top_k': FULL_BODY_TOP_K,
+                    'threshold_definition': threshold_policy,
+                    'policy': {'min_full_score': min_full_score, 'top_k': FULL_BODY_TOP_K,
                                'body_characters': MAX_CONTEXT_CHARS, 'per_body': PER_BODY_CAP}}

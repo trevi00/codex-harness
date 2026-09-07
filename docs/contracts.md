@@ -104,3 +104,10 @@ current Git-bound policy and separate lead then conductor execution. Receipt ide
 must match the actor, decision, input and revision. Review completion and downstream
 review queueing are atomic. An assessment never authorizes implementation, source
 adoption, policy activation or deployment; existing approval gates remain required.
+# INV-THRESHOLD-POLICY-001
+
+Native routing and proposal collection resolve the same packaged Git threshold
+definition. Only implemented, unlocked registry consumers accept finite numeric
+overrides. Invalid definitions fail explicitly. Resolved values and definition
+identity accompany routing evidence; a calculated or assessed proposal cannot write
+the active definition. Candidate promotion and rollback retain release authority.
