@@ -7,7 +7,8 @@ from codex_harness.adapters.commands import run_process
 def observe_source(path):
     root = str(Path(path).resolve())
     def git(*args):
-        result = run_process(['git', '--no-optional-locks', '-C', root, *args], timeout=15)
+        result = run_process(['git', '--no-optional-locks', '-c', 'core.fsmonitor=false',
+                              '-c', 'core.untrackedCache=false', '-C', root, *args], timeout=15)
         if result.returncode:
             raise ValueError('Git source observation failed')
         return result.stdout.strip()

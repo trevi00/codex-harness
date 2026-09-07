@@ -104,6 +104,9 @@ def test_git_observation_detects_dirty_and_unknown_sources(tmp_path):
         'commit', '--allow-empty', '-qm', 'base')
     clean = observe_source(tmp_path)
     assert clean['status'] == 'clean' and len(clean['tree']) == 40
+    # An invalid configured helper must not execute or affect the observation.
+    git('config', 'core.fsmonitor', '/nonexistent-migration-fsmonitor')
+    assert observe_source(tmp_path)['status'] == 'clean'
     (tmp_path / 'nested').mkdir()
     assert observe_source(tmp_path / 'nested')['status'] == 'unknown'
     (tmp_path / 'new.txt').write_text('untracked change')

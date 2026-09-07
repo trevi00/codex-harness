@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "objective": "Migrate all behavior and assets in Baldrix, then oh-my-codex, then Ouroboros into the Codex harness",
+  "sequence": [
+    {
+      "name": "baldrix",
+      "url": "https://github.com/trevi00/baldrix.git",
+      "revision": "b9586c59c062457a45018e41c2e753934b5ca6c9",
+      "tree": "2079595f7b7c8aa31af1c05a0cb5a5cfada631f7",
+      "tracked_paths": 1648,
+      "inventory_ref": "sha256:4d8a0f36705b2c12a29970c166f156a0afe5d577ca0b964a8dd84fa7ee6162a4"
+    },
+    {
+      "name": "oh-my-codex",
+      "url": "https://github.com/Yeachan-Heo/oh-my-codex.git",
+      "revision": "304fb3b4825c4132c273732b14d2d5e86b54f8e3",
+      "tree": "809de75d5f779b2bdfbe93fc3415127b4c7fd4a5",
+      "tracked_paths": 1388,
+      "inventory_ref": "sha256:740c73705397fee5855101a02e810b11ffcc4a0165754e6c0b0e93e88a0cffe9"
+    },
+    {
+      "name": "ouroboros",
+      "url": "https://github.com/Q00/ouroboros.git",
+      "revision": "1fc754e7b7599b3df057660bcc6af37241183766",
+      "tree": "de039d19eecaa3fb49726fdf0219903ed8d2bfcb",
+      "tracked_paths": 1806,
+      "inventory_ref": "sha256:1012e7bbec39b4bc560c703d24a96dad0dcce2a25eb1f1e2b8d272af2d4aa406"
+    }
+  ],
+  "reviewer": "Claude Code independent source and candidate reviews, with retained exact-revision evidence",
+  "completion_requirements": [
+    "Account for every tracked source path without silent omission",
+    "Trace source behavior, callers, state and executable tests",
+    "Map every adopted behavior to destination implementation and assets",
+    "Document adaptations and incompatibilities explicitly without shrinking scope",
+    "Verify normal, failure, concurrency, recovery and context behavior",
+    "Retain Claude review and resolved findings",
+    "Pass incumbent source adoption and release reviews",
+    "Pass actual exact-candidate Codex CLI canary before activation",
+    "Verify deployed integration; inventory, partial records and green unit tests alone are not completion"
+  ]
+}
