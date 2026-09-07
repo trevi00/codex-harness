@@ -833,3 +833,66 @@ def test_rollback_between_audit_releases_keeps_dispatch_paused(audit, legacy_con
     # INV-RESEARCH-004: only another verified promotion lifts rollback containment.
     activate_fixture(service, revision='fixed', expected=first['id'])
     assert schedule_audits(service.workflow) > 0
+
+
+@pytest.mark.parametrize('operation', ['proposal', 'review'])
+def test_schema_preflight_failure_cannot_create_audit_success(audit, monkeypatch, operation):
+    from types import SimpleNamespace
+
+    from codex_harness.adapters.app_server import AppServer
+    from codex_harness.adapters.audit_execution import AuditExecution
+    from codex_harness.adapters.output_schema import CAUSE
+
+    service, record, source, _, _ = audit
+    executor = SimpleNamespace(service=SimpleNamespace(store=service.store),
+                               artifacts=service.artifacts, workflow=service.workflow)
+    execution = AuditExecution(executor, FixtureRunner(service.artifacts))
+    server = AppServer(executable='fixture')
+    sent = []
+    monkeypatch.setattr(server, 'send', sent.append)
+
+    cause = CAUSE
+
+    def defective_turn(task, objective, evidence, schema):
+        del schema['properties']['version']['type']
+        return server.request('turn/start', {'outputSchema': schema})
+
+    monkeypatch.setattr(execution, 'run_model', defective_turn)
+    if operation == 'review':
+        activate_fixture(service)
+        proposal = complete_fixture_audit(service, record, source)
+        service.propose(record['id'], proposal)
+        task = lease_review(service, 'lead:research')
+        with pytest.raises(ContractError, match=cause):
+            execution.review(task)
+    else:
+        task = {'agent': 'worker:github', 'message': {'what': {'action': 'audit_propose',
+                'details': {'audit_id': record['id']}}}}
+        with pytest.raises(ContractError, match=cause):
+            execution.execute(task)
+    assert sent == []
+    with service.store.transaction() as tx:
+        assert not tx.scan('research_reviews')
+        assert not tx.scan('research_proposal_runs')
+        assert all(row['status'] != 'succeeded' for row in tx.scan('decisions_pending'))
+
+
+def test_affected_records_still_validate_and_parse(audit):
+    from jsonschema import ValidationError, validate
+
+    from codex_harness.adapters.audit_execution import AuditExecution
+    from codex_harness.domain.research import parse_record
+
+    service, record, source, _, _ = audit
+    activate_fixture(service)
+    proposal = complete_fixture_audit(service, record, source)
+    service.propose(record['id'], proposal)
+    _, review = approve_fixture(service, 'lead:research')
+    for kind, value in [('AdaptationProposal', proposal), ('IndependentReview', review)]:
+        schema = AuditExecution.typed_schema(kind)
+        body = asdict(value)
+        validate(body, schema)
+        assert parse_record({'version': 1, 'kind': kind, 'record': body}) == value
+        for version in [0, 2, True, '1']:
+            with pytest.raises(ValidationError):
+                validate({**body, 'version': version}, schema)

@@ -18,6 +18,15 @@ TEXT = {'type': 'string'}
 STRINGS = {'type': 'array', 'items': TEXT}
 
 
+def output_definitions():
+    definitions = json.loads(files('codex_harness.resources').joinpath('research.schema.json').read_text())['$defs']
+    # INV-RESEARCH-003: retain historical evidence; constrain only newly generated output.
+    # The provider rejects open objects even in unused definitions (2026-09-07 canary).
+    definitions['SubsystemAnalysis']['properties']['tests_not_run']['items'] = schema(
+        test=TEXT, reason=TEXT, follow_up=TEXT)
+    return definitions
+
+
 class AuditExecution:
     def __init__(self, executor, runner):
         self.executor, self.runner = executor, runner
@@ -32,8 +41,17 @@ class AuditExecution:
 
     @staticmethod
     def typed_schema(kind):
-        definitions = json.loads(files('codex_harness.resources').joinpath('research.schema.json').read_text())['$defs']
+        definitions = output_definitions()
         return {**definitions[kind], '$defs': definitions}
+
+    @staticmethod
+    def partition_schema():
+        defs = output_definitions()
+        result_schema = schema(paths={'type': 'array', 'items': {'$ref': '#/$defs/PathDisposition'}},
+            subsystems={'type': 'array', 'items': {'$ref': '#/$defs/SubsystemAnalysis'}},
+            open_questions=STRINGS, cursor=TEXT)
+        result_schema['$defs'] = defs
+        return result_schema
 
     def execute(self, task):
         details = task['message']['what']['details']
@@ -109,11 +127,7 @@ class AuditExecution:
         require(len(plan['commands']) <= 4, 'Inspection command budget exceeded')
         receipts = [self.audits.execute(task, audit['id'], command) for command in plan['commands']]
         evidence['receipts'] = receipts
-        defs = json.loads(files('codex_harness.resources').joinpath('research.schema.json').read_text())['$defs']
-        result_schema = schema(paths={'type': 'array', 'items': {'$ref': '#/$defs/PathDisposition'}},
-            subsystems={'type': 'array', 'items': {'$ref': '#/$defs/SubsystemAnalysis'}},
-            open_questions=STRINGS, cursor=TEXT)
-        result_schema['$defs'] = defs
+        result_schema = self.partition_schema()
         answer = self.run_model(task, 'Semantically trace this bounded partition against contracts, callers, '
             'configuration, failure handling and tests. Use only supplied successful runner receipt IDs. '
             'Explicitly preserve unreviewed scope, tests not run and open questions. Inventory is not review. '

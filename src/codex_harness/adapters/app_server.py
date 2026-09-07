@@ -13,6 +13,7 @@ from pathlib import Path
 from jsonschema import validate
 
 from codex_harness.adapters.codex import resolve_codex
+from codex_harness.adapters.output_schema import preflight
 from codex_harness.domain.model import ContractError, canonical, require
 from codex_harness.domain.policy import POLICY
 
@@ -114,6 +115,8 @@ class AppServer:
         return value
 
     def request(self, method: str, params: dict, timeout: float = 30):
+        if method == "turn/start" and "outputSchema" in params:
+            preflight(params["outputSchema"])
         self.sequence += 1
         request_id = self.sequence
         self.send({"id": request_id, "method": method, "params": params})
