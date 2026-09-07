@@ -15,7 +15,8 @@ from codex_harness.adapters.codex import CodexRuntime
 from codex_harness.adapters.commands import run_process
 from codex_harness.adapters.contracts import validate_message
 from codex_harness.adapters.knowledge import PostgresKnowledge
-from codex_harness.bootstrap import build, database_url, organization, redis_url
+from codex_harness.application.workflow import Workflow
+from codex_harness.bootstrap import build, build_executor, database_url, organization, redis_url
 from codex_harness.domain.model import (
     ContextItem,
     ContractError,
@@ -71,12 +72,14 @@ def _generation(service, agent: str) -> int:
         return (tx.get("sessions", agent) or {"generation": 0})["generation"]
 
 
-def serve(service, agent: str, once: bool) -> None:
+def serve(service, agent: str, once: bool, execute: bool = False) -> None:
     service.org.actor(agent)
     bus = RedisBus(redis_url())
     consumer = f"{agent}:{uuid4()}"
     last_activity = time.monotonic()
-    emit({"status": "listening", "agent_id": agent, "mode": "scripted-message-runtime"})
+    workflow = Workflow(service.store, service.org)
+    executor = build_executor(service) if execute else None
+    emit({"status": "listening", "agent_id": agent, "autonomous": execute})
     while True:
         row = bus.receive(agent, consumer)
         if row:
@@ -88,12 +91,7 @@ def serve(service, agent: str, once: bool) -> None:
                 if message["type"] == "incident.report":
                     result = service.record_incident(message)
                 else:
-                    with service.store.transaction() as tx:
-                        old = tx.get("deliveries", message["message_id"])
-                        require(old is None or old["hash"] == digest(message), "Conflicting message ID")
-                        result = {"message": message, "hash": digest(message),
-                                  "status": "awaiting_handler", "agent": agent}
-                        tx.put("deliveries", message["message_id"], result)
+                    result = workflow.handle(message)
                 service.flush_outbox(bus)
                 bus.ack(agent, entry_id)
                 emit({"message_id": message["message_id"], "result": result})
@@ -101,6 +99,12 @@ def serve(service, agent: str, once: bool) -> None:
             except (ContractError, json.JSONDecodeError, KeyError) as exc:
                 bus.dead_letter(agent, entry_id, fields, str(exc))
                 emit({"rejected": entry_id, "reason": str(exc)})
+        if executor:
+            result = executor.execute_one(agent) or executor.decide_one(agent)
+            if result:
+                emit({"execution": result})
+                service.flush_outbox(bus)
+                last_activity = time.monotonic()
         if once:
             break
         if time.monotonic() - last_activity >= 3600:
@@ -129,16 +133,38 @@ def parser() -> argparse.ArgumentParser:
     s = commands.add_parser("serve")
     s.add_argument("--agent", required=True)
     s.add_argument("--once", action="store_true")
+    s.add_argument("--execute", action="store_true")
+    research = commands.add_parser("research")
+    research.add_argument("source", choices=["github", "geeknews"])
+    execute = commands.add_parser("execute-one")
+    execute.add_argument("--agent", required=True)
+    cancel = commands.add_parser("cancel")
+    cancel.add_argument("task_id")
+    cancel.add_argument("--reason", required=True)
+    artifact = commands.add_parser("artifact")
+    artifact.add_argument("reference")
+    artifact.add_argument("--start", type=int, default=0)
+    artifact.add_argument("--length", type=int, default=8000)
+    artifact.add_argument("--search")
     index = commands.add_parser("index")
     index.add_argument("root", nargs="?", default=".")
     q = commands.add_parser("query")
     q.add_argument("text")
+    q.add_argument("--semantic", action="store_true")
+    embedding = commands.add_parser("embed")
+    embedding.add_argument("--limit", type=int, default=200)
+    commands.add_parser("project-graph")
+    rlm = commands.add_parser("rlm")
+    rlm.add_argument("reference")
+    rlm.add_argument("question")
+    rlm.add_argument("--max-calls", type=int, default=8)
     context = commands.add_parser("context")
     context.add_argument("query")
     context.add_argument("--agent", default="worker:implementation")
     context.add_argument("--budget", type=int, default=12000)
     inspect = commands.add_parser("inspect")
-    inspect.add_argument("bucket", choices=["incidents", "hooks", "sessions", "events", "deliveries", "outbox"])
+    inspect.add_argument("bucket", choices=["incidents", "hooks", "sessions", "events", "deliveries", "outbox",
+                                           "tasks", "decisions_pending", "releases", "deployment", "release_queue"])
     rollback = commands.add_parser("rollback-hook")
     rollback.add_argument("hook_id")
     rollback.add_argument("--reason", required=True)
@@ -211,11 +237,47 @@ def main() -> None:
             if result.returncode:
                 raise SystemExit(result.returncode)
         elif args.command == "serve":
-            serve(service, args.agent, args.once)
+            serve(service, args.agent, args.once, args.execute)
+        elif args.command == "research":
+            executor = build_executor(service)
+            message = envelope("task.assign", "lead:research", "worker:" + args.source, "research",
+                               {"source": args.source}, "research:" + str(uuid4()))
+            message["where"]["revision"] = executor.git._git("rev-parse", "HEAD")
+            emit({"message": message, "stream_id": RedisBus(redis_url()).publish(message)})
+        elif args.command == "execute-one":
+            executor = build_executor(service)
+            emit(executor.execute_one(args.agent) or executor.decide_one(args.agent) or {"status": "idle"})
+            service.flush_outbox(RedisBus(redis_url()))
+        elif args.command == "cancel":
+            Workflow(service.store, service.org).cancel(args.task_id, "conductor", args.reason)
+            emit({"cancelled": args.task_id})
+        elif args.command == "artifact":
+            artifacts = build_executor(service).artifacts
+            emit(artifacts.search(args.reference, args.search) if args.search
+                 else artifacts.read(args.reference, args.start, args.length))
         elif args.command == "index":
             emit(PostgresKnowledge(database_url()).index_python(args.root))
         elif args.command == "query":
-            emit(PostgresKnowledge(database_url()).query(args.text))
+            knowledge = PostgresKnowledge(database_url())
+            if args.semantic:
+                from codex_harness.adapters.embeddings import LocalEmbeddings
+
+                emit(knowledge.hybrid_query(args.text, LocalEmbeddings(".runtime/models")))
+            else:
+                emit(knowledge.query(args.text))
+        elif args.command == "embed":
+            from codex_harness.adapters.embeddings import LocalEmbeddings
+
+            emit(PostgresKnowledge(database_url()).embed_missing(LocalEmbeddings(".runtime/models"), args.limit))
+        elif args.command == "project-graph":
+            emit(PostgresKnowledge(database_url()).project_runtime(service.store, service.org))
+        elif args.command == "rlm":
+            from codex_harness.application.rlm import RecursiveContext
+
+            executor = build_executor(service)
+            rlm = RecursiveContext(executor.artifacts, CodexRuntime(), str(executor.git.repository),
+                                   max_calls=args.max_calls)
+            emit(rlm.analyze(args.reference, args.question))
         elif args.command == "context":
             actor = service.org.actor(args.agent)
             hits = PostgresKnowledge(database_url()).query(args.query)

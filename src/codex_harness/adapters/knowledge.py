@@ -11,7 +11,7 @@ import tree_sitter_python
 from psycopg.types.json import Jsonb
 from tree_sitter import Language, Parser
 
-from codex_harness.domain.model import ContractError, require
+from codex_harness.domain.model import ContractError, canonical, digest, require
 
 SKIP = {".git", ".venv", "node_modules", "__pycache__", ".runtime", ".pytest_cache", ".ruff_cache"}
 
@@ -22,6 +22,7 @@ def extract_python(root: str) -> dict:
     parser = Parser(Language(tree_sitter_python.language()))
     nodes, edges = [], []
     fingerprints = []
+    repository_id = digest(str(base))[:16]
     for directory, children, names in os.walk(base):
         children[:] = sorted(n for n in children if n not in SKIP and not Path(directory, n).is_symlink())
         for name in sorted(names):
@@ -35,7 +36,7 @@ def extract_python(root: str) -> dict:
             relative = path.relative_to(base).as_posix()
             revision = hashlib.sha256(raw).hexdigest()
             fingerprints.append((relative, revision))
-            file_id = f"file:{base.name}:{relative}"
+            file_id = f"file:{repository_id}:{relative}"
             nodes.append({"id": file_id, "repository": str(base), "kind": "file",
                           "body": relative, "source_ref": relative, "revision": revision,
                           "properties": {"language": "python"}})
@@ -45,7 +46,7 @@ def extract_python(root: str) -> dict:
                 if node.type in {"function_definition", "class_definition"}:
                     symbol = node.child_by_field_name("name").text.decode()
                     current_qualified = qualified + [symbol]
-                    node_id = f"symbol:{base.name}:{relative}:{'.'.join(current_qualified)}:{node.start_point.row + 1}"
+                    node_id = f"symbol:{repository_id}:{relative}:{'.'.join(current_qualified)}"
                     nodes.append({"id": node_id, "repository": str(base), "kind": node.type,
                                   "body": node.text.decode()[:6000],
                                   "source_ref": f"{relative}:{node.start_point.row + 1}",
@@ -55,7 +56,7 @@ def extract_python(root: str) -> dict:
                 elif node.type == "comment":
                     for rule_id in re.findall(rb"@invariant\s+([A-Z0-9-]+)", node.text):
                         rule = rule_id.decode()
-                        rule_node = f"rule:{base.name}:{rule}"
+                        rule_node = f"rule:{repository_id}:{rule}"
                         if not any(n["id"] == rule_node for n in nodes):
                             nodes.append({"id": rule_node, "repository": str(base), "kind": "rule_reference",
                                           "body": rule, "source_ref": f"{relative}:{node.start_point.row + 1}",
@@ -77,18 +78,101 @@ class PostgresKnowledge:
         graph = extract_python(root)
         with psycopg.connect(self.dsn) as conn:
             conn.execute("SELECT pg_advisory_xact_lock(734220)")
-            # Full replace only after all parses succeed; old index survives failures.
-            conn.execute("DELETE FROM knowledge_nodes WHERE repository=%s", (graph["repository"],))
+            # Preserve vectors when content is unchanged; remove deleted nodes transactionally.
+            ids = [n["id"] for n in graph["nodes"]]
+            conn.execute("DELETE FROM knowledge_nodes WHERE repository=%s AND NOT (id=ANY(%s))",
+                         (graph["repository"], ids))
+            conn.execute("DELETE FROM knowledge_edges WHERE source IN (SELECT id FROM knowledge_nodes WHERE repository=%s)",
+                         (graph["repository"],))
             for n in graph["nodes"]:
                 conn.execute("""INSERT INTO knowledge_nodes
                     (id,repository,kind,body,source_ref,revision,properties)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+                    VALUES (%s,%s,%s,%s,%s,%s,%s)
+                    ON CONFLICT(id) DO UPDATE SET body=excluded.body,source_ref=excluded.source_ref,
+                    revision=excluded.revision,properties=excluded.properties ||
+                    CASE WHEN knowledge_nodes.body=excluded.body THEN
+                    jsonb_strip_nulls(jsonb_build_object('embedding_model',knowledge_nodes.properties->'embedding_model'))
+                    ELSE '{}'::jsonb END,
+                    embedding=CASE WHEN knowledge_nodes.body=excluded.body THEN knowledge_nodes.embedding ELSE NULL END""",
                              (n["id"], n["repository"], n["kind"], n["body"], n["source_ref"],
                               n["revision"], Jsonb({**n["properties"], "snapshot": graph["snapshot"]})))
             for source, target, kind in graph["edges"]:
                 conn.execute("INSERT INTO knowledge_edges VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
                              (source, target, kind))
         return {"snapshot": graph["snapshot"], "nodes": len(graph["nodes"]), "edges": len(graph["edges"])}
+
+    def project_runtime(self, store, organization) -> dict:
+        with store.transaction() as tx:
+            records = {bucket: tx.scan(bucket) for bucket in ("tasks", "hooks", "sessions", "releases")}
+        nodes, edges = [], []
+        snapshot = digest(records)
+        for agent in organization.agents.values():
+            nodes.append(("runtime:agent:" + agent.id, "agent", canonical({"id": agent.id, "role": agent.role,
+                          "team": agent.team}), "organization.json", "definition", {"authority": "Git"}))
+            if agent.parent:
+                edges.append(("runtime:agent:" + agent.parent, "runtime:agent:" + agent.id, "supervises"))
+        for bucket, rows in records.items():
+            for row in rows:
+                key = row.get("id") or row.get("agent_id")
+                node_id = f"runtime:{bucket}:{key}"
+                nodes.append((node_id, bucket, canonical(row), f"postgres:{bucket}/{key}", digest(row),
+                              {"authority": "PostgreSQL", "snapshot": snapshot}))
+                agent = row.get("agent") or row.get("agent_id") or row.get("author")
+                if agent:
+                    edges.append(("runtime:agent:" + agent, node_id, "owns"))
+                if bucket == "tasks":
+                    for dependency in row["message"]["when"]["after"]:
+                        edges.append((f"runtime:tasks:{dependency}", node_id, "precedes"))
+        with psycopg.connect(self.dsn) as conn:
+            conn.execute("SELECT pg_advisory_xact_lock(734220)")
+            conn.execute("DELETE FROM knowledge_nodes WHERE repository='runtime:ssot'")
+            for node_id, kind, body, source, revision, properties in nodes:
+                conn.execute("INSERT INTO knowledge_nodes (id,repository,kind,body,source_ref,revision,properties) "
+                             "VALUES (%s,'runtime:ssot',%s,%s,%s,%s,%s)",
+                             (node_id, kind, body, source, revision, Jsonb(properties)))
+            ids = {n[0] for n in nodes}
+            for source, target, kind in edges:
+                if source in ids and target in ids:
+                    conn.execute("INSERT INTO knowledge_edges VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
+                                 (source, target, kind))
+        return {"snapshot": snapshot, "nodes": len(nodes), "edges": len(edges)}
+
+    def embed_missing(self, embedder, limit: int = 200) -> dict:
+        require(0 < limit <= 1000, "Invalid embedding batch size")
+        with psycopg.connect(self.dsn) as conn:
+            rows = conn.execute("SELECT id,body,revision FROM knowledge_nodes WHERE embedding IS NULL "
+                                "OR properties->>'embedding_model' IS DISTINCT FROM %s ORDER BY id LIMIT %s",
+                                (embedder.model_name, limit)).fetchall()
+        vectors = embedder.embed([row[1] for row in rows]) if rows else []
+        require(len(vectors) == len(rows), "Embedding provider response count mismatch")
+        updated = 0
+        with psycopg.connect(self.dsn) as conn:
+            for (node_id, _, revision), vector in zip(rows, vectors):
+                cursor = conn.execute("UPDATE knowledge_nodes SET embedding=%s::vector,properties=properties || %s "
+                                      "WHERE id=%s AND revision=%s",
+                                      (self.vector(vector), Jsonb({"embedding_model": embedder.model_name}), node_id, revision))
+                updated += cursor.rowcount
+        return {"embedded": updated, "model": embedder.model_name}
+
+    def hybrid_query(self, text: str, embedder, depth: int = 1, limit: int = 12) -> list[dict]:
+        require(0 <= depth <= 3 and 1 <= limit <= 100, "Invalid hybrid query budget")
+        semantic = self.vector_query(embedder.embed([text])[0], embedder.model_name, limit)
+        lexical = self.query(text, depth=0, limit=limit)
+        scores = {}
+        for result in (semantic, lexical):
+            for rank, row in enumerate(result, 1):
+                scores[row["id"]] = scores.get(row["id"], 0) + 1 / (60 + rank)
+        seeds = sorted(scores, key=lambda key: (-scores[key], key))[:limit]
+        found = set(seeds)
+        with psycopg.connect(self.dsn) as conn:
+            for _ in range(depth):
+                rows = conn.execute("SELECT source,target FROM knowledge_edges WHERE source=ANY(%s) OR target=ANY(%s) "
+                                    "ORDER BY source,target LIMIT 500", (sorted(found), sorted(found))).fetchall()
+                found.update(value for row in rows for value in row)
+            rows = conn.execute("SELECT id,kind,body,source_ref,revision,properties FROM knowledge_nodes WHERE id=ANY(%s)",
+                                (sorted(found),)).fetchall()
+        hits = [dict(zip(("id", "kind", "body", "source_ref", "revision", "properties"), row)) for row in rows]
+        return sorted(hits, key=lambda row: (-scores.get(row["id"], 0), row["id"]))[:limit]
 
     def query(self, text: str, depth: int = 1, limit: int = 12) -> list[dict]:
         require(bool(text.strip()) and 0 <= depth <= 3 and 1 <= limit <= 100, "Invalid graph query")

@@ -35,3 +35,20 @@ def build() -> Harness:
 
 def redis_url() -> str:
     return os.environ.get("HARNESS_REDIS_URL", "redis://127.0.0.1:56379/0")
+
+
+def build_executor(service=None):
+    from pathlib import Path
+
+    from codex_harness.adapters.artifacts import FileArtifacts
+    from codex_harness.adapters.executor import Executor
+    from codex_harness.adapters.git import GitWorkspace
+    from codex_harness.adapters.knowledge import PostgresKnowledge
+    from codex_harness.adapters.research import ResearchSources
+
+    repository = os.environ.get("HARNESS_REPOSITORY", str(Path.cwd()))
+    runtime = Path(os.environ.get("HARNESS_RUNTIME_DIR", str(Path(repository) / ".runtime")))
+    artifacts = FileArtifacts(str(runtime / "artifacts"))
+    git = GitWorkspace(repository, str(runtime / "workspaces"), os.environ.get("HARNESS_GITHUB_REPO"))
+    return Executor(service or build(), git, artifacts, PostgresKnowledge(database_url()),
+                    ResearchSources(artifacts))

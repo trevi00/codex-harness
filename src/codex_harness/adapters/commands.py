@@ -6,11 +6,11 @@ import subprocess
 
 
 def run_process(argv: list[str], cwd: str | None = None, timeout: int = 120,
-                input_text: str | None = None) -> subprocess.CompletedProcess:
+                input_text: str | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
     """Terminate our own process tree on timeout, including cmd -> node on Windows."""
     kwargs = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
     process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace", **kwargs)
+                               stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace", env=env, **kwargs)
     try:
         stdout, stderr = process.communicate(input_text, timeout=timeout)
     except (subprocess.TimeoutExpired, KeyboardInterrupt):

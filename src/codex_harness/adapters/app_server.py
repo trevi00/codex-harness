@@ -1,0 +1,186 @@
+from __future__ import annotations
+
+import json
+import os
+import queue
+import signal
+import subprocess
+import threading
+import time
+from collections import deque
+from pathlib import Path
+
+from jsonschema import validate
+
+from codex_harness.adapters.codex import resolve_codex
+from codex_harness.domain.model import ContractError, canonical, require
+
+
+def toml_literal(value):
+    if isinstance(value, dict):
+        return "{" + ",".join(json.dumps(k) + "=" + toml_literal(v) for k, v in value.items()) + "}"
+    if isinstance(value, list):
+        return "[" + ",".join(toml_literal(v) for v in value) + "]"
+    return json.dumps(value)
+
+
+class AppServer:
+    """Versioned Codex JSON-RPC stdio client; no shell interpolation or shared thread."""
+
+    def __init__(self, executable: str | None = None, hooks: dict | None = None,
+                 context_window: int | None = None):
+        self.executable = executable or resolve_codex()
+        require(bool(self.executable), "Codex CLI unavailable")
+        self.process = None
+        self.sequence = 0
+        self.incoming = queue.Queue()
+        self.notifications = deque()
+        self.stderr = deque(maxlen=20)
+        self.hooks = hooks or {}
+        self.hook_state = {}
+        self.readers = []
+        self.context_window = context_window
+
+    def __enter__(self):
+        flags = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt"
+                 else {"start_new_session": True})
+        argv = [self.executable, "app-server"]
+        if self.context_window:
+            argv += ["-c", "model_context_window=" + str(self.context_window)]
+        if self.hooks:
+            argv += ["-c", "hooks=" + toml_literal({**self.hooks, "state": self.hook_state}), "--enable", "hooks"]
+        self.process = subprocess.Popen(argv, stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        text=True, encoding="utf-8", errors="replace", **flags)
+        self.readers = [threading.Thread(target=self._read, daemon=True), threading.Thread(target=self._errors, daemon=True)]
+        for reader in self.readers:
+            reader.start()
+        self.request("initialize", {"clientInfo": {"name": "codex_harness", "version": "0.1.0"},
+                                    "capabilities": {"experimentalApi": True}}, 20)
+        self.send({"method": "initialized"})
+        return self
+
+    def _read(self):
+        try:
+            for line in self.process.stdout:
+                try:
+                    self.incoming.put(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        finally:
+            self.incoming.put(None)
+
+    def _errors(self):
+        for line in self.process.stderr:
+            self.stderr.append(line)
+
+    def send(self, value: dict):
+        self.process.stdin.write(canonical(value) + "\n")
+        self.process.stdin.flush()
+
+    def _receive(self, timeout: float):
+        try:
+            value = self.incoming.get(timeout=max(timeout, 0.01))
+        except queue.Empty as exc:
+            raise ContractError("Codex App Server timed out") from exc
+        require(value is not None, "Codex App Server exited unexpectedly: " + "".join(self.stderr)[-2000:])
+        if "id" in value and "method" in value:
+            # This unattended protocol cannot answer interactive questions as user consent.
+            self.send({"id": value["id"], "error": {"code": -32601,
+                       "message": "Interactive requests are unsupported; use assignment constraints"}})
+        return value
+
+    def request(self, method: str, params: dict, timeout: float = 30):
+        self.sequence += 1
+        request_id = self.sequence
+        self.send({"id": request_id, "method": method, "params": params})
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            value = self._receive(deadline - time.monotonic())
+            if value.get("id") == request_id and "method" not in value:
+                require("error" not in value, f"Codex {method} error: {value.get('error')}")
+                return value.get("result", {})
+            self.notifications.append(value)
+        raise ContractError(f"Codex {method} timed out")
+
+    def run(self, prompt: str, cwd: str, schema: dict, timeout: int = 240,
+            thread_id: str | None = None, on_event=None, read_only: bool = False) -> dict:
+        options = {"cwd": str(Path(cwd).resolve()), "approvalPolicy": "never",
+                   "sandbox": "read-only" if read_only else "danger-full-access"}
+        if self.hooks and not self.hook_state:
+            discovered = self.request("hooks/list", {"cwds": [options["cwd"]]})
+            commands = {hook["command"] for groups in self.hooks.values()
+                        for group in groups for hook in group["hooks"]}
+            entries = [hook for row in discovered["data"] for hook in row["hooks"]
+                       if hook.get("handler", {}).get("command") in commands
+                       or hook.get("command") in commands]
+            require(len(entries) == sum(len(g["hooks"]) for groups in self.hooks.values() for g in groups),
+                    "Codex did not discover all verified hooks")
+            self.hook_state = {hook["key"]: {"enabled": True, "trusted_hash": hook["currentHash"]} for hook in entries}
+            self.__exit__()
+            self.incoming = queue.Queue()
+            self.notifications.clear()
+            self.__enter__()
+        if thread_id:
+            response = self.request("thread/resume", {"threadId": thread_id, **options})
+        else:
+            response = self.request("thread/start", options)
+        thread_id = response["thread"]["id"]
+        turn = self.request("turn/start", {"threadId": thread_id,
+                            "input": [{"type": "text", "text": prompt}], "outputSchema": schema})
+        turn_id = turn["turn"]["id"]
+        deadline = time.monotonic() + timeout
+        events, answer_text, usage = [], "", None
+        rotate, interrupted = False, False
+        active_tools = set()
+        while time.monotonic() < deadline:
+            event = (self.notifications.popleft() if self.notifications
+                     else self._receive(deadline - time.monotonic()))
+            method, params = event.get("method", ""), event.get("params", {})
+            if params.get("threadId", thread_id) != thread_id:
+                continue
+            events.append(event)
+            if on_event:
+                on_event(event)
+            if method == "thread/tokenUsage/updated":
+                usage = params["tokenUsage"]
+                capacity = usage.get("modelContextWindow")
+                # Latest request occupancy is not the lifetime total across requests.
+                rotate = rotate or bool(capacity and usage["last"]["totalTokens"] >= capacity * 0.70)
+            item = params.get("item", {})
+            if method == "item/started" and item.get("type") in {"commandExecution", "fileChange", "mcpToolCall"}:
+                active_tools.add(item["id"])
+            if method == "item/completed":
+                active_tools.discard(item.get("id"))
+                if item.get("type") == "agentMessage":
+                    answer_text = item.get("text", "")
+            if method == "turn/completed":
+                status = params["turn"]["status"]
+                require(status in {"completed", "interrupted"},
+                        f"Codex turn failed: {params['turn'].get('error')}")
+                if status == "completed":
+                    answer = json.loads(answer_text)
+                    validate(answer, schema)
+                else:
+                    answer = None
+                return {"answer": answer, "events": events, "thread_id": thread_id,
+                        "usage": usage, "rotate": rotate, "interrupted": status == "interrupted"}
+            if rotate and not active_tools and not interrupted:
+                self.request("turn/interrupt", {"threadId": thread_id, "turnId": turn_id})
+                interrupted = True
+        raise ContractError("Codex turn execution budget exceeded")
+
+    def __exit__(self, *_):
+        if not self.process:
+            return
+        if self.process.poll() is None:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/PID", str(self.process.pid), "/T", "/F"],
+                               capture_output=True, timeout=20)
+            else:
+                os.killpg(self.process.pid, signal.SIGTERM)
+            self.process.wait(timeout=20)
+        for reader in self.readers:
+            reader.join(timeout=2)
+        for stream in (self.process.stdin, self.process.stdout, self.process.stderr):
+            stream.close()

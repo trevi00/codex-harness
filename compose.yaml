@@ -30,28 +30,41 @@ services:
   conductor:
     &agent
     build: .
-    image: codex-harness:bootstrap
+    image: ${HARNESS_AGENT_IMAGE:-codex-harness:bootstrap}
     profiles: ["agents"]
     environment:
       HARNESS_DATABASE_URL: postgresql://harness:${POSTGRES_PASSWORD}@postgres:5432/harness
       HARNESS_REDIS_URL: redis://redis:6379/0
-    command: ["serve", "--agent", "conductor"]
+      HARNESS_REPOSITORY: /repository
+      HARNESS_RUNTIME_DIR: /runtime
+    volumes:
+      - .:/repository
+      - ./.runtime:/runtime
+      - ${USERPROFILE}/.codex/auth.json:/run/secrets/codex-auth:ro
+    command: ["serve", "--agent", "conductor", "--execute"]
     depends_on:
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
-    mem_limit: 256m
-    cpus: 0.5
+    mem_limit: 768m
+    cpus: 1.0
   research-lead:
     <<: *agent
-    command: ["serve", "--agent", "lead:research"]
+    command: ["serve", "--agent", "lead:research", "--execute"]
   improvement-lead:
     <<: *agent
-    command: ["serve", "--agent", "lead:improvement"]
+    command: ["serve", "--agent", "lead:improvement", "--execute"]
   implementation-worker:
     <<: *agent
     profiles: ["workers"]
-    command: ["serve", "--agent", "worker:implementation"]
-    mem_limit: 512m
+    command: ["serve", "--agent", "worker:implementation", "--execute"]
+  github-worker:
+    <<: *agent
+    profiles: ["workers"]
+    command: ["serve", "--agent", "worker:github", "--execute"]
+  geeknews-worker:
+    <<: *agent
+    profiles: ["workers"]
+    command: ["serve", "--agent", "worker:geeknews", "--execute"]
 volumes:
   postgres-data:
   redis-data:

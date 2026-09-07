@@ -10,4 +10,4 @@ COPY pyproject.toml uv.lock ./
 COPY src ./src
 RUN pip install --no-cache-dir uv==0.12.2 && uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
-ENTRYPOINT ["harness"]
+ENTRYPOINT ["python", "-m", "codex_harness.container_main"]

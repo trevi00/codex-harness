@@ -1,0 +1,104 @@
+from __future__ import annotations
+
+import json
+import re
+import tempfile
+from pathlib import Path
+
+from codex_harness.adapters.commands import run_process
+from codex_harness.domain.model import require
+
+
+class GitWorkspace:
+    def __init__(self, repository: str, workspaces: str, remote: str | None = None):
+        self.repository = Path(repository).resolve()
+        self.workspaces = Path(workspaces).resolve()
+        self.workspaces.mkdir(parents=True, exist_ok=True)
+        self.remote = remote
+
+    def _git(self, *args: str, cwd: str | None = None, strip: bool = True) -> str:
+        result = run_process(["git", *args], cwd=cwd or str(self.repository), timeout=120)
+        require(result.returncode == 0, "Git operation failed: " + result.stderr[-2000:])
+        return result.stdout.strip() if strip else result.stdout
+
+    def prepare(self, task_id: str, base: str = "HEAD") -> dict:
+        require(bool(re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", task_id)), "Invalid workspace ID")
+        revision = self._git("rev-parse", "--verify", base + "^{commit}")
+        path = self.workspaces / task_id
+        branch = "harness/" + task_id
+        if not path.exists():
+            self._git("clone", "--no-hardlinks", str(self.repository), str(path))
+            self._git("checkout", "-b", branch, revision, cwd=str(path))
+        require(self._git("branch", "--show-current", cwd=str(path)) == branch, "Workspace branch mismatch")
+        require(self._git("merge-base", revision, "HEAD", cwd=str(path)) == revision,
+                "Workspace diverged from assignment base")
+        return {"path": str(path), "branch": branch, "base": revision, "task_id": task_id}
+
+    def capture(self, workspace: dict) -> dict:
+        path = str(Path(workspace["path"]).resolve())
+        require(Path(path).parent == self.workspaces, "Workspace outside managed root")
+        self._git("add", "--all", cwd=path)
+        names = self._git("diff", "--cached", "--name-only", cwd=path).splitlines()
+        require(not any(Path(n).name in {".env", "auth.json", "credentials.json"} for n in names),
+                "Credential file cannot enter a candidate")
+        if names:
+            self._git("-c", "user.name=Codex Harness", "-c", "user.email=harness@localhost",
+                      "commit", "-m", "Implement harness task " + workspace["task_id"], cwd=path)
+        revision = self._git("rev-parse", "HEAD", cwd=path)
+        require(revision != workspace["base"], "Task produced no code change")
+        require(not self._git("status", "--porcelain", cwd=path), "Candidate workspace is dirty")
+        self._git("fetch", path, "HEAD:refs/heads/" + workspace["branch"])
+        return {**workspace, "revision": revision,
+                "tree": self._git("rev-parse", "HEAD^{tree}", cwd=path), "author": "worker:implementation"}
+
+    def inspect(self, revision: str, base: str) -> dict:
+        revision = self._git("rev-parse", "--verify", revision + "^{commit}")
+        base = self._git("rev-parse", "--verify", base + "^{commit}")
+        return {"revision": revision, "base": base,
+                "tree": self._git("rev-parse", revision + "^{tree}"),
+                "diff": self._git("diff", "--no-ext-diff", base, revision, "--"),
+                "files": self._git("diff", "--name-only", base, revision, "--").splitlines()}
+
+    def review_workspace(self, revision: str, review_id: str) -> str:
+        require(bool(re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", review_id)), "Invalid review workspace ID")
+        path = self.workspaces / ("review-" + review_id)
+        if not path.exists():
+            self._git("clone", "--no-hardlinks", str(self.repository), str(path))
+            self._git("checkout", "--detach", revision, cwd=str(path))
+        require(self._git("rev-parse", "HEAD", cwd=str(path)) == revision, "Stale review workspace")
+        require(not self._git("status", "--porcelain", cwd=str(path)), "Review workspace is dirty")
+        return str(path)
+
+    def publish(self, candidate: dict, title: str, body: str) -> dict:
+        require(bool(self.remote), "GitHub repository must be configured")
+        require(bool(re.fullmatch(r"[\w.-]+/[\w.-]+", self.remote)), "Invalid GitHub repository")
+        branch = candidate["branch"]
+        self._git("push", "https://github.com/" + self.remote + ".git",
+                  candidate["revision"] + ":refs/heads/" + branch)
+        existing = run_process(["gh", "pr", "list", "--repo", self.remote, "--head", branch,
+                                "--state", "open", "--json", "number,url,headRefOid"], timeout=60)
+        require(existing.returncode == 0, "Cannot inspect GitHub PR")
+        rows = json.loads(existing.stdout)
+        if rows:
+            require(rows[0]["headRefOid"] == candidate["revision"], "PR head changed")
+            return rows[0]
+        with tempfile.TemporaryDirectory(prefix="harness-pr-") as directory:
+            path = Path(directory) / "body.md"
+            path.write_text(body, encoding="utf-8")
+            result = run_process(["gh", "pr", "create", "--repo", self.remote, "--head", branch,
+                                  "--base", "main", "--title", title, "--body-file", str(path)], timeout=60)
+            require(result.returncode == 0, "PR creation failed: " + result.stderr[-1000:])
+            return {"url": result.stdout.strip(), "headRefOid": candidate["revision"]}
+
+    def merge(self, candidate: dict) -> dict:
+        require(self._git("rev-parse", candidate["revision"] + "^{tree}") == candidate["tree"],
+                "Candidate tree changed")
+        if self.remote:
+            result = run_process(["gh", "pr", "merge", candidate["branch"], "--repo", self.remote,
+                                  "--merge", "--match-head-commit", candidate["revision"]], timeout=120)
+            require(result.returncode == 0, "PR merge failed: " + result.stderr[-1000:])
+            return {"merged": True, "revision": candidate["revision"], "transport": "github"}
+        require(not self._git("status", "--porcelain"), "Main worktree is dirty")
+        require(self._git("rev-parse", "HEAD") == candidate["base"], "Main changed; rebase and review again")
+        self._git("merge", "--ff-only", candidate["revision"])
+        return {"merged": True, "revision": candidate["revision"], "transport": "local"}

@@ -10,11 +10,21 @@ from codex_harness.adapters.commands import run_process
 from codex_harness.domain.model import ContractError, canonical
 
 
+def resolve_codex() -> str | None:
+    executable = shutil.which("codex.cmd") or shutil.which("codex")
+    if executable and executable.lower().endswith(".cmd"):
+        package = Path(executable).parent / "node_modules/@openai/codex/node_modules/@openai"
+        candidates = sorted(package.glob("codex-win32-*/vendor/*/bin/codex.exe"))
+        if len(candidates) == 1:
+            return str(candidates[0])
+    return executable
+
+
 class CodexRuntime:
     """Noninteractive Codex transport. Prompts travel over stdin, never a shell string."""
 
     def __init__(self, executable: str | None = None):
-        self.executable = executable or shutil.which("codex.cmd") or shutil.which("codex")
+        self.executable = executable or resolve_codex()
         if not self.executable:
             raise ContractError("Codex CLI not installed")
 
