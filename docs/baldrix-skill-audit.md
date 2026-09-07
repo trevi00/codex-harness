@@ -61,7 +61,7 @@ Adaptations and limitations:
   Older imported records can omit base scores but cannot silently retrofit them later.
 - Global transaction locking and permanent replay-ledger retention remain existing debt.
   Even this read-only report takes the existing global transaction lock while copying
-  the project document; aggregation occurs after releasing it. JSON is compact ASCII-
+  the project document; aggregation occurs after releasing it. JSON is single-line ASCII-
   escaped output rather than the upstream indented Unicode formatting; values agree.
   This command is a passive audit, not threshold calibration or full Baldrix migration.
 
@@ -82,3 +82,35 @@ to observations or definitions; a database read transaction still commits and ma
 Empty valid-skill reports return an empty message, matching upstream's early return.
 JSON structure differs as documented; mapped per-skill values and candidate reasons
 were compared against upstream in 400 randomized cases, not asserted byte-identical.
+
+## Candidate validation
+
+Implementation revision: `7b9d9c814631185e3f571ed0fbfba40103943e43`.
+These are component checks, not production release or full-repository adoption.
+
+- Windows PostgreSQL/Redis suite: 421 passed, 7 skipped.
+  `sha256:db6a1ba340e666d183a243d04a4a48e9341acd98fc8b473f265ba53163d10614`.
+- Linux PostgreSQL/Redis suite: 428 passed, no skips.
+  `sha256:7039d5a31a3fb3bd9224a3e59904ab89549c84cf49ba653cd3e66a843cd7027e`.
+- Actual Codex CLI canary passed; 82 source/config/lock files matched the immutable
+  image. `sha256:9a8f9e1dd5d5e8cd201aa2c8bf9d8456c2d770a00efb0fcc5aac6ac00cb5d83e`.
+- Actual audit CLI subprocesses against PostgreSQL verified JSON/text, minimum samples,
+  exclusion of an explicitly backdated isolated fixture record with `--since`, and no
+  history/ledger changes during reads.
+  `sha256:12cfb82877d443078b98873b5dc7cbc01d395f7d78adbfa4ea7880e7119da744`.
+- Original upstream test script: all 9 passed in a temporary isolated source copy;
+  400 seeded pure-function comparisons matched mapped statistics and candidate reasons.
+  `sha256:8f81d4b26b363b89377d3b64bf27c29916854ceeecbe66923b7b5a32797e9f45`.
+  The local runner is `.runtime/check_skill_audit_parity.py` in the parent development
+  workspace; publishing a portable runner in Git remains a reproducibility follow-up.
+- Claude complete-source review: ACCEPT.
+  `sha256:7df8f1edb9052799b1156cd744f84e03e35caca9587a01676a02156421adca53`.
+  Earlier rejected/conditional reviews are retained in immutable artifacts. Remaining
+  non-blocking items include separate diagnosis of malformed legacy base scores,
+  report-format polish, identity-length bounds and the portable verification runner.
+
+Pending calibration work also requires body-size observations, proposal/holdout metrics,
+locked-vs-tunable registries and guarded activation. Current transaction-time timestamps
+must not be reused as an import API that invents dates for old events. Historical JSONL
+import needs its own provenance-preserving, idempotent contract. Remaining Baldrix and
+all OMC/Ouroboros remain in the migration sequence.
