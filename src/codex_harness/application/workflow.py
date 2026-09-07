@@ -194,6 +194,12 @@ class Workflow:
                     if tx.get("research_topics", topic) is None:
                         tx.put("research_topics", topic, {"id": topic, "result": result,
                                                          "decision_id": message["message_id"]})
+                        # INV-RESEARCH-001/004: retain the decision identity without approval authority.
+                        tx.put("decisions_pending", message["message_id"],
+                               {"id": message["message_id"], "actor": recipient, "phase": "research_lead",
+                                "message": message, "input": result,
+                                "status": "deferred_pending_source_audit", "attempt": 0,
+                                "discovery_id": topic})
                         tx.put("research_discoveries", topic,
                                {"id": topic, "version": 1, "result": result,
                                 "status": "deferred_pending_source_audit",

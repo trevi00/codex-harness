@@ -123,7 +123,11 @@ def test_research_topics_deduplicate_across_scheduled_runs():
                            if row["message"]["what"]["details"].get("task_id") == task["id"])
         workflow.handle(message)
     with workflow.store.transaction() as tx:
-        assert len(tx.scan("decisions_pending")) == 0
+        assert len(tx.scan("decisions_pending")) == 1
+        decision = tx.scan("decisions_pending")[0]
+        topic = tx.scan("research_topics")[0]
+        assert topic['decision_id'] == decision['id']
+        assert decision['status'] == 'deferred_pending_source_audit'
         assert len(tx.scan("research_discoveries")) == 1
 
 

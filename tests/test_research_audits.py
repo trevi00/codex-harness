@@ -210,7 +210,8 @@ def test_readme_feed_discovery_never_queues_approval(source):
     workflow.handle(report)
     workflow.handle(report)
     with workflow.store.transaction() as tx:
-        assert not tx.scan('decisions_pending')
+        assert len(tx.scan('decisions_pending')) == 1
+        assert tx.scan('decisions_pending')[0]['status'] == 'deferred_pending_source_audit'
         assert len(tx.scan('research_discoveries')) == 1
 
 
