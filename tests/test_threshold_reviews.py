@@ -37,8 +37,9 @@ def runtime(executor, calls, *, accepted=True, blocked=False, wrong_actor=False,
         calls.append((actor, evidence))
         answer = {'accepted': accepted, 'reason': 'fixture assessment', 'blocked': blocked,
                   'risks': [], 'sre_assessment': 'fixture', 'arc42_assessment': 'fixture'}
+        source = executor.artifacts.put(canonical(evidence), 'fixture-input')
         packet = executor.artifacts.put(canonical({'agent_id': 'wrong' if wrong_actor else actor,
-            'task_id': key}), 'fixture-context')
+            'task_id': key, 'required': {'external_context': {'ref': source['ref']}}}), 'fixture-context')
         revision = executor.git._git('rev-parse', 'HEAD', cwd=cwd)
         receipt = executor.artifacts.put(canonical({'answer': answer, 'context_ref': packet['ref'],
             'research_binding': {'stage': 'threshold_review', 'evidence_ref': 'sha256:' + digest(evidence),

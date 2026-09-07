@@ -25,17 +25,6 @@ def review_threshold(executor, lease, schema):
             and executor.git._git('rev-parse', 'HEAD', cwd=cwd) == revision, 'Threshold reviewer changed checkout')
     require(current_policy(executor.git) == policy, 'Threshold policy changed during review')
     receipt = executor.artifacts.document(result['execution_ref'])
-    require(not receipt.get('interrupted'), 'Interrupted threshold review cannot complete')
-    require(not receipt.get('inspection_blocked') or
-            result.get('inspection_blocked') and result['accepted'] is False,
-            'Blocked threshold execution cannot approve')
-    packet = executor.artifacts.document(receipt['context_ref'])
-    require(packet['agent_id'] == lease['actor'] and packet['task_id'] == lease['id']
-            and receipt['research_binding']['stage'] == 'threshold_review'
-            and receipt['research_binding']['evidence_ref'] == 'sha256:' + digest(evidence)
-            and receipt['research_binding']['basis_revision'] == revision
-            and result['basis_revision'] == revision, 'Threshold execution receipt mismatch')
-    if not result.get('inspection_blocked'):
-        require(all(result.get(key) == value for key, value in receipt['answer'].items()),
-                'Threshold assessment differs from execution')
+    require(receipt['research_binding']['evidence_ref'] == 'sha256:' + digest(evidence),
+            'Threshold execution input mismatch')
     return reviews.complete(lease, bundle, result)

@@ -65,7 +65,23 @@ class ThresholdReviews:
     def complete(self, lease, bundle, result):
         require(type(result.get('accepted')) is bool and isinstance(result.get('reason'), str),
                 'Invalid threshold assessment')
-        self.artifacts.inspect(result['execution_ref'])
+        receipt = self.artifacts.document(result['execution_ref'])
+        packet = self.artifacts.document(receipt['context_ref'])
+        binding = receipt['research_binding']
+        revision = bundle['record']['proposal']['policy_revision']
+        require(packet['agent_id'] == lease['actor'] and packet['task_id'] == lease['id']
+                and binding['stage'] == 'threshold_review' and binding['basis_revision'] == revision
+                and result['basis_revision'] == revision
+                and packet['required']['external_context']['ref'] == binding['evidence_ref']
+                and self.artifacts.document(binding['evidence_ref'])['review'] == bundle,
+                'Threshold execution receipt mismatch')
+        require(not receipt.get('interrupted'), 'Interrupted threshold review cannot complete')
+        require(not receipt.get('inspection_blocked') or
+                result.get('inspection_blocked') and result['accepted'] is False,
+                'Blocked threshold execution cannot approve')
+        if not result.get('inspection_blocked'):
+            require(all(result.get(key) == value for key, value in receipt['answer'].items()),
+                    'Threshold assessment differs from execution')
         blocked = bool(result.get('blocked') or result.get('inspection_blocked'))
         require(not blocked or not result['accepted'], 'Blocked threshold review cannot accept')
         with self.store.transaction() as tx:
