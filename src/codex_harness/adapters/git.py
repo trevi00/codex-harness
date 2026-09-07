@@ -18,20 +18,28 @@ class GitWorkspace:
 
     def _git(self, *args: str, cwd: str | None = None, strip: bool = True) -> str:
         result = run_process(["git", *args], cwd=cwd or str(self.repository), timeout=120)
-        require(result.returncode == 0, "Git operation failed: " + result.stderr[-2000:])
+        require(result.returncode == 0, "Git operation failed (" + (args[0] if args else '')
+                + ", cwd=" + str(cwd or self.repository) + "): " + result.stderr[-2000:])
         return result.stdout.strip() if strip else result.stdout
 
     def prepare(self, task_id: str, base: str = "HEAD") -> dict:
         require(bool(re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", task_id)), "Invalid workspace ID")
-        revision = self._git("rev-parse", "--verify", base + "^{commit}")
         path = self.workspaces / task_id
         branch = "harness/" + task_id
+        # INV-SESSION-001: retries keep their original base even when main advances.
+        marker = path / '.git' / 'harness-assignment-base'
+        pinned = marker.read_text('utf-8').strip() if marker.exists() else None
+        revision = pinned if pinned and base == 'HEAD' else self._git(
+            "rev-parse", "--verify", base + "^{commit}")
+        require(not pinned or pinned == revision, 'Assignment base changed; use a new rebase task')
         if not path.exists():
             self._git("clone", "--no-hardlinks", str(self.repository), str(path))
             self._git("checkout", "-b", branch, revision, cwd=str(path))
         require(self._git("branch", "--show-current", cwd=str(path)) == branch, "Workspace branch mismatch")
         require(self._git("merge-base", revision, "HEAD", cwd=str(path)) == revision,
                 "Workspace diverged from assignment base")
+        if not pinned:
+            marker.write_text(revision, encoding='utf-8')
         return {"path": str(path), "branch": branch, "base": revision, "task_id": task_id}
 
     def capture(self, workspace: dict) -> dict:

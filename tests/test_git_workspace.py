@@ -52,6 +52,21 @@ def test_main_advance_invalidates_previous_merge_approval(tmp_path):
         adapter.merge(candidate)
 
 
+def test_retry_keeps_original_base_and_uncommitted_work(tmp_path):
+    root = repository(tmp_path)
+    adapter = GitWorkspace(str(root), str(tmp_path / 'workspaces'))
+    workspace = adapter.prepare('retry', 'HEAD')
+    work = Path(workspace['path']) / 'unfinished.txt'
+    work.write_text('saved work')
+    (root / 'advanced.txt').write_text('main changed during model turn')
+    git(root, 'add', '.')
+    git(root, 'commit', '-m', 'Concurrent change')
+    assert adapter.prepare('retry', 'HEAD')['base'] == workspace['base']
+    assert work.read_text() == 'saved work'
+    with pytest.raises(ContractError, match='Assignment base changed'):
+        adapter.prepare('retry', git(root, 'rev-parse', 'HEAD'))
+
+
 def test_hook_identity_survives_rework_and_rebase_without_prompt_metadata(tmp_path):
     root = repository(tmp_path)
     adapter = GitWorkspace(str(root), str(tmp_path / "workspaces"))
