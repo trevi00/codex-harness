@@ -24,8 +24,10 @@ class DatabaseFacts:
     def read(self):
         with self.service.store.transaction() as tx:
             data = {name: tx.scan(name) for name in ('tasks', 'decisions_pending', 'sessions',
-                    'execution_progress', 'hooks', 'releases', 'events', 'reference_audits')}
+                    'execution_progress', 'hooks', 'releases', 'events', 'reference_audits',
+                    'research_audits', 'research_partitions')}
             active, health = tx.get('deployment', 'active'), tx.get('health', 'latest')
+            audit_control = tx.get('research_control', 'activation') or {}
         progress_by_id = {p['id']: p for p in data['execution_progress']}
         def work(row, decision=False):
             message = row.get('message', {})
@@ -91,14 +93,37 @@ class DatabaseFacts:
                 'reviews': [{k: r.get(k) for k in ('actor', 'accepted', 'evidence')} for r in row.get('reviews', [])],
                 'checks': {name: {'passed': check.get('passed'), 'evidence': check.get('evidence')}
                            for name, check in row.get('checks', {}).items()}})
-        audits = [{k: row.get(k) for k in ('id', 'repository', 'revision', 'status', 'files', 'manifest_ref')}
-                  for row in data['reference_audits']]
+        audits = audit_progress(data, audit_control)
         return {'agents': agents, 'tasks': tasks, 'decisions': decisions, 'hooks': hooks, 'releases': releases,
                 'audits': audits,
                 'active': {k: (active or {}).get(k) for k in ('release_id', 'revision', 'at')},
                 'health': {k: (health or {}).get(k) for k in ('status', 'checked_at')},
                 'events': [{k: row.get(k) for k in ('type', 'at', 'task_id', 'hook_id', 'release_id')}
                            for row in sorted(data['events'], key=lambda r: r.get('at', ''), reverse=True)[:60]]}
+
+
+def audit_progress(data, control):
+    """INV-RESEARCH-001: checkpoint counts do not certify semantic review or adoption."""
+    output = {(r['repository'], r['revision']): {k: r.get(k) for k in (
+        'id', 'repository', 'revision', 'status', 'files', 'manifest_ref',
+        'semantically_reviewed_files', 'independent_review', 'review_ref', 'test_receipt_ref')}
+        for r in data.get('reference_audits', [])}
+    for audit in data.get('research_audits', []):
+        source = audit['source']
+        key = (source['repository'], source['commit'])
+        partitions = [p for p in data.get('research_partitions', []) if p['audit_id'] == audit['id']]
+        row = output.setdefault(key, {'repository': key[0], 'revision': key[1]})
+        row.update(audit_id=audit['id'], files=len(audit['inventory']),
+                   status=audit['status'], manifest_ref=source['manifest_ref'],
+                   dispatch_status=control.get('status', 'inactive'),
+                   checkpoint_partitions=len(partitions),
+                   remaining_paths=len({p for part in partitions for p in part['remaining_paths']})
+                   if partitions else None,
+                   remaining_subsystems=len({s for part in partitions for s in part['remaining_subsystems']})
+                   if partitions else None,
+                   open_questions=sum(len(p['open_questions']) for p in partitions),
+                   independent_review='not_certified_by_monitor')
+    return list(output.values())
 
 
 def docker_facts(repository):
