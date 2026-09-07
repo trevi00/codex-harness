@@ -33,6 +33,9 @@ class SkillHistory:
             if 'base_score' in item:
                 require(isinstance(item['base_score'], int) and not isinstance(item['base_score'], bool)
                         and 0 <= item['base_score'] <= item['score'], 'Invalid base score')
+            if 'body_chars' in item:
+                require(isinstance(item['body_chars'], int) and not isinstance(item['body_chars'], bool)
+                        and 0 <= item['body_chars'] <= 1024 * 1024, 'Invalid skill body size')
             require(isinstance(item.get('dimensions', []), list)
                     and all(isinstance(dim, str) for dim in item.get('dimensions', [])),
                     'Invalid skill dimensions')

@@ -68,7 +68,9 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
         if boost:
             dims = [*dims, *(record.get('pipeline_dimensions') or ['pipeline:unknown'])]
         score = base + boost
-        record.update(base_score=base, score=score, dimensions=dims,
+        # INV-SKILL-HISTORY-001: preserve pre-budget Unicode character length;
+        # rendered/truncated lengths cannot replay the upstream budget guard.
+        record.update(base_score=base, score=score, dimensions=dims, body_chars=len(body),
                       description=meta.get('description', '')[:120],
                       tier='unmatched', metadata=meta)
         if match or boost:

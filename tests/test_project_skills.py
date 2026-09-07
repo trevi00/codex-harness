@@ -207,6 +207,13 @@ def test_real_skill_history_annotation_and_recovery_survive_other_task_observati
     assert audit['invocations'] == 5  # three weak, one full, another task; retry is not a sample
     assert audit['dim_weight'] == {'kw': 7}
     assert audit['skills'][0]['path'].endswith('/routes.md')
+    from codex_harness.domain.model import digest
+
+    with store.transaction() as tx:
+        history = tx.get('skill_history', digest('uuid:' + project_id))
+    assert len(history['events']) == 5
+    assert all(event['top'][0]['body_chars'] == len('FASTAPI_ELIGIBLE')
+               for event in history['events'])
     executor._run('worker:implementation', 'main', 'changed objective', {},
                   str(root), IMPLEMENTATION)
     assert prompts[-1]['required']['recovery']['sources'] == {}

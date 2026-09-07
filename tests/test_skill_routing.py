@@ -119,6 +119,10 @@ def test_composed_budget_fills_lower_rank_and_bounds_pointer_tail(tmp_path):
     assert any(item.body == 'SECOND' for item in full)
     assert any(item.body == 'LEGACY' for item in rendered)
     assert all(record.get('tier') for record in records)
+    top = next(record for record in records if record['path'].endswith('/top.md'))
+    assert top['body_chars'] == len(bodies['top'])
+    assert top['body_chars'] < len(bodies['top'].encode('utf-8'))
+    assert top['body_chars'] > sum(len(item.body) for item in full)
 
 
 def test_frontmatter_requires_a_bare_closing_fence():
