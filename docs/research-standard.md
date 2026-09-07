@@ -60,15 +60,20 @@ continuations. Checkpoints preserve evidence history and reconcile all remaining
 partition fencing. Context overflow uses immutable artifact handles and the existing executor handoff;
 inspection planning and semantic analysis have separate evidence-bound session stages.
 
-The configured runner creates execution receipts directly from process results. It mounts only a
-read-only source copy plus system executables in a networkless bubblewrap namespace, with temporary
-scratch space. Symlinks and gitlinks are inert; this limitation is recorded in every receipt. The
-container installs bubblewrap without adding privileges. Missing isolation, namespace denial and
-command failure preserve command/output evidence and cannot support accepted independent reviews.
-The environment revision fingerprints runner configuration and platform, not a reproducible dependency
-image; upstream tests needing other dependencies must remain explicitly not run. Gitlinks still require
-separate audits and cannot currently close parent path coverage. These limitations never count as
-complete audit scope.
+The configured runner creates execution receipts directly from process results. Immutable object
+inspection uses bounded inert reads. Ordinary commands use PostgreSQL infrastructure requests tied to
+the assigned source, task generation and lease; the host supervisor executes them in a separate Docker
+container using the active deployment's immutable image. Source agents receive neither a Docker socket
+nor host credentials. Only an ephemeral read-only source copy is mounted, with no network, dropped
+capabilities, a read-only root, bounded scratch space, process/memory/CPU limits and an in-container
+deadline. Runtime limits live in domain/policy.py. Output tails are bounded and their limit is recorded.
+Rollback, changed deployment or stale task authority cancels result consumption while retaining evidence.
+
+This is an explicit host execution backend, not a retry of a denied nested namespace with weaker
+flags. The original bubblewrap adapter remains available for standalone inspection; denied isolation
+still produces blocked evidence. Symlinks remain inert regular files; gitlinks, unsupported host paths
+and missing upstream dependencies remain explicit gaps. Commands requiring source-tree writes can fail
+in the read-only tree. No unavailable or failed execution establishes complete audit scope.
 
 Completed coverage and resolved partition questions permit adaptation proposals. Independent research
 lead and conductor decisions use separate fenced leases and successful command inspection. Their

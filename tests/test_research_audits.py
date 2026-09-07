@@ -296,6 +296,9 @@ class FixtureRunner:
         return ExecutionReceipt(source, 'fixture-env', command, 'fixture-isolation',
                                 125 if self.blocked else 0, output, 'fixture-runner', self.blocked)
 
+    def execute_assigned(self, source, command, task, workflow):
+        return self.execute(source, command)
+
 
 def activate_fixture(service, revision='audit', expected=None, enabled=True):
     from codex_harness.application.releases import Releases
@@ -575,6 +578,100 @@ def test_reconcile_refuses_missing_canary(audit):
         tx.put('releases', row['id'], row)
     with pytest.raises(ContractError, match='checks incomplete'):
         releases.reconcile_audits()
+
+
+def queued_source_fixture(audit):
+    from codex_harness.application.source_execution import SourceExecutions
+    service, record, source, _, _ = audit
+    _, release = activate_fixture(service)
+    with service.store.transaction() as tx:
+        tx.put('images', release['id'], {'id': release['id'], 'revision': 'audit',
+                                       'image': 'sha256:' + 'a' * 64})
+    message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_partition',
+                       {'audit_id': record['id']}, 'host-runner-fixture')
+    service.workflow.submit(message)
+    task = service.workflow.claim('worker:github', 'fixture-host')
+    return SourceExecutions(service.workflow), service, source, task
+
+
+def test_host_request_deduplicates_and_rejects_cross_source(audit):
+    queue, _, source, task = queued_source_fixture(audit)
+    request = queue.request(task, source, ['python', '--version'])
+    assert queue.request(task, source, ['python', '--version']) == request
+    with pytest.raises(ContractError, match='assignment mismatch'):
+        queue.request(task, replace(source, repository='https://github.com/other/repo'), ['true'])
+    row = queue.claim()
+    assert row['id'] == request['id'] and row['image'] == 'sha256:' + 'a' * 64
+    assert queue.claim() is None
+
+
+@pytest.mark.parametrize('invalidate', ['pause', 'lease', 'deployment'])
+def test_host_result_preserves_evidence_but_cannot_cross_invalidated_authority(audit, invalidate):
+    queue, service, source, task = queued_source_fixture(audit)
+    queue.request(task, source, ['true'])
+    row = queue.claim()
+    receipt = FixtureRunner(service.artifacts).execute(source, ['true'])
+    with service.store.transaction() as tx:
+        if invalidate == 'pause':
+            tx.put('research_control', 'activation', {'status': 'paused'})
+        elif invalidate == 'lease':
+            current = tx.get('tasks', task['id'])
+            tx.put('tasks', task['id'], {**current, 'generation': current['generation'] + 1})
+        else:
+            tx.put('deployment', 'active', {'release_id': 'changed'})
+    queue.complete(row, receipt)
+    with service.store.transaction() as tx:
+        saved = tx.get('source_execution_requests', row['id'])
+    assert saved['status'] == 'cancelled'
+    assert saved['receipt']['output_ref'] == receipt.output_ref
+
+
+def test_host_queue_pause_cancels_pending_without_execution(audit):
+    queue, service, source, task = queued_source_fixture(audit)
+    request = queue.request(task, source, ['true'])
+    with service.store.transaction() as tx:
+        tx.put('research_control', 'activation', {'status': 'paused'})
+    assert queue.claim() is None
+    with service.store.transaction() as tx:
+        assert tx.get('source_execution_requests', request['id'])['status'] == 'cancelled'
+
+
+def test_host_restart_reclaims_expired_runner_and_fences_late_result(audit):
+    from datetime import datetime, timedelta, timezone
+    queue, service, source, task = queued_source_fixture(audit)
+    queue.request(task, source, ['true'])
+    first = queue.claim()
+    with service.store.transaction() as tx:
+        row = tx.get('source_execution_requests', first['id'])
+        row['started_at'] = (datetime.now(timezone.utc) - timedelta(seconds=200)).isoformat()
+        tx.put('source_execution_requests', first['id'], row)
+    second = queue.claim()
+    assert second['owner'] != first['owner']
+    queue.complete(first, FixtureRunner(service.artifacts).execute(source, ['true']))
+    with service.store.transaction() as tx:
+        assert tx.get('source_execution_requests', first['id'])['owner'] == second['owner']
+        assert tx.get('source_execution_requests', first['id'])['status'] == 'running'
+        assert len(tx.scan('source_execution_history')) == 1
+
+
+def test_docker_source_runner_uses_only_inert_source_and_immutable_image(audit, tmp_path, monkeypatch):
+    from codex_harness.adapters.source_execution import DockerSourceRunner
+    service, _, source, _, _ = audit
+    observed = []
+    def run(argv, timeout):
+        observed.append(argv)
+        return subprocess.CompletedProcess(argv, 0, 'fixture-only', '')
+    monkeypatch.setattr('codex_harness.adapters.source_execution.bounded_command', run)
+    monkeypatch.setattr('codex_harness.adapters.source_execution.run_process', run)
+    receipt = DockerSourceRunner(tmp_path / 'host', service.artifacts).execute(
+        source, ['python', '--version'], 'sha256:' + 'a' * 64)
+    assert receipt.exit_status == 0 and not receipt.inspection_blocked
+    argv = observed[0]
+    assert argv[argv.index('--network') + 1] == 'none'
+    assert '--read-only' in argv and '--pids-limit' in argv and '--cap-drop' in argv
+    assert argv.count('-v') == 1 and argv[argv.index('-v') + 1].endswith(':/source:ro')
+    assert argv[-4:] == ['sha256:' + 'a' * 64, '120', 'python', '--version']
+    assert observed[-1][:3] == ['docker', 'rm', '-f']
 
 
 @pytest.mark.parametrize('legacy_control', [False, True])

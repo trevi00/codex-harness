@@ -16,9 +16,16 @@ from codex_harness.domain.research import ExecutionReceipt, InventoryEntry, Sour
 
 
 class AuditRunner:
-    def __init__(self, root, artifacts):
+    def __init__(self, root, artifacts, host_execution=False):
         self.root, self.artifacts = Path(root), artifacts
+        self.host_execution = host_execution
         self.root.mkdir(parents=True, exist_ok=True)
+
+    def execute_assigned(self, source, command, task, workflow):
+        if self.host_execution and command[0] not in {'source-list', 'source-read'}:
+            from codex_harness.adapters.source_execution import SourceExecutionClient
+            return SourceExecutionClient().execute(workflow, task, source, command)
+        return self.execute(source, command)
 
     def acquire(self, repository, commit):
         provisional = SourceIdentity(repository, commit, '0' * 40, 'sha256:' + '0' * 64)

@@ -24,6 +24,7 @@ TARGETS = {"conductor": "conductor", "lead:research": "research-lead",
            "lead:improvement": "improvement-lead", "worker:implementation": "implementation-worker",
            "worker:github": "github-worker", "worker:geeknews": "geeknews-worker"}
 release_thread = None
+source_thread = None
 last_maintenance = 0
 last_collection = 0
 
@@ -46,7 +47,7 @@ def deploy_queued(service, executor):
 
 
 def tick(research=False, releases=False):
-    global release_thread, last_maintenance, last_collection
+    global release_thread, source_thread, last_maintenance, last_collection
     status = run_process(["docker", "compose", "ps", "--all", "--format", "json"], cwd=str(ROOT), timeout=20)
     if status.returncode:
         raise RuntimeError(status.stderr)
@@ -67,6 +68,15 @@ def tick(research=False, releases=False):
         active = tx.get("deployment", "active")
         image = tx.get("images", active["release_id"]) if active else None
     desired = image["image"] if image else "codex-harness:bootstrap"
+    if source_thread is None or not source_thread.is_alive():
+        from codex_harness.adapters.artifacts import FileArtifacts
+        from codex_harness.adapters.source_execution import DockerSourceRunner
+        from codex_harness.application.workflow import Workflow
+        runner = DockerSourceRunner(ROOT / '.runtime/source-executions',
+                                    FileArtifacts(ROOT / '.runtime/artifacts'))
+        source_thread = threading.Thread(target=runner.run_one,
+            args=(Workflow(service.store, service.org),), daemon=True)
+        source_thread.start()
     if time.monotonic() - last_maintenance >= 60:
         compacted = sum(bus.compact(agent, POLICY.stream_retention_entries) for agent in TARGETS)
         executor = build_executor(service)

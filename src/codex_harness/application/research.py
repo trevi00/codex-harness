@@ -249,7 +249,7 @@ class ResearchAudits:
             require(details.get('audit_id') == audit_id, 'Execution is not assigned this audit')
             audit = tx.get('research_audits', audit_id)
             require(audit is not None, 'Unknown audit')
-        receipt = self.runner.execute(SourceIdentity(**audit['source']), command)
+        receipt = self.runner.execute_assigned(SourceIdentity(**audit['source']), command, task, self.workflow)
         receipt.validate()
         require(asdict(receipt.source) == audit['source'], 'Runner source mismatch')
         self.artifacts.inspect(receipt.output_ref)

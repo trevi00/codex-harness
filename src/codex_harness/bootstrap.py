@@ -59,4 +59,4 @@ def build_executor(service=None):
     git = GitWorkspace(repository, str(runtime / "workspaces"), remote)
     return Executor(service or build(), git, artifacts, PostgresKnowledge(database_url()),
                     ResearchSources(artifacts),
-                    audit_runner=AuditRunner(runtime / "audit-sources", artifacts))
+                    audit_runner=AuditRunner(runtime / "audit-sources", artifacts, host_execution=True))
