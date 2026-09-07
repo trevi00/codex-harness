@@ -87,3 +87,12 @@ advance only a validated append-only prefix. Replays do not add observations; ch
 committed prefixes fail. Historical timestamps and unknown content versions are not
 replaced with import time or current skill identity. Imported archives do not mutate
 live history or become authority to activate skills, hooks, thresholds or releases.
+
+## INV-THRESHOLD-PROPOSAL-001
+
+Numeric proposals use a closed registry disjoint from locked source invariants.
+They bind supplied effective current values, Git policy revision, corpus and registry
+digests, and temporal holdout evidence. A single allowed step must improve training
+beyond hysteresis and pass independent reference replay. Reference acceptance alone
+never grants native activation authority. Staging and apply must verify the supplied
+basis against authoritative Git and runtime state before changing policy.
