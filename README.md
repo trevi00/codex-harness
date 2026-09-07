@@ -89,6 +89,18 @@ uv run python scripts/verify_rlm.py
 
 ## 구조
 
+로컬 운영 모니터: [http://127.0.0.1:8787](http://127.0.0.1:8787).
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start_monitor.ps1 -InstallStartup`
+로 수집기와 웹 서버를 시작하고 사용자 로그인 시 자동 시작을 등록합니다.
+웹 서버는 정제된 스냅샷만 읽습니다. 조직·작업·검수·세션·배포·훅·Docker·Redis 상태를
+확인할 수 있고 출처별 수집 실패와 오래된 관측값을 표시합니다. 조회 외 조작 API는 없습니다.
+5초 갱신 주기는 수집 시간 때문에 더 길어질 수 있습니다.
+
+호스트 MCP는 Playwright 확장 연결과 Context7 로컬 stdio를 사용합니다. Context7 OAuth
+콜백 오류는 로컬 stdio 연결로 해소했고 문서 검색을 실측했습니다. Chrome 탭 할당은 확장
+연결 시 사용자가 선택해야 합니다. 호스트 MCP 설정은 Docker 에이전트로 자동 전파되지 않습니다.
+외부 기능의 채택 기준은 [리서치 검증 계약](docs/research-standard.md)을 따릅니다.
+
 `domain/`은 순수 규칙, `application/`은 상태 전이와 유스케이스, `ports.py`는 내부 계약,
 `adapters/`는 Codex·GitHub·Docker·저장소·GraphRAG 구현입니다.
 `resources/`에는 조직 JSON, 메시지 Schema, DB 초기 스키마가 있고 `scripts/`는 운영 진입점입니다.

@@ -9,3 +9,9 @@
 - Test recurrence deduplication, stale writes, authorization, context overflow, and promotion failures.
 - Never report simulated review/canary as an actual Codex or GitHub production verification.
 - Run `uv run ruff check .` and `uv run pytest` after code changes.
+- Reference adoption follows `docs/research-standard.md`. README summaries are discovery only.
+- Every reference review pins a commit, inventories every tracked path, traces implementations and
+  callers against contracts/configuration/tests, and records coverage and unknowns. Inventory is
+  not semantic review; an upstream test file is not evidence that the test was executed.
+- Never mark a repository fully analyzed while files or subsystems remain unreviewed. Carry forward
+  remaining work using immutable evidence references and bounded context, rather than skipping it.
