@@ -150,7 +150,7 @@ def test_profile_symlink_in_git_is_rejected(project):
         project_context(git, artifacts, str(root), git._git('rev-parse', 'HEAD'))
 
 
-def test_real_skill_history_annotation_and_recovery_survive_other_task_observation(project, monkeypatch):
+def test_real_skill_history_annotation_and_recovery_survive_other_task_observation(project, monkeypatch, capsys):
     root, git, artifacts = project
     (root / '.harness/stages.yaml').write_text('stages: []\n', encoding='utf-8')
     (root / '.harness/skills/python/fastapi/routes.md').write_text(
@@ -199,6 +199,14 @@ def test_real_skill_history_annotation_and_recovery_survive_other_task_observati
     assert artifacts.document(recovery['progress']['ref']) == original_progress
     assert artifacts.document(recovery['checkpoint']['ref']) == checkpoint
     assert 'skill_history_ref' not in resumed['required']['research_context']
+    from codex_harness.adapters.skill_audit import main
+
+    project_id = resumed['required']['project_skills']['project_id']
+    assert main(['--project-id', project_id, '--json'], store=store) == 0
+    audit = json.loads(capsys.readouterr().out)
+    assert audit['invocations'] == 5  # three weak, one full, another task; retry is not a sample
+    assert audit['dim_weight'] == {'kw': 7}
+    assert audit['skills'][0]['path'].endswith('/routes.md')
     executor._run('worker:implementation', 'main', 'changed objective', {},
                   str(root), IMPLEMENTATION)
     assert prompts[-1]['required']['recovery']['sources'] == {}

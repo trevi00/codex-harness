@@ -57,11 +57,12 @@ def main(argv=None, *, store=None):
         selection = normalize_profile({'project_id': args.project_id}) if args.project_id else {}
         project = project_identity(selection, SimpleNamespace(remote=args.github_repo))
         require(project is not None, 'Invalid project identity')
-        history = SkillHistory(store if store is not None else PostgresStore(database_url()))
-        report = history.audit(digest(project), min_samples=args.min_samples, cutoff=cutoff)
     except (ContractError, ValueError):
         print(json.dumps({'error': 'Invalid audit arguments'}), file=sys.stderr)
         return 2
+    try:
+        history = SkillHistory(store if store is not None else PostgresStore(database_url()))
+        report = history.audit(digest(project), min_samples=args.min_samples, cutoff=cutoff)
     except Exception as exc:
         print(json.dumps({'error': 'Audit unavailable', 'type': type(exc).__name__}), file=sys.stderr)
         return 1

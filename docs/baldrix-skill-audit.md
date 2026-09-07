@@ -40,9 +40,19 @@ Adaptations and limitations:
 - Dimensional counts are occurrences, not weighted score contributions. Tie ordering
   follows first observed category, as in the source Counter. Unknown categories remain
   visible; absent older dimension data does not become zero-confidence evidence.
+- Scores are total scores including stage boost, exactly as the pinned upstream
+  prompt producer writes `top5` after adding +3. Both upstream and this harness use
+  base scores for full-body admission. Thin-history classification is therefore not
+  a classifier of all pointer-only matches: base=1 plus boost=3 is recorded as 4,
+  non-thin, despite being a pointer. The fixed historical ceiling of 2 is the shared
+  source predicate, not a dynamically derived routing threshold. The source's
+  `score<=2, never full-body` reason is a one-way implication under current defaults.
 - Invalid Boolean/negative scores are skipped explicitly. The original audit accepted
   Boolean scores accidentally; the original prompt adviser excluded them.
 - New diagnostic fields do not change replay identity. Retrying an old observation
   does not add a sample, replace its first timestamp, or enrich it retroactively.
 - Global transaction locking and permanent replay-ledger retention remain existing debt.
+  Even this read-only report takes the existing global transaction lock while copying
+  the project document; aggregation occurs after releasing it. JSON is compact ASCII-
+  escaped output rather than the upstream indented Unicode formatting; values agree.
   This command is a passive audit, not threshold calibration or full Baldrix migration.

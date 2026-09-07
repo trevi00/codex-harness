@@ -47,6 +47,14 @@ def test_dates_legacy_dimensions_and_invalid_entries_are_explicit():
     assert 'no skill-match telemetry' in render_text(audit_history([]))
 
 
+def test_total_score_matches_upstream_producer_not_pointer_eligibility():
+    events = [observation(i, 4) for i in range(3)]
+    for event in events:
+        event['top'][0]['base_score'] = 1  # weak prompt relevance plus upstream +3 stage boost
+    assert audit_history(events)['false_positive_candidates'] == []
+    assert not assess_history(events, events[0]['top'])[0]['candidate']
+
+
 @pytest.mark.parametrize('value', ['0s', '-1d', 'NaNh', 'infh', '7x', ''])
 def test_invalid_since_is_rejected(value):
     with pytest.raises(ContractError):
@@ -78,3 +86,16 @@ def test_cli_reads_same_project_without_writes_and_replay_preserves_time(capsys)
     assert main(['--github-repo', '../sibling', '--json'], store=store) == 2
     assert main(['--project-id', project_id, '--since', 'invalid'], store=store) == 2
     assert main(['--project-id', project_id, '--min-samples', '0'], store=store) == 2
+    assert main(['--project-id', 'not-a-uuid'], store=store) == 2
+    capsys.readouterr()
+    assert main(['--project-id', project_id], store=store) == 0
+    assert 'Narrow the kw surface' in capsys.readouterr().out
+
+
+def test_store_value_error_is_unavailable_not_bad_arguments(capsys):
+    class BrokenStore:
+        def transaction(self):
+            raise ValueError('secret backend detail')
+    assert main(['--project-id', str(uuid4())], store=BrokenStore()) == 1
+    error = json.loads(capsys.readouterr().err)
+    assert error == {'error': 'Audit unavailable', 'type': 'ValueError'}
