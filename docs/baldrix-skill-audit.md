@@ -53,8 +53,12 @@ Adaptations and limitations:
   audit classifies that category as `unknown`, and this report preserves that behavior.
 - Invalid Boolean/negative scores are skipped explicitly. The original audit accepted
   Boolean scores accidentally; the original prompt adviser excluded them.
-- New diagnostic fields do not change replay identity. Retrying an old observation
-  does not add a sample, replace its first timestamp, or enrich it retroactively.
+- New dimension/time diagnostics do not change replay identity for the same selection.
+  Replaying that selection does not add a sample, replace its first timestamp, or enrich
+  it retroactively. Base score is an immutable scoring field (already recorded before
+  this audit migration); changing or adding it to an existing observation conflicts.
+  Changing the routing manifest identifies a new selection, even for the same task.
+  Older imported records can omit base scores but cannot silently retrofit them later.
 - Global transaction locking and permanent replay-ledger retention remain existing debt.
   Even this read-only report takes the existing global transaction lock while copying
   the project document; aggregation occurs after releasing it. JSON is compact ASCII-
@@ -70,3 +74,11 @@ the guard runs; this is the existing documented ownership tradeoff, not a promis
 all database outages are advisory. Unleased recording remains best-effort. Passive CLI
 reads have no lease and return unavailable on storage errors. No ownership exception was
 weakened in response to the review.
+
+Input tightening is intentional: duration must be finite and positive (`0s` and negative
+durations are rejected). Invalid non-object event envelopes are excluded and counted
+under invalid entries instead of crashing as upstream does. `read_only` means no writes
+to observations or definitions; a database read transaction still commits and may lock.
+Empty valid-skill reports return an empty message, matching upstream's early return.
+JSON structure differs as documented; mapped per-skill values and candidate reasons
+were compared against upstream in 400 randomized cases, not asserted byte-identical.

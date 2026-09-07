@@ -76,6 +76,22 @@ def test_invalid_since_is_rejected(value):
         duration_seconds(value)
 
 
+@pytest.mark.parametrize('value', ['yesterday', True, float('nan')])
+def test_invalid_cutoff_is_a_contract_error(value):
+    with pytest.raises(ContractError, match='Invalid time cutoff'):
+        audit_history([], cutoff=value)
+
+
+@pytest.mark.parametrize('value', [True, '1', 1.5, -1, 2])
+def test_invalid_base_score_cannot_be_recorded(value):
+    store = MemoryStore()
+    entry = observation('invalid')
+    entry['top'][0]['base_score'] = value
+    with pytest.raises(ContractError, match='Invalid base score'):
+        SkillHistory(store).record('project', entry)
+    assert store.data == {}
+
+
 def test_cli_reads_same_project_without_writes_and_replay_preserves_time(capsys):
     store = MemoryStore()
     project_id = str(uuid4())

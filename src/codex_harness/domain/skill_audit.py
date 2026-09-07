@@ -38,7 +38,8 @@ def timestamp(value):
 def audit_history(events, *, min_samples=MIN_SAMPLES, cutoff=None):
     require(isinstance(min_samples, int) and not isinstance(min_samples, bool) and min_samples > 0,
             'Minimum samples must be a positive integer')
-    require(cutoff is None or math.isfinite(cutoff), 'Invalid time cutoff')
+    require(cutoff is None or (isinstance(cutoff, (int, float)) and not isinstance(cutoff, bool)
+                              and math.isfinite(cutoff)), 'Invalid time cutoff')
     scores, base_scores, boosted, dimensions, overall = {}, {}, Counter(), {}, Counter()
     invocations = unknown_dates = invalid_entries = 0
     for event in events[-MAX_EVENTS:]:

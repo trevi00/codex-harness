@@ -30,6 +30,9 @@ class SkillHistory:
                     and item['score'] >= 0, 'Invalid skill score')
             require(all(isinstance(item.get(key), str) and item[key]
                         for key in ('path', 'content_ref')), 'Invalid skill identity')
+            if 'base_score' in item:
+                require(isinstance(item['base_score'], int) and not isinstance(item['base_score'], bool)
+                        and 0 <= item['base_score'] <= item['score'], 'Invalid base score')
             require(isinstance(item.get('dimensions', []), list)
                     and all(isinstance(dim, str) for dim in item.get('dimensions', [])),
                     'Invalid skill dimensions')

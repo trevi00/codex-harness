@@ -101,6 +101,11 @@ def test_atomic_body_advisory_uses_prior_samples_and_preserves_source(tmp_path):
     unchanged, _ = prepare_history(store, artifacts, 'project', 'agent', 'pointer', 'objective',
         {'manifest_ref': pointer_manifest['ref']}, [item])
     assert unchanged == [item]
+    del record['base_score']
+    old_manifest = artifacts.put(canonical({'skills': [record]}), 'legacy-no-base')
+    legacy = {'manifest_ref': old_manifest['ref']}
+    _, observation = prepare_history(store, artifacts, 'project', 'agent', 'old', 'objective', legacy, [item])
+    assert observation is not None and 'base_score' not in observation[2]['top'][0]
 
 
 @pytest.mark.integration
