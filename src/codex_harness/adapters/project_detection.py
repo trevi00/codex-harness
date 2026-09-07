@@ -1,6 +1,7 @@
 """Explicit-root, read-only project detection; no project code or installers execute."""
 import hashlib
 import json
+import os
 import tomllib
 from pathlib import Path
 
@@ -29,10 +30,21 @@ def unique_json(pairs):
     return result
 
 
+def is_home_directory(root):
+    try:
+        home = Path.home()
+    except RuntimeError as exc:
+        raise ContractError('Cannot resolve home directory for project boundary check') from exc
+    try:
+        return root.samefile(home)
+    except OSError:
+        return os.path.normcase(str(root)) == os.path.normcase(str(home.resolve()))
+
+
 def detect_project(root):
     root = Path(root).resolve()
     require(root.is_dir(), 'Project root must exist')
-    require(not root.samefile(Path.home()), 'Home directory is not an implicit project')
+    require(not is_home_directory(root), 'Home directory is not an implicit project')
     signals, types, contents = [], set(), {}
     entries = {entry.name for entry in root.iterdir()}
     for filename, kind in FILE_SIGNALS.items():
@@ -40,6 +52,7 @@ def detect_project(root):
         if filename not in entries:
             continue
         require(not path.is_symlink() and path.is_file(), 'Manifest must be a regular file: ' + filename)
+        # INV-PROJECT-001: recheck containment if a manifest changes during inspection.
         require(path.resolve().is_relative_to(root), 'Manifest escapes project root')
         with path.open('rb') as stream:
             data = stream.read(262145)
@@ -49,7 +62,8 @@ def detect_project(root):
         types.add(kind)
         contents[filename] = data
     workflows = root / '.github/workflows'
-    if workflows.exists() or workflows.is_symlink():
+    github = root / '.github'
+    if '.github' in entries and github.is_dir() and 'workflows' in {p.name for p in github.iterdir()}:
         require(not workflows.is_symlink() and workflows.is_dir(),
                 'Workflow signal must be a regular directory')
         require(workflows.resolve().is_relative_to(root), 'Workflow directory escapes project root')
@@ -76,7 +90,7 @@ def detect_project(root):
         stacks.extend({'language': language, 'framework': framework} for _, framework in frameworks)
         if not frameworks:
             stacks.append({'language': language})
-        declarations = {name: dependencies[name] for name, _ in frameworks}
+        declarations.update({name: dependencies[name] for name, _ in frameworks})
         if 'typescript' in dependencies:
             declarations['typescript'] = dependencies['typescript']
     if 'pyproject.toml' in contents:

@@ -124,3 +124,23 @@ def test_workflow_file_is_reported_as_type_error(tmp_path):
     (tmp_path / '.github/workflows').write_text('not a directory')
     with pytest.raises(ContractError, match='regular directory'):
         detect_project(tmp_path)
+
+
+def test_missing_home_does_not_block_explicit_project(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, 'home', classmethod(lambda cls: tmp_path / 'absent-home'))
+    (tmp_path / 'package.json').write_text('{}')
+    assert detect_project(tmp_path)['stacks'] == [{'language': 'javascript'}]
+
+
+def test_unresolvable_home_is_classified(tmp_path, monkeypatch):
+    def unavailable(cls):
+        raise RuntimeError('Could not determine home directory')
+    monkeypatch.setattr(Path, 'home', classmethod(unavailable))
+    with pytest.raises(ContractError, match='Cannot resolve home directory'):
+        detect_project(tmp_path)
+
+
+@pytest.mark.parametrize('directory', ['.GitHub/workflows', '.github/Workflows'])
+def test_workflow_signal_uses_exact_directory_names(tmp_path, directory):
+    (tmp_path / directory).mkdir(parents=True)
+    assert detect_project(tmp_path)['metadata']['detection']['status'] == 'unknown'

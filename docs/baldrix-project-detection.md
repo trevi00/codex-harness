@@ -40,3 +40,7 @@ ranges/conflicts, source hashes, unknown/nested/home boundaries, malformed manif
 size/file-type limits, and actual CLI preview/initialization/no-overwrite behavior.
 Claude review and candidate canaries are retained separately. Full stage selection,
 ranking, asset migration, recursive workspace modeling and runtime proof remain open.
+
+Home aliases are checked by filesystem identity, with a normalized path fallback when
+home cannot be statted. An unresolvable home produces a classified contract error before
+writes. Both directory segments of the workflow signal use exact directory membership.
