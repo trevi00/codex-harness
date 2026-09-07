@@ -56,3 +56,45 @@ Initial actual Claude review ACCEPT:
 Follow-up binds calculation constants, moves metric validation into the registry
 validator, normalizes corpus encoding failures and strengthens tests for ties,
 hysteresis, lower-safe direction and malformed registry/input.
+
+Native routing currently reads `domain/skill_ranking.py:FULL_BODY_MIN_SCORE`
+through `adapters/skill_routing.py`; the routed manifest records that effective
+value under its routing policy. The future Git policy loader must supply the same
+resolution to the live router and proposer. A separate YAML policy used only by
+the proposer would not be authoritative and must not be presented as effective
+runtime policy. Full-body admission uses base score while reference calibration
+uses total score, so native replay and canary checks remain necessary before apply.
+
+Final runtime verification at `53159fdd7044e42451e169fa7117faec07c9314d`:
+
+- Ruff passed. Windows PostgreSQL/Redis: 450 passed, 7 skipped;
+  `sha256:7f72a05f703c9b011b480efa239ac76ac676aedf80092c3bb377a5ac0b5e2e36`.
+- Linux PostgreSQL/Redis: 457 passed, no skips;
+  `sha256:4ab7ed15820af9d5fde6190654df2fc5e664e6c4b0605295290c401d1a08eb6a`.
+- Actual Codex CLI canary passed with all 89 source/config/lock files matching the
+  immutable image:
+  `sha256:81b64cfa6c3e45bcb666c4dd41cbfed1f98b2532f590d3d7433630670999f7a0`.
+- Original proposer parity (300 corpora, 177 proposals):
+  `sha256:98d88f5bdae0c5d91bec0c86203b0d3aaa35df9040c6b353777f4286676d4222`.
+- Actual optimized Python subprocess rejected locked overlap:
+  `sha256:10b7e3da6c2cdb1e8fde42851c540b8fd0aa0ea68b16efd0e35161aa988e59d2`.
+- Actual Claude follow-up ACCEPT:
+  `sha256:7303b4fc01ae5aa88a5d289a40d8943f0383411560ed07f0da32f5d7c012f2f3`.
+
+Pre-activation findings: the reference target returns 1.0 for zero admitted entries,
+and the sized-event guard returns 1.0 when no body is selected. Thus raising above all
+observed scores can be reference-accepted while selecting no skills. Native staging
+must expose admission counts on both partitions and reject loss of useful admission
+without independent task-success evidence. Preserve source replay semantics for
+auditability; do not promote its numerical verdict as native improvement. Guard
+deltas use the full corpus while target deltas use holdout only. The current report
+limitations do not yet expose the empty-admission issue directly; add coverage and
+its warning to the next report/staging increment.
+
+Other review follow-ups: enforce registry name/qualified pairing, include the registry
+check in a future CLI/build validator, use deterministic decimal steps before wiring
+fractional entries, and cover unknown-date and lower-safe end-to-end cases. Current
+source parity checks exact registry pairs and full pytest already exercises runtime
+registry validation. The four unwired entries remain inert. Neither source parity
+nor the baseline Codex CLI canary establishes task-success improvement from applying
+any proposed threshold.
