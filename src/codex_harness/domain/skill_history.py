@@ -12,13 +12,24 @@ def is_candidate(count, thin_rate, middle, min_samples=MIN_SAMPLES):
     return count >= min_samples and thin_rate >= FP_THIN_RATE and middle <= THIN_SCORE_CEILING
 
 
+def valid_record(record):
+    return (isinstance(record, dict) and all(isinstance(record.get(k), str) and record[k]
+            for k in ('path', 'content_ref')) and isinstance(record.get('score'), int)
+            and not isinstance(record['score'], bool) and record['score'] >= 0)
+
+
 def assess_history(events, current, exclude=None):
     identities = {(record['path'], record['content_ref']) for record in current}
     scores = {}
     for event in events[-MAX_EVENTS:]:
-        if event['id'] == exclude:
+        if not isinstance(event, dict) or (exclude is not None and event.get('id') == exclude):
             continue
-        for record in event['top']:
+        entries = event.get('top')
+        if not isinstance(entries, list):
+            continue
+        for record in entries:
+            if not valid_record(record):
+                continue
             identity = (record['path'], record['content_ref'])
             if identity in identities:
                 scores.setdefault(identity, []).append(record['score'])

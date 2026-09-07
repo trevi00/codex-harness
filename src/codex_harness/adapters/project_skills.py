@@ -119,8 +119,11 @@ def project_context(git, artifacts, cwd, revision, objective=None):
         names = (set().union(*recommended.values()) if language == '_common' else
                  recommended.get(language, set()) | recommended.get('project', set()))
         boost = 3 if Path(relative).name in names else 0
+        pipeline_dims = sorted({f"pipeline:{r.get('stage', {}).get('id', 'unknown')}"
+            for r in pipeline['recommendations'] if Path(relative).name in r['skills']
+            and (language == '_common' or r['language'] in {language, 'project'})})
         records.append({'path': path, 'content_ref': stored['ref'], 'revision': revision,
-                        'pipeline_boost': boost,
+                        'pipeline_boost': boost, 'pipeline_dimensions': pipeline_dims,
                         'file': str(artifacts.root / (stored['ref'][7:] + '.txt'))})
         items.append(ContextItem('project-skill:' + path, body, stored['ref'], revision, 15 + boost))
     routing, guidance_summary = {}, {}

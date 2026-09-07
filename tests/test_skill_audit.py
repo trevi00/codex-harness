@@ -53,6 +53,21 @@ def test_total_score_matches_upstream_producer_not_pointer_eligibility():
         event['top'][0]['base_score'] = 1  # weak prompt relevance plus upstream +3 stage boost
     assert audit_history(events)['false_positive_candidates'] == []
     assert not assess_history(events, events[0]['top'])[0]['candidate']
+    report = audit_history(events)
+    assert report['skills'][0]['base_score_profile'] == {
+        'count': 3, 'min': 1, 'median': 1, 'max': 1, 'boosted_count': 3}
+    assert 'base score median: 1' in render_text(report)
+
+
+def test_window_cutoff_boundary_and_legacy_slug_cli(capsys, monkeypatch):
+    monkeypatch.setattr('codex_harness.domain.skill_audit.MAX_EVENTS', 2)
+    boundary = timestamp('2026-09-08T00:00:00Z')
+    report = audit_history([observation(i) for i in range(3)], cutoff=boundary)
+    assert report['invocations'] == 2 and report['max_events'] == 2
+    store = MemoryStore()
+    SkillHistory(store).record(digest('github:owner/repo'), observation('slug'))
+    assert main(['--github-repo', 'Owner/Repo', '--json'], store=store) == 0
+    assert json.loads(capsys.readouterr().out)['invocations'] == 1
 
 
 @pytest.mark.parametrize('value', ['0s', '-1d', 'NaNh', 'infh', '7x', ''])

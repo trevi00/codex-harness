@@ -34,6 +34,9 @@ def test_thresholds_and_content_version_scope():
     assert not assess_history(events + [event('strong', 5)], current)[0]['candidate']
     assert assess_history(events + [event('strong', 5)], current, 'strong')[0]['candidate']
     assert assess_history(events, event('changed', content='new-body')['top']) == []
+    damaged = [None, {}, {'id': 'missing', 'top': None},
+               {'id': 'invalid', 'top': [None, {}, {**current[0], 'score': True}]}]
+    assert assess_history(damaged + events, current) == assess_history(events, current)
 
 
 def test_transactional_dedup_conflicts_retention_and_lease_guard(monkeypatch):

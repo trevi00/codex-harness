@@ -73,6 +73,12 @@ def test_actual_routing_tiers_filter_stack_and_keep_retrieval_handles(tmp_path):
     records = {record['path'].split('/')[-1]: record for record in manifest['skills']}
     assert records['strong.md']['tier'] == 'full'
     assert records['stage.md']['tier'] == 'pointer' and records['stage.md']['base_score'] == 0
+    assert records['stage.md']['dimensions'] == ['pipeline:first']
+    from codex_harness.domain.skill_audit import audit_history
+
+    audit = audit_history([{'id': 'stage', 'top': [records['stage.md']]}])
+    assert audit['dim_weight'] == {'unknown': 1}
+    assert audit['skills'][0]['dominant_dim'] == 'unknown'
     assert records['irrelevant.md']['tier'] == 'unmatched'
     assert artifacts.read(records['weak.md']['content_ref']).endswith('HIDDEN_WEAK')
     (root / 'src/auth.py').write_text('changed', encoding='utf-8')

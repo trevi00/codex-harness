@@ -11,6 +11,7 @@ from codex_harness.domain.skill_history import (
     MIN_SAMPLES,
     THIN_SCORE_CEILING,
     is_candidate,
+    valid_record,
 )
 
 DIMENSIONS = ('intent', 'path', 'kw', 'pat')
@@ -38,24 +39,34 @@ def audit_history(events, *, min_samples=MIN_SAMPLES, cutoff=None):
     require(isinstance(min_samples, int) and not isinstance(min_samples, bool) and min_samples > 0,
             'Minimum samples must be a positive integer')
     require(cutoff is None or math.isfinite(cutoff), 'Invalid time cutoff')
-    scores, dimensions, overall = {}, {}, Counter()
+    scores, base_scores, boosted, dimensions, overall = {}, {}, Counter(), {}, Counter()
     invocations = unknown_dates = invalid_entries = 0
     for event in events[-MAX_EVENTS:]:
+        if not isinstance(event, dict):
+            invalid_entries += 1
+            continue
         when = timestamp(event.get('at'))
         if cutoff is not None and when is not None and when < cutoff:
             continue
         invocations += 1
         unknown_dates += when is None
-        for entry in event.get('top') or []:
-            if (not isinstance(entry, dict) or not all(isinstance(entry.get(k), str) and entry[k]
-                    for k in ('path', 'content_ref')) or not isinstance(entry.get('score'), int)
-                    or isinstance(entry['score'], bool) or entry['score'] < 0):
+        entries = event.get('top') or []
+        if not isinstance(entries, list):
+            invalid_entries += 1
+            continue
+        for entry in entries:
+            if not valid_record(entry):
                 invalid_entries += 1
                 continue
             identity = (entry['path'], entry['content_ref'])
             scores.setdefault(identity, []).append(entry['score'])
+            base = entry.get('base_score')
+            if isinstance(base, int) and not isinstance(base, bool) and 0 <= base <= entry['score']:
+                base_scores.setdefault(identity, []).append(base)
+                boosted[identity] += base < entry['score']
             counts = dimensions.setdefault(identity, Counter())
-            for dim in entry.get('dimensions') or []:
+            raw_dims = entry.get('dimensions') or []
+            for dim in raw_dims if isinstance(raw_dims, list) else []:
                 category = dim.split(':', 1)[0] if isinstance(dim, str) and ':' in dim else 'unknown'
                 category = category if category in DIMENSIONS else 'unknown'
                 counts[category] += 1
@@ -70,6 +81,10 @@ def audit_history(events, *, min_samples=MIN_SAMPLES, cutoff=None):
                   'score_min': min(values), 'score_median': middle, 'score_max': max(values),
                   'thin_rate': round(rate, 3), 'dominant_dim': dominant, 'dim_breakdown': dict(dims)}
         skills.append(record)
+        base = base_scores.get(identity, [])
+        record['base_score_profile'] = ({'count': len(base), 'min': min(base),
+            'median': median(base), 'max': max(base), 'boosted_count': boosted[identity]} if base else None)
+        record['missing_base_scores'] = count - len(base)
         if is_candidate(count, rate, middle, min_samples):
             candidates.append({**record, 'reason': f'fires {count}x but {round(rate * 100)}% are thin '
                 f'(score<={THIN_SCORE_CEILING}, never full-body); median {middle}. Narrow the '

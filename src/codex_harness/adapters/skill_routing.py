@@ -65,6 +65,8 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
             continue
         match, base, dims = score_skill(meta, prompt, sorted(mentioned), evidence.copy())
         boost = record['pipeline_boost']
+        if boost:
+            dims = [*dims, *record.get('pipeline_dimensions', ['pipeline:unknown'])]
         score = base + boost
         record.update(base_score=base, score=score, dimensions=dims,
                       description=meta.get('description', '')[:120],

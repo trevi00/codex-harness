@@ -25,6 +25,11 @@ def render_text(report):
             lines.append(f"{row['path']} [{row['content_ref']}] | {row['count']} | {row['score_min']} | "
                          f"{row['score_median']} | {row['score_max']} | {round(row['thin_rate'] * 100)}% | "
                          f"{row['dominant_dim'] or '-'}")
+            base = row['base_score_profile']
+            if base:
+                lines.append(f"  base score median: {base['median']}; boosted observations: "
+                             f"{base['boosted_count']}/{base['count']}; "
+                             f"missing base scores: {row['missing_base_scores']}")
         lines.append('dimension weight (counts of matching signals, not score contributions):')
         weights = report['dim_weight']
         total = sum(weights.values()) or 1

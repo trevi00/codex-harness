@@ -47,6 +47,10 @@ Adaptations and limitations:
   non-thin, despite being a pointer. The fixed historical ceiling of 2 is the shared
   source predicate, not a dynamically derived routing threshold. The source's
   `score<=2, never full-body` reason is a one-way implication under current defaults.
+  Reports additionally expose available base-score min/median/max, boosted counts,
+  and missing-base-score counts so operators can inspect this distinction directly.
+  Pipeline boost dimensions retain `pipeline:<stage>` in observations; the original
+  audit classifies that category as `unknown`, and this report preserves that behavior.
 - Invalid Boolean/negative scores are skipped explicitly. The original audit accepted
   Boolean scores accidentally; the original prompt adviser excluded them.
 - New diagnostic fields do not change replay identity. Retrying an old observation
@@ -56,3 +60,13 @@ Adaptations and limitations:
   the project document; aggregation occurs after releasing it. JSON is compact ASCII-
   escaped output rather than the upstream indented Unicode formatting; values agree.
   This command is a passive audit, not threshold calibration or full Baldrix migration.
+
+Review follow-up: the live adviser and passive audit now share malformed-score and
+identity guards; corrupt legacy entries do not discard healthy samples. The actual
+producer-to-CLI project test, legacy slug selection, retained-window bound and exact
+cutoff boundary are covered. Leased execution still fails closed when ownership cannot
+be checked before an observation write. That includes a store connection failure before
+the guard runs; this is the existing documented ownership tradeoff, not a promise that
+all database outages are advisory. Unleased recording remains best-effort. Passive CLI
+reads have no lease and return unavailable on storage errors. No ownership exception was
+weakened in response to the review.
