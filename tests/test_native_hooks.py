@@ -16,6 +16,7 @@ HOOK_ID = 'hook-ab97ba09554daa5aec289867'
 
 
 @pytest.fixture(params=[
+    ("hook-ec928b6c78b06bb571eb45cb", "codex-provider-usage-limit-exceeded", "worker:github/codex-turn"),
     (HOOK_ID, "codex-bubblewrap-namespace-creation-denied", "docker/linux/codex-read-only-review"),
     ("hook-572b2b90cf311ed31d66b108", "codex-output-schema-version-missing-type",
      "codex-harness/research-audit/output-schema"),

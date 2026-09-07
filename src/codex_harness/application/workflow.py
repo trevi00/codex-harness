@@ -4,7 +4,14 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from codex_harness.application.audit_gate import require_adoption
-from codex_harness.domain.model import canonical, digest, envelope, require, utcnow
+from codex_harness.domain.model import (
+    ExecutionFailure,
+    canonical,
+    digest,
+    envelope,
+    require,
+    utcnow,
+)
 from codex_harness.domain.policy import POLICY
 from codex_harness.domain.research import require_dispatch
 from codex_harness.ports import Store
@@ -130,13 +137,26 @@ class Workflow:
                                            "generation": task["generation"], "at": utcnow()})
             return current
 
-    def fail(self, task: dict, error: str, retryable: bool = True) -> None:
+    def fail_execution(self, task: dict, error: Exception) -> dict:
+        # INV-RECURRENCE-001: containment applies to this execution, not an account.
+        confirmed = (isinstance(error, ExecutionFailure)
+                     and error.cause == "codex-provider-usage-limit-exceeded")
+        return self.fail(task, type(error).__name__ + ": " + str(error),
+                         retryable=not confirmed,
+                         failure=error.evidence if isinstance(error, ExecutionFailure) else None)
+
+    def fail(self, task: dict, error: str, retryable: bool = True,
+             failure: dict | None = None) -> dict:
         with self.store.transaction() as tx:
             current = self._owned(tx, task)
             self._attempt_outcome(current, "failed", utcnow(), error)
+            if failure is not None:
+                current["failure"] = failure
+                current["attempt_outcomes"][-1]["failure"] = failure
             current.update(status="retry" if retryable else "failed", error=error,
                            lease_until=None, lease_owner=None)
-            tx.put("tasks", task["id"], current)
+            tx.put(task.get("_bucket", "tasks"), task["id"], current)
+            return current
 
     def cancel(self, task_id: str, actor: str, reason: str) -> None:
         with self.store.transaction() as tx:

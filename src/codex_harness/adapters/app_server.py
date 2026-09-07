@@ -207,9 +207,21 @@ class AppServer:
                 if item.get("type") == "agentMessage":
                     answer_text = item.get("text", "")
             if method == "turn/completed":
+                if params["turn"].get("id") != turn_id:
+                    continue
                 status = params["turn"]["status"]
                 if inspection_failures:
                     return blocked_result()
+                error = params["turn"].get("error")
+                # INV-RECURRENCE-001: only the provider's failed-turn field is authoritative.
+                if (status == "failed" and params.get("threadId") == thread_id
+                        and isinstance(error, dict)
+                        and error.get("codexErrorInfo") == "usageLimitExceeded"):
+                    return {"answer": None, "events": events, "thread_id": thread_id,
+                            "turn_id": turn_id, "usage": usage, "rotate": False,
+                            "interrupted": False,
+                            "failure": {"cause": "codex-provider-usage-limit-exceeded",
+                                        "provider_error": error}}
                 require(status in {"completed", "interrupted"},
                         f"Codex turn failed: {params['turn'].get('error')}")
                 if status == "completed":
