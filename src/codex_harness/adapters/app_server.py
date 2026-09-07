@@ -78,10 +78,12 @@ class AppServer:
         self.process.stdin.write(canonical(value) + "\n")
         self.process.stdin.flush()
 
-    def _receive(self, timeout: float):
+    def _receive(self, timeout: float, poll: bool = False):
         try:
             value = self.incoming.get(timeout=max(timeout, 0.01))
         except queue.Empty as exc:
+            if poll:
+                return {}
             raise ContractError("Codex App Server timed out") from exc
         require(value is not None, "Codex App Server exited unexpectedly: " + "".join(self.stderr)[-2000:])
         if "id" in value and "method" in value:
@@ -104,9 +106,11 @@ class AppServer:
         raise ContractError(f"Codex {method} timed out")
 
     def run(self, prompt: str, cwd: str, schema: dict, timeout: int = 240,
-            thread_id: str | None = None, on_event=None, read_only: bool = False) -> dict:
+            thread_id: str | None = None, on_event=None, read_only: bool = False, on_tick=None) -> dict:
         options = {"cwd": str(Path(cwd).resolve()), "approvalPolicy": "never",
-                   "sandbox": "read-only" if read_only else "danger-full-access"}
+                   "sandbox": "danger-full-access"}
+        if read_only:
+            options["developerInstructions"] = "This is an independent review. Inspect and test, but do not edit tracked source, commit, push, merge, or deploy."
         if self.hooks and not self.hook_state:
             discovered = self.request("hooks/list", {"cwds": [options["cwd"]]})
             commands = {hook["command"] for groups in self.hooks.values()
@@ -134,8 +138,12 @@ class AppServer:
         rotate, interrupted = False, False
         active_tools = set()
         while time.monotonic() < deadline:
+            if on_tick:
+                on_tick()
             event = (self.notifications.popleft() if self.notifications
-                     else self._receive(deadline - time.monotonic()))
+                     else self._receive(min(5, deadline - time.monotonic()), poll=True))
+            if not event:
+                continue
             method, params = event.get("method", ""), event.get("params", {})
             if params.get("threadId", thread_id) != thread_id:
                 continue

@@ -68,9 +68,12 @@ class Executor:
         prompt = packet.render()
         with self.service.store.transaction() as tx:
             checkpoint = tx.get("sessions", agent)
+            progress = tx.get("execution_progress", key)
         generation = (checkpoint or {}).get("generation", 0)
         if checkpoint and checkpoint["checkpoint"].get("task_id") == key:
             prompt += "\nResume durable checkpoint; inspect current files before repeating effects:\n" + canonical(checkpoint)
+        if progress:
+            prompt += "\nPrevious execution progress (inspect before repeating completed tools):\n" + canonical(progress)
         for handoff in range(4):
             if heartbeat:
                 heartbeat()
@@ -81,11 +84,28 @@ class Executor:
                 if heartbeat and time.monotonic() - last_beat > 20:
                     heartbeat()
                     last_beat = time.monotonic()
+                if event is None:
+                    return
+                if event.get("method") in {"item/completed", "thread/tokenUsage/updated"}:
+                    receipt = self.artifacts.put(canonical(event), "runtime-event:" + key)
+                    with self.service.store.transaction() as tx:
+                        previous = tx.get("execution_progress", key) or {"id": key, "recent": []}
+                        previous["recent"] = (previous["recent"] + [receipt["ref"]])[-6:]
+                        previous.update(agent=agent, context_ref=context_ref["ref"], at=utcnow(),
+                                        last_event=event.get("method"), worktree=cwd)
+                        item = event.get("params", {}).get("item")
+                        if item:
+                            previous["last_completed"] = {"id": item["id"], "type": item["type"],
+                                                          "status": item.get("status"), "evidence": receipt["ref"]}
+                        tx.put("execution_progress", key, previous)
 
             with AppServer(hooks=NativeHooks(self.service, self.git, self.artifacts).configuration()) as runtime:
-                result = runtime.run(prompt, cwd, schema, 240, on_event=observe, read_only=read_only)
+                result = runtime.run(prompt, cwd, schema, 900 if agent.startswith("worker:") else 300,
+                                     on_event=observe, read_only=read_only, on_tick=lambda: observe(None))
             evidence_ref = self.artifacts.put(canonical(result), "execution:" + key)
-            graph = self.knowledge.index_python(cwd) if self.knowledge and result["rotate"] else None
+            graph = ({"code": self.knowledge.index_python(cwd),
+                      "runtime": self.knowledge.project_runtime(self.service.store, self.service.org)}
+                     if self.knowledge and result["rotate"] else None)
             state = {"next_action": "continue interrupted assignment" if result["interrupted"] else "await next assignment",
                      "task_id": key, "source_revision": self.git._git("rev-parse", "HEAD", cwd=cwd),
                      "graph_snapshot": graph or packet.snapshot, "worktree": cwd,
@@ -147,6 +167,13 @@ class Executor:
                     result["candidate"]["hook_id"] = hook["id"]
                     NativeHooks(self.service, self.git, self.artifacts).candidate(hook["id"], result["candidate"])
                 result["origin"] = details
+            elif action == "rebase":
+                heartbeat()
+                candidate = self.git.rebase(task["id"], details["candidate"], details["new_base"])
+                if candidate.get("hook_id"):
+                    NativeHooks(self.service, self.git, self.artifacts).candidate(candidate["hook_id"], candidate)
+                result = {"candidate": candidate, "summary": "Rebased onto current main; approvals must be repeated",
+                          "origin": details, "execution_ref": self.artifacts.put(canonical(candidate), "git-rebase")["ref"]}
             else:
                 raise ValueError("Unsupported task action: " + action)
             return self.workflow.complete(task, result, commands)
@@ -206,6 +233,10 @@ class Executor:
                                "cause only from evidence, never from generic error similarity; reuse a known cause "
                                "ID only when the cause and scope are the same.", data, cwd,
                                DIAGNOSIS if phase == "diagnose" else VERDICT, True)
+            if phase.startswith("review_"):
+                require(not self.git._git("status", "--porcelain", cwd=cwd), "Reviewer modified its checkout")
+                require(self.git._git("rev-parse", "HEAD", cwd=cwd) == data["candidate"]["revision"],
+                        "Reviewer changed its commit")
             message = decision["message"]
             next_message = None
             if phase == "diagnose" and result["confirmed"]:

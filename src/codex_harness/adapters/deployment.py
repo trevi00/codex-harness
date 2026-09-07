@@ -45,6 +45,10 @@ class ReleaseRunner:
         python = Path(path) / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
         tests = self._check([str(python), "-m", "pytest", str(Path(incumbent) / "tests"),
                              "-c", str(Path(incumbent) / "pyproject.toml"), "--import-mode=importlib", "-q"], path)
+        candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path)
+        tests = {"passed": tests["passed"] and candidate_tests["passed"],
+                 "evidence": self.artifacts.put(canonical({"incumbent": tests, "candidate": candidate_tests}),
+                                                "test-suites:" + release_id)["ref"]}
         if not install["passed"]:
             tests = install
         image = "codex-harness:candidate-" + candidate["revision"][:16]

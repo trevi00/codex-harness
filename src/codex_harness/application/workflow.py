@@ -163,7 +163,7 @@ class Workflow:
                     tx.put("decisions_pending", message["message_id"],
                            {"id": message["message_id"], "actor": "conductor", "phase": "proposal",
                             "message": message, "input": result, "status": "pending", "attempt": 0})
-                elif action == "implement":
+                elif action in {"implement", "rebase"}:
                     tx.put("decisions_pending", message["message_id"],
                            {"id": message["message_id"], "actor": recipient, "phase": "review_lead",
                             "message": message, "input": result, "status": "pending", "attempt": 0})

@@ -136,6 +136,9 @@ def parser() -> argparse.ArgumentParser:
     s.add_argument("--execute", action="store_true")
     research = commands.add_parser("research")
     research.add_argument("source", choices=["github", "geeknews"])
+    improve = commands.add_parser("improve")
+    improve.add_argument("objective")
+    improve.add_argument("--acceptance", action="append", required=True)
     execute = commands.add_parser("execute-one")
     execute.add_argument("--agent", required=True)
     cancel = commands.add_parser("cancel")
@@ -244,6 +247,15 @@ def main() -> None:
                                {"source": args.source}, "research:" + str(uuid4()))
             message["where"]["revision"] = executor.git._git("rev-parse", "HEAD")
             emit({"message": message, "stream_id": RedisBus(redis_url()).publish(message)})
+        elif args.command == "improve":
+            executor = build_executor(service)
+            message = envelope("task.assign", "conductor", "lead:improvement", "plan",
+                               {"objective": args.objective, "acceptance_criteria": args.acceptance},
+                               "improvement:" + str(uuid4()))
+            message["where"]["revision"] = executor.git._git("rev-parse", "HEAD")
+            message["how"]["acceptance_criteria"] = args.acceptance
+            emit({"message_id": message["message_id"], "correlation_id": message["correlation_id"],
+                  "stream_id": RedisBus(redis_url()).publish(message)})
         elif args.command == "execute-one":
             executor = build_executor(service)
             emit(executor.execute_one(args.agent) or executor.decide_one(args.agent) or {"status": "idle"})

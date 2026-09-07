@@ -59,6 +59,16 @@ class GitWorkspace:
                 "diff": self._git("diff", "--no-ext-diff", base, revision, "--"),
                 "files": self._git("diff", "--name-only", base, revision, "--").splitlines()}
 
+    def rebase(self, task_id: str, candidate: dict, new_base: str) -> dict:
+        workspace = self.prepare(task_id, candidate["revision"])
+        self._git("-c", "user.name=Codex Harness", "-c", "user.email=harness@localhost",
+                  "rebase", "--onto", new_base, candidate["base"], cwd=workspace["path"])
+        workspace["base"] = self._git("rev-parse", "--verify", new_base + "^{commit}")
+        result = self.capture(workspace)
+        if candidate.get("hook_id"):
+            result["hook_id"] = candidate["hook_id"]
+        return result
+
     def review_workspace(self, revision: str, review_id: str) -> str:
         require(bool(re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", review_id)), "Invalid review workspace ID")
         path = self.workspaces / ("review-" + review_id)
