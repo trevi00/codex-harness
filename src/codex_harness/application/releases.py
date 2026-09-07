@@ -74,8 +74,14 @@ class Releases:
             active = tx.get("deployment", "active")
             require((active or {}).get("release_id") == expected_active, "Active deployment changed")
             require(record["policy_hash"] == digest(record["policy"]), "Evaluator changed")
+            if active:
+                tx.put("deployment_history", active["release_id"], active)
+                previous_release = tx.get("releases", active["release_id"])
+                if previous_release:
+                    previous_release["status"] = "superseded"
+                    tx.put("releases", previous_release["id"], previous_release)
             pointer = {"release_id": release_id, "revision": record["candidate"]["revision"],
-                       "previous": active, "at": utcnow()}
+                       "previous": {"release_id": active["release_id"]} if active else None, "at": utcnow()}
             tx.put("deployment", "active", pointer)
             record["status"] = "active"
             tx.put("releases", release_id, record)
@@ -89,9 +95,19 @@ class Releases:
             require(active is not None and active["release_id"] == expected_active, "Stale rollback")
             require(active["previous"] is not None, "No known-good previous deployment")
             record = tx.get("releases", expected_active)
+            require(record is not None, "Active release record missing")
+            hook_id = record.get("candidate", {}).get("hook_id")
+            hook = tx.get("hooks", hook_id) if hook_id else None
+            if hook and hook["revision"] == record["candidate"]["revision"]:
+                tx.put("hooks", hook_id, hook.get("previous_active") or {**hook, "status": "rolled_back"})
             record.update(status="rolled_back", rollback_reason=reason)
             tx.put("releases", expected_active, record)
-            tx.put("deployment", "active", active["previous"])
+            previous = tx.get("deployment_history", active["previous"]["release_id"]) or active["previous"]
+            tx.put("deployment", "active", previous)
+            previous_release = tx.get("releases", previous["release_id"])
+            if previous_release:
+                previous_release["status"] = "active"
+                tx.put("releases", previous_release["id"], previous_release)
             tx.put("events", str(uuid4()), {"type": "release.rolled_back", "at": utcnow(),
                                            "release_id": expected_active, "reason": reason})
-            return active["previous"]
+            return previous

@@ -5,6 +5,8 @@ import json
 import re
 from pathlib import Path
 
+from filelock import FileLock
+
 from codex_harness.domain.model import canonical, require, utcnow
 
 
@@ -16,11 +18,16 @@ class FileArtifacts:
         self.root.mkdir(parents=True, exist_ok=True)
 
     def put(self, body: str, source: str) -> dict:
+        with FileLock(str(self.root.parent / "artifacts.lock"), timeout=30):
+            return self._put(body, source)
+
+    def _put(self, body: str, source: str) -> dict:
         data = body.encode("utf-8")
         key = hashlib.sha256(data).hexdigest()
         path = self.root / (key + ".txt")
         if path.exists():
             require(path.read_bytes() == data, "Artifact integrity failure")
+            path.touch()
         else:
             try:
                 with path.open("xb") as stream:

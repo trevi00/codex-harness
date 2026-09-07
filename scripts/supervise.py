@@ -7,30 +7,25 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from filelock import FileLock, Timeout
+
 from codex_harness.adapters.bus import RedisBus
 from codex_harness.adapters.commands import run_process
 from codex_harness.adapters.deployment import ReleaseRunner
+from codex_harness.adapters.embeddings import LocalEmbeddings
+from codex_harness.adapters.maintenance import ArtifactMaintenance
+from codex_harness.application.scheduling import schedule_research
 from codex_harness.bootstrap import build, build_executor, redis_url
-from codex_harness.domain.model import envelope, utcnow
+from codex_harness.domain.model import utcnow
+from codex_harness.domain.policy import POLICY
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {"conductor": "conductor", "lead:research": "research-lead",
            "lead:improvement": "improvement-lead", "worker:implementation": "implementation-worker",
            "worker:github": "github-worker", "worker:geeknews": "geeknews-worker"}
 release_thread = None
-
-
-def schedule_research(service, hours=6):
-    slot = int(time.time() // (hours * 3600))
-    with service.store.transaction() as tx:
-        for source in ("github", "geeknews"):
-            key = f"research:{source}:{slot}"
-            if tx.get("schedule", key):
-                continue
-            message = envelope("task.assign", "lead:research", "worker:" + source, "research",
-                               {"source": source}, key)
-            tx.put("outbox", message["message_id"], {"message": message, "sent": False})
-            tx.put("schedule", key, {"id": key, "at": utcnow()})
+last_maintenance = 0
+last_collection = 0
 
 
 def deploy_queued(service, executor):
@@ -51,7 +46,16 @@ def deploy_queued(service, executor):
 
 
 def tick(research=False, releases=False):
-    global release_thread
+    global release_thread, last_maintenance, last_collection
+    status = run_process(["docker", "compose", "ps", "--all", "--format", "json"], cwd=str(ROOT), timeout=20)
+    if status.returncode:
+        raise RuntimeError(status.stderr)
+    rows = [json.loads(line) for line in status.stdout.splitlines() if line.startswith("{")]
+    services = {row["Service"]: row for row in rows}
+    if any(services.get(name, {}).get("State") != "running" for name in ("postgres", "redis")):
+        ready = run_process(["docker", "compose", "up", "-d", "--wait", "postgres", "redis"], cwd=str(ROOT), timeout=90)
+        if ready.returncode:
+            raise RuntimeError(ready.stderr)
     service = build()
     bus = RedisBus(redis_url())
     if research:
@@ -63,11 +67,30 @@ def tick(research=False, releases=False):
         active = tx.get("deployment", "active")
         image = tx.get("images", active["release_id"]) if active else None
     desired = image["image"] if image else "codex-harness:bootstrap"
-    status = run_process(["docker", "compose", "ps", "--all", "--format", "json"], cwd=str(ROOT), timeout=20)
-    if status.returncode:
-        raise RuntimeError(status.stderr)
-    rows = [json.loads(line) for line in status.stdout.splitlines() if line.startswith("{")]
-    services = {row["Service"]: row for row in rows}
+    if time.monotonic() - last_maintenance >= 60:
+        compacted = sum(bus.compact(agent, POLICY.stream_retention_entries) for agent in TARGETS)
+        executor = build_executor(service)
+        revision = executor.git._git("rev-parse", "HEAD")
+        with service.store.transaction() as tx:
+            indexed = tx.get("graph_index", "main")
+        if not indexed or indexed["revision"] != revision:
+            index = executor.knowledge.index_python(str(ROOT))
+            with service.store.transaction() as tx:
+                tx.put("graph_index", "main", {"id": "main", "revision": revision, **index})
+        executor.knowledge.project_runtime(service.store, service.org)
+        executor.knowledge.embed_missing(LocalEmbeddings(str(ROOT / ".runtime/models")), limit=200)
+        health = ReleaseRunner(service, executor.git, executor.artifacts,
+                               str(Path(os.environ["USERPROFILE"]) / ".codex/auth.json")).monitor()
+        if health["status"] == "rolled_back":
+            with service.store.transaction() as tx:
+                image = tx.get("images", health["active"]["release_id"])
+                desired = image["image"]
+        with service.store.transaction() as tx:
+            tx.put("health", "latest", {"id": "latest", "at": utcnow(), "compacted": compacted, **health})
+        last_maintenance = time.monotonic()
+        if time.monotonic() - last_collection >= 86400:
+            ArtifactMaintenance(service.store, executor.artifacts).collect(apply=True)
+            last_collection = time.monotonic()
     for agent, name in TARGETS.items():
         agent_tasks = [row for row in tasks if row.get("agent", row.get("actor")) == agent]
         busy = any(row["status"] == "running" and datetime.fromisoformat(row["lease_until"]) > now
@@ -103,13 +126,17 @@ if __name__ == "__main__":
     parser.add_argument("--research", action="store_true")
     parser.add_argument("--releases", action="store_true")
     args = parser.parse_args()
-    while True:
-        try:
-            tick(args.research, args.releases)
-        except Exception as exc:
-            print(json.dumps({"supervisor_error": str(exc), "at": utcnow()}), flush=True)
-        if args.once:
-            if release_thread:
-                release_thread.join()
-            break
-        time.sleep(5)
+    try:
+        with FileLock(str(ROOT / ".runtime/supervisor.lock"), timeout=0):
+            while True:
+                try:
+                    tick(args.research, args.releases)
+                except Exception as exc:
+                    print(json.dumps({"supervisor_error": str(exc), "at": utcnow()}), flush=True)
+                if args.once:
+                    if release_thread:
+                        release_thread.join()
+                    break
+                time.sleep(5)
+    except Timeout:
+        print(json.dumps({"status": "supervisor_already_running"}), flush=True)

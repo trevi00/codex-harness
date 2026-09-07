@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import base64
 import json
 import re
 import xml.etree.ElementTree as ET
 from html import unescape
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from codex_harness.domain.model import require, utcnow
@@ -63,7 +65,14 @@ class ResearchSources:
         require(bool(re.fullmatch(r"https://github.com/[\w.-]+/[\w.-]+", url)), "Invalid repository URL")
         api = "https://api.github.com/repos/" + url.removeprefix("https://github.com/")
         metadata = json.loads(self.fetch(api))
+        commit = json.loads(self.fetch(api + "/commits/" + quote(metadata["default_branch"], safe="")))["sha"]
+        require(bool(re.fullmatch(r"[0-9a-f]{40}", commit)), "Invalid source revision")
+        readme = json.loads(self.fetch(api + "/readme?ref=" + commit))
+        require(readme.get("encoding") == "base64", "Unsupported README encoding")
+        text = base64.b64decode(readme["content"]).decode("utf-8", errors="replace")
+        receipt = self.artifacts.put(text, url + "/blob/" + commit + "/" + readme["path"])
         return {"url": url, "description": metadata.get("description"),
                 "license": (metadata.get("license") or {}).get("spdx_id"),
                 "default_branch": metadata["default_branch"], "archived": metadata["archived"],
-                "pushed_at": metadata["pushed_at"], "fetched_at": utcnow()}
+                "pushed_at": metadata["pushed_at"], "fetched_at": utcnow(),
+                "revision": commit, "readme_ref": receipt["ref"], "readme_excerpt": text[:10000]}

@@ -14,6 +14,7 @@ from jsonschema import validate
 
 from codex_harness.adapters.codex import resolve_codex
 from codex_harness.domain.model import ContractError, canonical, require
+from codex_harness.domain.policy import POLICY
 
 
 def toml_literal(value):
@@ -154,7 +155,7 @@ class AppServer:
                 usage = params["tokenUsage"]
                 capacity = usage.get("modelContextWindow")
                 # Latest request occupancy is not the lifetime total across requests.
-                rotate = rotate or bool(capacity and usage["last"]["totalTokens"] >= capacity * 0.70)
+                rotate = rotate or bool(capacity and usage["last"]["totalTokens"] >= capacity * POLICY.context_checkpoint_fraction)
             item = params.get("item", {})
             if method == "item/started" and item.get("type") in {"commandExecution", "fileChange", "mcpToolCall"}:
                 active_tools.add(item["id"])

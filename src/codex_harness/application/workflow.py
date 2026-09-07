@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from codex_harness.domain.model import canonical, digest, envelope, require, utcnow
+from codex_harness.domain.policy import POLICY
 from codex_harness.ports import Store
 
 
@@ -33,15 +34,15 @@ class Workflow:
             tx.put("tasks", task_id, task)
             return task
 
-    def claim(self, agent: str, owner: str, lease_seconds: int = 600,
-              max_attempts: int = 3, now: datetime | None = None) -> dict | None:
+    def claim(self, agent: str, owner: str, lease_seconds: int = POLICY.task_lease_seconds,
+              max_attempts: int = POLICY.max_attempts, now: datetime | None = None) -> dict | None:
         self.org.actor(agent)
         require(lease_seconds > 0 and max_attempts > 0, "Invalid execution budget")
         now = now or datetime.now(timezone.utc)
         with self.store.transaction() as tx:
             running = [row for bucket in ("tasks", "decisions_pending") for row in tx.scan(bucket)
                        if row["status"] == "running" and datetime.fromisoformat(row["lease_until"]) > now]
-            if len(running) >= 2 or any(row.get("agent", row.get("actor")) == agent for row in running):
+            if len(running) >= POLICY.max_active_executions or any(row.get("agent", row.get("actor")) == agent for row in running):
                 return None
             for task in sorted(tx.scan("tasks"), key=lambda t: (t["created_at"], t["id"])):
                 if task["agent"] != agent or task["status"] not in {"queued", "running", "retry"}:
@@ -70,7 +71,9 @@ class Workflow:
         return None
 
     def _owned(self, tx, task: dict, now: datetime | None = None) -> dict:
-        current = tx.get("tasks", task["id"])
+        bucket = task.get("_bucket", "tasks")
+        require(bucket in {"tasks", "decisions_pending"}, "Invalid execution aggregate")
+        current = tx.get(bucket, task["id"])
         now = now or datetime.now(timezone.utc)
         require(current is not None and current["status"] == "running"
                 and current["generation"] == task["generation"]
@@ -79,12 +82,12 @@ class Workflow:
                 "Stale or expired task execution")
         return current
 
-    def heartbeat(self, task: dict, seconds: int = 600) -> None:
+    def heartbeat(self, task: dict, seconds: int = POLICY.task_lease_seconds) -> None:
         with self.store.transaction() as tx:
             current = self._owned(tx, task)
             current["lease_until"] = (datetime.now(timezone.utc)
                                       + timedelta(seconds=seconds)).isoformat()
-            tx.put("tasks", task["id"], current)
+            tx.put(task.get("_bucket", "tasks"), task["id"], current)
 
     def complete(self, task: dict, result: dict, commands: list[dict] | None = None) -> dict:
         require(isinstance(result, dict), "Task result must be an object")
@@ -157,8 +160,9 @@ class Workflow:
             if message["type"] == "hook.required":
                 hook = tx.get("hooks", details["hook_id"])
                 require(hook is not None, "Unknown hook")
-                next_message = self._next(message, "conductor", "lead:improvement", "plan",
-                                          {"objective": "Implement mandatory recurrence hook", "hook": hook})
+                if hook["status"] == "required":
+                    next_message = self._next(message, "conductor", "lead:improvement", "plan",
+                                              {"objective": "Implement mandatory recurrence hook", "hook": hook})
             else:
                 if "decision_id" in details:
                     decision = tx.get("decisions_pending", details["decision_id"])
@@ -175,9 +179,14 @@ class Workflow:
                 result = details["result"]
                 recipient = message["who"]["recipient"]
                 if action == "research":
-                    tx.put("decisions_pending", message["message_id"],
-                           {"id": message["message_id"], "actor": recipient, "phase": "research_lead",
-                            "message": message, "input": result, "status": "pending", "attempt": 0})
+                    topic = digest({"url": result["source_url"],
+                                    "revision": result.get("source_details", {}).get("revision")})
+                    if tx.get("research_topics", topic) is None:
+                        tx.put("research_topics", topic, {"id": topic, "result": result,
+                                                         "decision_id": message["message_id"]})
+                        tx.put("decisions_pending", message["message_id"],
+                               {"id": message["message_id"], "actor": recipient, "phase": "research_lead",
+                                "message": message, "input": result, "status": "pending", "attempt": 0})
                 elif action == "assess_research" and result.get("accepted") is True:
                     tx.put("decisions_pending", message["message_id"],
                            {"id": message["message_id"], "actor": "conductor", "phase": "proposal",

@@ -22,6 +22,10 @@ class MemoryTransaction:
     def scan(self, bucket: str) -> list[dict]:
         return [deepcopy(v) for (b, _), v in sorted(self.data.items()) if b == bucket]
 
+    def records(self) -> list[dict]:
+        return [{"bucket": bucket, "id": key, "body": deepcopy(value)}
+                for (bucket, key), value in sorted(self.data.items())]
+
 
 class MemoryStore:
     def __init__(self):
@@ -52,6 +56,10 @@ class PostgresTransaction:
     def scan(self, bucket: str) -> list[dict]:
         return [r[0] for r in self.conn.execute(
             "SELECT body FROM documents WHERE bucket=%s ORDER BY id", (bucket,)).fetchall()]
+
+    def records(self) -> list[dict]:
+        return [dict(zip(("bucket", "id", "body"), row)) for row in self.conn.execute(
+            "SELECT bucket,id,body FROM documents ORDER BY bucket,id").fetchall()]
 
 
 class PostgresStore:

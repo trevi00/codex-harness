@@ -63,8 +63,7 @@ class NativeHooks:
         return checks
 
     def configuration(self) -> dict:
-        with self.service.store.transaction() as tx:
-            hooks = tx.scan("hooks")
+        hooks = self.service.active_hooks()
         output = {}
         for hook in hooks:
             if hook["status"] != "active" or hook["spec"].get("kind") != "native_hook":

@@ -137,6 +137,30 @@ def test_checkpoint_generation_fences_old_session(service):
         service.checkpoint("worker:implementation", 0, state)
 
 
+def test_recurrence_updates_same_hook_without_disabling_previous_verified_version(service):
+    hook_id, spec = reviewed(service)
+    checks = {"reproduction": True, "normal_case": True, "cli_start": True}
+    service.record_canary(hook_id, "revision-a", digest(spec), checks)
+    service.activate(hook_id)
+    recurrence = incident("after-activation")
+    result = service.record_incident(recurrence)
+    assert result["hook_created"] and result["hook_id"] == hook_id
+    assert service.get_hook(hook_id)["status"] == "required"
+    service.record_incident(incident("after-activation"))
+    with service.store.transaction() as tx:
+        assert len(tx.scan("outbox")) == 2
+    changed = {**spec, "replacement": "codex.exe"}
+    service.propose(hook_id, "worker:implementation", changed, "revision-b")
+    assert service.prepare_command(["codex.ps1"], "windows") == ["codex.cmd"]
+    for actor in ("lead:improvement", "conductor"):
+        service.review(hook_id, actor, "revision-b", digest(changed), True, "fixture:review")
+    service.record_canary(hook_id, "revision-b", digest(changed), checks)
+    service.activate(hook_id)
+    assert service.prepare_command(["codex.ps1"], "windows") == ["codex.exe"]
+    service.rollback(hook_id, "new version regression")
+    assert service.prepare_command(["codex.ps1"], "windows") == ["codex.cmd"]
+
+
 @pytest.mark.parametrize("used,idle,busy,action", [
     (70, 0, False, "rotate"), (70, 0, True, "checkpoint_when_safe"),
     (20, 3600, False, "hibernate"), (20, 3600, True, "continue"),

@@ -86,12 +86,14 @@ class GitWorkspace:
         self._git("push", "https://github.com/" + self.remote + ".git",
                   candidate["revision"] + ":refs/heads/" + branch)
         existing = run_process(["gh", "pr", "list", "--repo", self.remote, "--head", branch,
-                                "--state", "open", "--json", "number,url,headRefOid"], timeout=60)
+                                "--state", "all", "--json", "number,url,headRefOid,state"], timeout=60)
         require(existing.returncode == 0, "Cannot inspect GitHub PR")
         rows = json.loads(existing.stdout)
-        if rows:
-            require(rows[0]["headRefOid"] == candidate["revision"], "PR head changed")
-            return rows[0]
+        matching = [row for row in rows if row["headRefOid"] == candidate["revision"]
+                    and row["state"] in {"OPEN", "MERGED"}]
+        if matching:
+            return matching[0]
+        require(not any(row["state"] == "OPEN" for row in rows), "PR head changed")
         with tempfile.TemporaryDirectory(prefix="harness-pr-") as directory:
             path = Path(directory) / "body.md"
             path.write_text(body, encoding="utf-8")
@@ -107,7 +109,13 @@ class GitWorkspace:
             result = run_process(["gh", "pr", "merge", candidate["branch"], "--repo", self.remote,
                                   "--merge", "--match-head-commit", candidate["revision"]], timeout=120)
             require(result.returncode == 0, "PR merge failed: " + result.stderr[-1000:])
-            return {"merged": True, "revision": candidate["revision"], "transport": "github"}
+            self._git("fetch", "https://github.com/" + self.remote + ".git", "main")
+            merged_revision = self._git("rev-parse", "FETCH_HEAD")
+            require(self._git("rev-parse", merged_revision + "^{tree}") == candidate["tree"],
+                    "Merged tree differs from reviewed candidate")
+            self._git("merge", "--ff-only", merged_revision)
+            return {"merged": True, "revision": candidate["revision"], "merged_revision": merged_revision,
+                    "transport": "github"}
         require(not self._git("status", "--porcelain"), "Main worktree is dirty")
         require(self._git("rev-parse", "HEAD") == candidate["base"], "Main changed; rebase and review again")
         self._git("merge", "--ff-only", candidate["revision"])

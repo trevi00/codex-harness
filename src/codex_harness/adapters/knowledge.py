@@ -23,6 +23,7 @@ def extract_python(root: str) -> dict:
     nodes, edges = [], []
     fingerprints = []
     repository_id = digest(str(base))[:16]
+    imports, calls, modules, symbols, symbol_counts = [], [], {}, {}, {}
     for directory, children, names in os.walk(base):
         children[:] = sorted(n for n in children if n not in SKIP and not Path(directory, n).is_symlink())
         for name in sorted(names):
@@ -37,6 +38,9 @@ def extract_python(root: str) -> dict:
             revision = hashlib.sha256(raw).hexdigest()
             fingerprints.append((relative, revision))
             file_id = f"file:{repository_id}:{relative}"
+            module = relative.removesuffix(".py").replace("/", ".").removeprefix("src.")
+            module = module.removesuffix(".__init__")
+            modules[module] = file_id
             nodes.append({"id": file_id, "repository": str(base), "kind": "file",
                           "body": relative, "source_ref": relative, "revision": revision,
                           "properties": {"language": "python"}})
@@ -47,10 +51,14 @@ def extract_python(root: str) -> dict:
                     symbol = node.child_by_field_name("name").text.decode()
                     current_qualified = qualified + [symbol]
                     node_id = f"symbol:{repository_id}:{relative}:{'.'.join(current_qualified)}"
+                    symbol_counts[node_id] = symbol_counts.get(node_id, 0) + 1
+                    if symbol_counts[node_id] > 1:
+                        node_id += ":variant:" + str(symbol_counts[node_id])
                     nodes.append({"id": node_id, "repository": str(base), "kind": node.type,
                                   "body": node.text.decode()[:6000],
                                   "source_ref": f"{relative}:{node.start_point.row + 1}",
                                   "revision": revision, "properties": {"name": symbol}})
+                    symbols[(relative, ".".join(current_qualified))] = node_id
                     edges.append((parent_id, node_id, "contains"))
                     current_parent = node_id
                 elif node.type == "comment":
@@ -62,10 +70,43 @@ def extract_python(root: str) -> dict:
                                           "body": rule, "source_ref": f"{relative}:{node.start_point.row + 1}",
                                           "revision": revision, "properties": {"trust": "declared"}})
                         edges.append((parent_id, rule_node, "references"))
+                elif node.type in {"import_statement", "import_from_statement"}:
+                    imported = node.child_by_field_name("module_name")
+                    names = ([imported.text.decode()] if imported else
+                             [(child.child_by_field_name("name") or child).text.decode()
+                              for child in node.named_children])
+                    for name in names:
+                        if name.startswith("."):
+                            levels = len(name) - len(name.lstrip("."))
+                            package = module.split(".") if relative.endswith("__init__.py") else module.split(".")[:-1]
+                            name = ".".join(package[:len(package) - levels + 1] + [name.lstrip(".")]).rstrip(".")
+                        imports.append((parent_id, name, f"{relative}:{node.start_point.row + 1}", revision))
+                elif node.type == "call":
+                    function = node.child_by_field_name("function")
+                    if function:
+                        expression = function.text.decode()
+                        target = (".".join(qualified[:-1] + [expression[5:]])
+                                  if expression.startswith("self.") else expression)
+                        calls.append((parent_id, relative, target))
                 for child in node.named_children:
                     visit(child, current_parent, current_qualified)
 
             visit(tree.root_node, file_id, [])
+    external = set()
+    for source, module, source_ref, revision in imports:
+        target = modules.get(module)
+        if target is None:
+            target = f"module:{repository_id}:{module}"
+            if target not in external:
+                external.add(target)
+                nodes.append({"id": target, "repository": str(base), "kind": "external_module",
+                              "body": module, "source_ref": source_ref, "revision": revision,
+                              "properties": {"evidence": "Tree-sitter import syntax"}})
+        edges.append((source, target, "imports"))
+    for source, relative, name in calls:
+        target = symbols.get((relative, name))
+        if target and target != source:
+            edges.append((source, target, "may_call"))
     snapshot = hashlib.sha256(repr(fingerprints).encode()).hexdigest()
     return {"repository": str(base), "snapshot": snapshot, "nodes": nodes, "edges": edges}
 
@@ -125,11 +166,18 @@ class PostgresKnowledge:
                         edges.append((f"runtime:tasks:{dependency}", node_id, "precedes"))
         with psycopg.connect(self.dsn) as conn:
             conn.execute("SELECT pg_advisory_xact_lock(734220)")
-            conn.execute("DELETE FROM knowledge_nodes WHERE repository='runtime:ssot'")
+            conn.execute("DELETE FROM knowledge_nodes WHERE repository='runtime:ssot' AND NOT (id=ANY(%s))",
+                         ([node[0] for node in nodes],))
+            conn.execute("DELETE FROM knowledge_edges WHERE source IN (SELECT id FROM knowledge_nodes WHERE repository='runtime:ssot')")
             for node_id, kind, body, source, revision, properties in nodes:
                 conn.execute("INSERT INTO knowledge_nodes (id,repository,kind,body,source_ref,revision,properties) "
-                             "VALUES (%s,'runtime:ssot',%s,%s,%s,%s,%s)",
-                             (node_id, kind, body, source, revision, Jsonb(properties)))
+                             "VALUES (%s,'runtime:ssot',%s,%s,%s,%s,%s) ON CONFLICT(id) DO UPDATE SET "
+                             "body=excluded.body,revision=excluded.revision,source_ref=excluded.source_ref,"
+                             "properties=excluded.properties || CASE WHEN knowledge_nodes.body=excluded.body THEN "
+                             "jsonb_strip_nulls(jsonb_build_object('embedding_model',knowledge_nodes.properties->'embedding_model')) "
+                             "ELSE '{}'::jsonb END,embedding=CASE WHEN knowledge_nodes.body=excluded.body "
+                             "THEN knowledge_nodes.embedding ELSE NULL END",
+                             (node_id, kind, body, source, revision, Jsonb({"snapshot": snapshot, **properties})))
             ids = {n[0] for n in nodes}
             for source, target, kind in edges:
                 if source in ids and target in ids:

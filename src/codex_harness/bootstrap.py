@@ -49,6 +49,12 @@ def build_executor(service=None):
     repository = os.environ.get("HARNESS_REPOSITORY", str(Path.cwd()))
     runtime = Path(os.environ.get("HARNESS_RUNTIME_DIR", str(Path(repository) / ".runtime")))
     artifacts = FileArtifacts(str(runtime / "artifacts"))
-    git = GitWorkspace(repository, str(runtime / "workspaces"), os.environ.get("HARNESS_GITHUB_REPO"))
+    remote = os.environ.get("HARNESS_GITHUB_REPO")
+    if not remote:
+        env_file = Path(repository) / ".env"
+        if env_file.exists():
+            remote = next((line.partition("=")[2] for line in env_file.read_text("utf-8").splitlines()
+                           if line.startswith("HARNESS_GITHUB_REPO=")), None)
+    git = GitWorkspace(repository, str(runtime / "workspaces"), remote)
     return Executor(service or build(), git, artifacts, PostgresKnowledge(database_url()),
                     ResearchSources(artifacts))

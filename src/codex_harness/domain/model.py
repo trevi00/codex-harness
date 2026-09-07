@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from codex_harness.domain.policy import POLICY
+
 
 class ContractError(ValueError):
     """An input violates a declared contract."""
@@ -170,9 +172,9 @@ def compile_context(agent: str, task: str, snapshot: str, required: dict,
 
 def session_action(used: int, capacity: int, idle_seconds: float, busy: bool) -> str:
     require(capacity > 0 and used >= 0 and idle_seconds >= 0, "Invalid session telemetry")
-    if used / capacity >= 0.70:
+    if used / capacity >= POLICY.context_checkpoint_fraction:
         return "checkpoint_when_safe" if busy else "rotate"
-    if idle_seconds >= 3600 and not busy:
+    if idle_seconds >= POLICY.idle_seconds and not busy:
         return "hibernate"
     return "continue"
 

@@ -109,3 +109,18 @@ def test_failed_canary_never_promotes():
                    {"live_cli": {"passed": False, "evidence": "failure-log"}})
     with pytest.raises(ContractError, match="not verified"):
         service.promote(release["id"], None)
+
+
+def test_research_topics_deduplicate_across_scheduled_runs():
+    workflow = Workflow(MemoryStore(), organization())
+    for _ in range(2):
+        task = workflow.submit(assignment("research", "worker:github"))
+        claimed = workflow.claim("worker:github", "fixture")
+        workflow.complete(claimed, {"source_url": "https://github.com/example/project",
+                                   "source_details": {"revision": "source-commit"}})
+        with workflow.store.transaction() as tx:
+            message = next(row["message"] for row in tx.scan("outbox")
+                           if row["message"]["what"]["details"].get("task_id") == task["id"])
+        workflow.handle(message)
+    with workflow.store.transaction() as tx:
+        assert len(tx.scan("decisions_pending")) == 1

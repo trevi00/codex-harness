@@ -39,6 +39,11 @@ services:
       HARNESS_RUNTIME_DIR: /runtime
     volumes:
       - .:/repository
+      - type: volume
+        source: repository-venv
+        target: /repository/.venv
+        volume:
+          nocopy: true
       - ./.runtime:/runtime
       - ${USERPROFILE}/.codex/auth.json:/run/secrets/codex-auth:ro
     command: ["serve", "--agent", "conductor", "--execute"]
@@ -68,3 +73,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  repository-venv:

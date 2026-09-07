@@ -1,20 +1,18 @@
-# Bootstrap contracts — authoritative definitions
+﻿# Contracts — authoritative definitions
 
 | ID | Contract |
 |---|---|
-| INV-MESSAGE-001 | Agent messages are six-W JSON. A message ID cannot identify two payloads. DB commit precedes ACK; transport is at-least-once. |
-| INV-RECURRENCE-001 | An occurrence ID identifies one independent incident. Two distinct occurrences with confirmed root-cause ID and scope require a hook. Fuzzy text similarity alone does not establish identity. |
-| INV-CONTEXT-001 | Required role, goal, acceptance and policy are never silently truncated. Budget overflow rejects composition. UTF-8 byte count is explicitly a conservative estimate, not measured Codex tokens. |
-| INV-RELEASE-001 | Hook activation requires author's team lead review, conductor review and a passing canary bound to the exact spec hash and revision. |
-| INV-SESSION-001 | Checkpoint generation fences stale session checkpoint writers. 70% triggers handoff at a safe point. Busy executions do not hibernate. |
+| INV-MESSAGE-001 | All messages are six-W JSON. IDs cannot identify two payloads. DB commit precedes ACK; delivery is at-least-once. Reports match durable completed executions. |
+| INV-RECURRENCE-001 | Two independent occurrences with the same confirmed cause/scope require a hook. Redelivery is not recurrence. Active-hook recurrence requires a version update while preserving the previous verified version. |
+| INV-CONTEXT-001 | Required role, goal, acceptance, policy and provenance are never silently truncated. UTF-8 bytes are a conservative composition budget, distinct from measured tokens. External evidence is bounded data. |
+| INV-RELEASE-001 | Exact commit/tree and incumbent policy bind lead review, conductor review, incumbent tests and actual CLI canaries. Failed checks cannot promote. Changed commits require new approvals. |
+| INV-SESSION-001 | Current context at 70% requests safe-point handoff. Checkpoint generation and execution lease fence stale writers. Busy agents do not hibernate; identity survives replacement. |
+| INV-GRAPH-001 | Git owns definitions; PostgreSQL owns runtime facts. Graph/vectors are versioned derived views. Unchanged symbols retain IDs; stale evidence cannot enter commit-bound review. |
+| INV-RECOVERY-001 | An external host controller restores the previous deployment without Codex. Images are pinned; rollback withdraws that release's hook. Destructive schema downgrade is outside this contract. |
+| INV-RESOURCE-001 | Runtime limits have one definition in domain/policy.py. Collection retains pending messages, referenced artifacts and transitive evidence; only aged unreferenced artifacts are removed. |
 
-Comments reference these IDs and explain local reasons; they do not copy alternative policy definitions.
+Comments cite invariant IDs and explain non-obvious local reasons, without duplicating policy definitions.
 Organization SSOT: `src/codex_harness/resources/organization.json`.
 Wire schema SSOT: `src/codex_harness/resources/message.schema.json`.
-
-The bootstrap's caller identities are trusted local process inputs. Schema validation is not authentication.
-Redis and PostgreSQL are exposed only on localhost. Host/container authentication and signed authority receipts
-must precede use with untrusted producers or unrestricted autonomous agents.
-
-The fixture canary verifies one declarative executable-alias hook and CLI startup. `harness canary --live`
-separately verifies a real CLI file task. Neither is a candidate deployment/PR integration test.
+Runtime policy SSOT: `src/codex_harness/domain/policy.py`.
+The trusted local-process identity boundary is documented in status.md; validation is not authentication.

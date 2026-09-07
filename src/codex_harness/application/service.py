@@ -12,6 +12,7 @@ from codex_harness.domain.model import (
     require,
     utcnow,
 )
+from codex_harness.domain.policy import POLICY
 from codex_harness.ports import MessageBus, Store
 
 
@@ -44,12 +45,18 @@ class Harness:
             occurrences = [r for r in tx.scan("incidents") if r["fingerprint"] == incident.fingerprint]
             hook_id = "hook-" + incident.fingerprint[:24]
             created = False
-            if len(occurrences) >= 2 and tx.get("hooks", hook_id) is None:
+            existing = tx.get("hooks", hook_id)
+            update_required = existing and existing["status"] == "active" and previous is None
+            if len(occurrences) >= POLICY.recurrence_threshold and (existing is None or update_required):
                 hook = {"id": hook_id, "fingerprint": incident.fingerprint, "status": "required",
                         "scope": incident.scope, "root_cause": incident.root_cause,
                         "occurrences": sorted(r["occurrence_id"] for r in occurrences),
+                        "evidence_refs": sorted({e for r in occurrences for e in r["evidence_refs"]}),
                         "version": 1, "spec": None, "revision": None, "author": None,
                         "reviews": [], "canary": None}
+                if update_required:
+                    hook["version"] = existing["version"]
+                    hook["previous_active"] = {k: v for k, v in existing.items() if k != "previous_active"}
                 tx.put("hooks", hook_id, hook)
                 lead = self.org.actor(message["who"]["recipient"])
                 notification = envelope("hook.required", lead.id, lead.parent or "conductor",
@@ -67,7 +74,7 @@ class Harness:
                                                "at": utcnow()})
                 created = True
             result = {"occurrences": len(occurrences), "duplicate_occurrence": previous is not None,
-                      "hook_id": hook_id if len(occurrences) >= 2 else None, "hook_created": created}
+                      "hook_id": hook_id if len(occurrences) >= POLICY.recurrence_threshold else None, "hook_created": created}
             tx.put("inbox", message["message_id"], {"hash": digest(message), "result": result})
             return result
 
@@ -148,24 +155,32 @@ class Harness:
         with self.store.transaction() as tx:
             hook = tx.get("hooks", hook_id)
             require(hook is not None and hook["status"] == "active", "Hook not active")
-            hook["status"] = "rolled_back"
+            hook = hook.get("previous_active") or {**hook, "status": "rolled_back"}
             tx.put("hooks", hook_id, hook)
             tx.put("events", str(uuid4()), {"type": "hook.rolled_back", "hook_id": hook_id,
                                            "reason": reason, "at": utcnow()})
 
     def prepare_command(self, argv: list[str], platform: str) -> list[str]:
-        with self.store.transaction() as tx:
-            hooks = sorted(tx.scan("hooks"), key=lambda x: x["id"])
-        matches = [h for h in hooks if h["status"] == "active"
-                   and hook_apply(h["spec"], argv, platform) != argv]
+        hooks = self.active_hooks()
+        matches = [h for h in hooks if hook_apply(h["spec"], argv, platform) != argv]
         require(len(matches) <= 1, "Conflicting active hooks; explicit resolution required")
         return hook_apply(matches[0]["spec"], argv, platform) if matches else list(argv)
 
-    def checkpoint(self, agent: str, expected_generation: int, state: dict) -> dict:
+    def active_hooks(self) -> list[dict]:
+        with self.store.transaction() as tx:
+            hooks = sorted(tx.scan("hooks"), key=lambda x: x["id"])
+        return [active for h in hooks
+                if (active := h if h["status"] == "active" else h.get("previous_active"))]
+
+    def checkpoint(self, agent: str, expected_generation: int, state: dict, execution: dict | None = None) -> dict:
         self.org.actor(agent)
         require(all(state.get(k) for k in ("next_action", "source_revision", "graph_snapshot")),
                 "Incomplete checkpoint")
         with self.store.transaction() as tx:
+            if execution:
+                from codex_harness.application.workflow import Workflow
+
+                Workflow(self.store, self.org)._owned(tx, execution)
             old = tx.get("sessions", agent) or {"generation": 0}
             require(old["generation"] == expected_generation, "Stale session writer")
             record = {"agent_id": agent, "generation": expected_generation + 1,

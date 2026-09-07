@@ -26,6 +26,7 @@ from codex_harness.domain.model import (
     require,
     utcnow,
 )
+from codex_harness.domain.policy import POLICY
 
 
 def emit(data: object) -> None:
@@ -107,7 +108,7 @@ def serve(service, agent: str, once: bool, execute: bool = False) -> None:
                 last_activity = time.monotonic()
         if once:
             break
-        if time.monotonic() - last_activity >= 3600:
+        if time.monotonic() - last_activity >= POLICY.idle_seconds:
             emit({"status": "idle_exit", "agent": agent, "at": utcnow()})
             return
 
@@ -117,6 +118,9 @@ def parser() -> argparse.ArgumentParser:
     commands = p.add_subparsers(dest="command", required=True)
     commands.add_parser("init-db")
     commands.add_parser("doctor")
+    commands.add_parser("status")
+    cleanup = commands.add_parser("cleanup")
+    cleanup.add_argument("--apply", action="store_true")
     commands.add_parser("organization")
     v = commands.add_parser("validate")
     v.add_argument("file")
@@ -223,6 +227,24 @@ def main() -> None:
             emit({"postgres": True, "redis": RedisBus(redis_url()).client.ping(),
                   "organization_valid": True, "hooks": len(hooks),
                   "active_hooks": sum(h["status"] == "active" for h in hooks)})
+        elif args.command == "status":
+            with service.store.transaction() as tx:
+                tasks = tx.scan("tasks")
+                decisions = tx.scan("decisions_pending")
+                terminal = [task for task in tasks if task["status"] in {"succeeded", "failed", "expired"}]
+                emit({"policy": POLICY.snapshot(), "tasks": {state: sum(t["status"] == state for t in tasks)
+                      for state in sorted({t["status"] for t in tasks})},
+                      "observed_task_success_rate": sum(t["status"] == "succeeded" for t in terminal) / len(terminal) if terminal else None,
+                      "sample_size": len(terminal), "active_deployment": tx.get("deployment", "active"),
+                      "health": tx.get("health", "latest"),
+                      "blocked_decisions": [{"id": d["id"], "actor": d["actor"], "result": d.get("result")}
+                                            for d in decisions if d["status"] in {"failed", "blocked"}],
+                      "pending_hooks": [{"id": h["id"], "status": h["status"]} for h in tx.scan("hooks") if h["status"] != "active"]})
+        elif args.command == "cleanup":
+            from codex_harness.adapters.maintenance import ArtifactMaintenance
+
+            executor = build_executor(service)
+            emit(ArtifactMaintenance(service.store, executor.artifacts).collect(apply=args.apply))
         elif args.command == "demo":
             emit(demo(service, args.scope))
         elif args.command == "incident":
@@ -292,17 +314,20 @@ def main() -> None:
         elif args.command == "project-graph":
             emit(PostgresKnowledge(database_url()).project_runtime(service.store, service.org))
         elif args.command == "rlm":
+            from codex_harness.adapters.app_server import AppServer
+            from codex_harness.adapters.hooks import NativeHooks
             from codex_harness.application.rlm import RecursiveContext
 
             executor = build_executor(service)
-            rlm = RecursiveContext(executor.artifacts, CodexRuntime(), str(executor.git.repository),
-                                   max_calls=args.max_calls)
-            emit(rlm.analyze(args.reference, args.question))
+            with AppServer(hooks=NativeHooks(service, executor.git, executor.artifacts).configuration()) as runtime:
+                rlm = RecursiveContext(executor.artifacts, runtime, str(executor.git.repository),
+                                       max_calls=args.max_calls)
+                emit(rlm.analyze(args.reference, args.question))
         elif args.command == "context":
             actor = service.org.actor(args.agent)
             hits = PostgresKnowledge(database_url()).query(args.query)
             items = [ContextItem(h["id"], h["body"], h["source_ref"], h["revision"]) for h in hits]
-            snapshot = digest(sorted({h["properties"]["snapshot"] for h in hits}))
+            snapshot = digest(sorted({h["properties"].get("snapshot", h["revision"]) for h in hits}))
             packet = compile_context(actor.id, "query:" + args.query, snapshot,
                                      {"role": actor.role, "objective": args.query,
                                       "acceptance_criteria": ["Return grounded evidence"],

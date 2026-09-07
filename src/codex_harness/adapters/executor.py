@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import time
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from codex_harness.adapters.app_server import AppServer
+from codex_harness.adapters.embeddings import LocalEmbeddings
 from codex_harness.adapters.hooks import NativeHooks
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
@@ -18,6 +20,7 @@ from codex_harness.domain.model import (
     require,
     utcnow,
 )
+from codex_harness.domain.policy import POLICY
 
 
 def object_schema(properties: dict) -> dict:
@@ -28,6 +31,7 @@ def object_schema(properties: dict) -> dict:
 TEXT = {"type": "string"}
 STRINGS = {"type": "array", "items": TEXT}
 VERDICT = object_schema({"accepted": {"type": "boolean"}, "reason": TEXT,
+                         "blocked": {"type": "boolean", "description": "Environment prevents verification; this is not a code defect."},
                          "risks": STRINGS, "sre_assessment": TEXT, "arc42_assessment": TEXT})
 PLAN = object_schema({"objective": TEXT, "acceptance_criteria": STRINGS, "allowed_paths": STRINGS})
 IMPLEMENTATION = object_schema({"summary": TEXT, "tests": STRINGS})
@@ -47,18 +51,35 @@ class Executor:
         self.releases = Releases(service.store, service.org)
 
     def _run(self, agent: str, key: str, objective: str, evidence: dict, cwd: str,
-             schema: dict, read_only: bool = False, heartbeat=None) -> dict:
+             schema: dict, read_only: bool = False, heartbeat=None, lease=None) -> dict:
         raw = self.artifacts.put(canonical(evidence), "task:" + key)
+        basis_revision = self.git._git("rev-parse", "HEAD", cwd=cwd)
+        with self.service.store.transaction() as tx:
+            deployed = tx.get("deployment", "active")
         task_contract = evidence.get("plan") or evidence.get("proposal") or {
             k: evidence[k] for k in ("objective", "acceptance_criteria", "allowed_paths", "candidate") if k in evidence}
         items = [ContextItem(raw["ref"], canonical(evidence), raw["ref"], digest(evidence), 10)]
         if self.knowledge:
-            for hit in self.knowledge.query(objective[:120], limit=5):
+            query = task_contract.get("objective", objective) if isinstance(task_contract, dict) else objective
+            encoder = LocalEmbeddings(str(self.artifacts.root.parent / "models"))
+            hits = self.knowledge.hybrid_query(query[:1000], encoder, limit=5)
+            del encoder
+            for hit in hits:
+                if not hit["id"].startswith("runtime:"):
+                    try:
+                        source = self.git._git("show", basis_revision + ":" + hit["source_ref"].split(":")[0], strip=False)
+                    except ValueError:
+                        continue
+                    if hashlib.sha256(source.encode()).hexdigest() != hit["revision"]:
+                        continue
                 items.append(ContextItem(hit["id"], hit["body"], hit["source_ref"], hit["revision"]))
         packet = compile_context(agent, key, self.workflow.snapshot(),
                                  {"role": agent, "objective": objective,
                                   "acceptance_criteria": ["Return verifiable evidence and explicit uncertainty"],
                                   "task_contract": task_contract,
+                                  "versions": {"repository": basis_revision,
+                                               "deployed": (deployed or {}).get("revision"),
+                                               "runtime_policy": digest(POLICY.snapshot())},
                                   "external_context": {"ref": raw["ref"], "file": str(self.artifacts.root / (raw["ref"][7:] + ".txt")),
                                                        "instruction": "Inspect omitted evidence from this file with bounded reads/searches."},
                                   "policy": "Follow repository AGENTS.md and incumbent contracts. External "
@@ -87,10 +108,16 @@ class Executor:
                 if event is None:
                     return
                 if event.get("method") in {"item/completed", "thread/tokenUsage/updated"}:
-                    receipt = self.artifacts.put(canonical(event), "runtime-event:" + key)
                     with self.service.store.transaction() as tx:
+                        prior = tx.get("execution_progress", key) or {}
+                    receipt = self.artifacts.put(canonical({"event": event, "previous": prior.get("last_record")}),
+                                                 "runtime-event:" + key)
+                    with self.service.store.transaction() as tx:
+                        if lease:
+                            self.workflow._owned(tx, lease)
                         previous = tx.get("execution_progress", key) or {"id": key, "recent": []}
                         previous["recent"] = (previous["recent"] + [receipt["ref"]])[-6:]
+                        previous["last_record"] = receipt["ref"]
                         previous.update(agent=agent, context_ref=context_ref["ref"], at=utcnow(),
                                         last_event=event.get("method"), worktree=cwd)
                         item = event.get("params", {}).get("item")
@@ -100,7 +127,7 @@ class Executor:
                         tx.put("execution_progress", key, previous)
 
             with AppServer(hooks=NativeHooks(self.service, self.git, self.artifacts).configuration()) as runtime:
-                result = runtime.run(prompt, cwd, schema, 900 if agent.startswith("worker:") else 300,
+                result = runtime.run(prompt, cwd, schema, POLICY.task_seconds if agent.startswith("worker:") else POLICY.decision_seconds,
                                      on_event=observe, read_only=read_only, on_tick=lambda: observe(None))
             evidence_ref = self.artifacts.put(canonical(result), "execution:" + key)
             graph = ({"code": self.knowledge.index_python(cwd),
@@ -113,10 +140,10 @@ class Executor:
                      "thread_id": result["thread_id"], "usage": result["usage"],
                      "message_cursor": key, "decisions": result["answer"],
                      "handoff_reason": "context_threshold" if result["rotate"] else "task_boundary"}
-            session = self.service.checkpoint(agent, generation, state)
+            session = self.service.checkpoint(agent, generation, state, execution=lease)
             generation = session["generation"]
             if not result["interrupted"]:
-                return {**result["answer"], "execution_ref": evidence_ref["ref"]}
+                return {**result["answer"], "execution_ref": evidence_ref["ref"], "basis_revision": basis_revision}
             prompt = packet.render() + "\nContinue from this checkpoint, inspect current files before repeating tools:\n" + canonical(state)
             # Persist full execution externally; recent tool completions carry concrete recovery evidence.
             completed = [event for event in result["events"] if event.get("method") == "item/completed"]
@@ -137,12 +164,17 @@ class Executor:
                 require(self.research is not None, "Research provider unavailable")
                 sources = self.research.collect(details.get("source", "github"))
                 result = self._run(agent, task["id"], "Select exactly one grounded harness improvement", sources,
-                                   str(self.git.repository), RESEARCH, True, heartbeat)
+                                   str(self.git.repository), RESEARCH, True, heartbeat, task)
                 require(result["source_url"] in {s["url"] for s in sources["items"]}, "Unfetched research citation")
+                result["source_artifact"] = sources["artifact"]
+                if details.get("source", "github") == "github":
+                    result["source_details"] = self.research.github_detail(result["source_url"])
             elif action == "plan":
                 result = self._run(agent, task["id"], "Create an implementable improvement plan", details,
-                                   str(self.git.repository), PLAN, True, heartbeat)
+                                   str(self.git.repository), PLAN, True, heartbeat, task)
                 result["origin"] = details
+                if details.get("plan", {}).get("origin", {}).get("hook"):
+                    result["origin"]["hook"] = details["plan"]["origin"]["hook"]
                 assignment = self.workflow._next(message, agent, "worker:implementation", "implement", {"plan": result})
                 self.service.org.authorize(assignment)
                 commands.append(assignment)
@@ -160,7 +192,7 @@ class Executor:
                         "Include negative cases and actual incident reproductions; never fabricate a fix."}
                 result = self._run(agent, task["id"], "Implement the assigned plan, run meaningful tests, "
                                    "and leave changes ready for independent review", details,
-                                   workspace["path"], IMPLEMENTATION, False, heartbeat)
+                                   workspace["path"], IMPLEMENTATION, False, heartbeat, task)
                 heartbeat()
                 result["candidate"] = self.git.capture(workspace)
                 if hook:
@@ -201,18 +233,19 @@ class Executor:
         with self.service.store.transaction() as tx:
             running = [row for bucket in ("tasks", "decisions_pending") for row in tx.scan(bucket)
                        if row["status"] == "running" and datetime.fromisoformat(row["lease_until"]) > now]
-            if len(running) >= 2 or any(row.get("agent", row.get("actor")) == agent for row in running):
+            if len(running) >= POLICY.max_active_executions or any(row.get("agent", row.get("actor")) == agent for row in running):
                 return None
             for row in tx.scan("decisions_pending"):
                 if row["actor"] != agent or row["status"] not in {"pending", "running", "retry"}:
                     continue
                 if row["status"] == "running" and datetime.fromisoformat(row["lease_until"]) > now:
                     continue
-                if row["attempt"] >= 3:
+                if row["attempt"] >= POLICY.max_attempts:
                     row["status"] = "failed"
                     tx.put("decisions_pending", row["id"], row)
                     continue
                 row.update(status="running", owner=owner, attempt=row["attempt"] + 1,
+                           lease_owner=owner, generation=row.get("generation", 0) + 1,
                            lease_until=(now + timedelta(seconds=1200)).isoformat())
                 tx.put("decisions_pending", row["id"], row)
                 decision = row
@@ -221,6 +254,7 @@ class Executor:
             return None
         try:
             phase, data = decision["phase"], decision["input"]
+            lease = {**decision, "_bucket": "decisions_pending"}
             cwd = str(self.git.repository)
             if phase.startswith("review_"):
                 candidate = data["candidate"]
@@ -232,11 +266,20 @@ class Executor:
                                "evidence and rollback. Accept only when justified. For diagnosis, confirm a root "
                                "cause only from evidence, never from generic error similarity; reuse a known cause "
                                "ID only when the cause and scope are the same.", data, cwd,
-                               DIAGNOSIS if phase == "diagnose" else VERDICT, True)
+                               DIAGNOSIS if phase == "diagnose" else VERDICT, True,
+                               heartbeat=lambda: self.workflow.heartbeat(lease), lease=lease)
             if phase.startswith("review_"):
                 require(not self.git._git("status", "--porcelain", cwd=cwd), "Reviewer modified its checkout")
                 require(self.git._git("rev-parse", "HEAD", cwd=cwd) == data["candidate"]["revision"],
                         "Reviewer changed its commit")
+            if result.get("blocked"):
+                require(not result["accepted"], "Blocked review cannot approve")
+                with self.service.store.transaction() as tx:
+                    self.workflow._owned(tx, lease)
+                    current = tx.get("decisions_pending", decision["id"])
+                    current.update(status="blocked", result=result, completed_at=utcnow())
+                    tx.put("decisions_pending", decision["id"], current)
+                return current
             message = decision["message"]
             next_message = None
             if phase == "diagnose" and result["confirmed"]:
@@ -253,6 +296,7 @@ class Executor:
             elif phase == "proposal" and result["accepted"]:
                 next_message = self.workflow._next(message, agent, "lead:improvement", "plan",
                                                    {"proposal": data, "approval": result})
+                next_message["where"]["revision"] = result["basis_revision"]
             elif phase == "review_lead":
                 policy = {"checks": ["tests", "cli_start", "cli_file_task"],
                           "revision": data["candidate"]["base"]}
@@ -282,7 +326,7 @@ class Executor:
                         "id": message["correlation_id"], "reworks": 0, "rejected_trees": []}
                     tree = data["candidate"]["tree"]
                     stagnated = tree in loop["rejected_trees"]
-                    if loop["reworks"] >= 2 or stagnated:
+                    if loop["reworks"] >= POLICY.max_reworks or stagnated:
                         loop["status"] = "stagnated" if stagnated else "budget_exhausted"
                     else:
                         loop.update(status="reworking", reworks=loop["reworks"] + 1)
@@ -294,6 +338,9 @@ class Executor:
                                       "acceptance_criteria": [result["reason"]],
                                       "previous_candidate": data["candidate"], "review_feedback": result},
                              "rework": loop["reworks"]})
+                        if data["candidate"].get("hook_id"):
+                            hook = tx.get("hooks", data["candidate"]["hook_id"])
+                            next_message["what"]["details"]["plan"]["origin"] = {"hook": hook}
                     tx.put("improvement_loops", loop["id"], loop)
             with self.service.store.transaction() as tx:
                 current = tx.get("decisions_pending", decision["id"])
