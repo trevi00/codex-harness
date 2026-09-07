@@ -22,6 +22,8 @@ class RuntimePolicy:
     source_pids: int = 128
     source_scratch_mb: int = 128
     source_output_bytes: int = 65536
+    source_read_bytes: int = 24000
+    source_read_lines: int = 120
 
     def snapshot(self) -> dict:
         return asdict(self)

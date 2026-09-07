@@ -99,8 +99,9 @@ class AuditExecution:
         evidence['partition'] = partition
         plan = self.run_model(task, 'Select bounded source inspection or test commands for this partition. '
             'For source inspection prefer ["source-list", "0"] (100 entries per page) or '
-            '["source-read", "BASE64_PATH_FROM_MANIFEST", "0"] (zero-based line offset, 120 lines). '
-            'These read immutable objects without running repository code. Follow next_line for coverage. '
+            '["source-read", "BASE64_PATH_FROM_MANIFEST", "0", "0"] (line and character offsets). '
+            'These read immutable objects without running repository code. Continue with BOTH next_line '
+            'and next_char; partial_last_line means that line is not fully read. '
             'Commands run in a networkless, read-only source tree with inert symlinks and no installs. '
             'Do not claim commands ran. Return at most four commands.', evidence,
             schema(commands={'type': 'array', 'maxItems': 4, 'items': STRINGS}))

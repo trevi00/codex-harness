@@ -86,6 +86,37 @@ def test_inert_reader_never_executes_repository_code(audit, tmp_path, monkeypatc
         runner.execute(source, ['source-read', 'arbitrary-path', '0'])
 
 
+@pytest.mark.parametrize('content', ['x' * 24001, '가🙂' * 6001], ids=['ascii', 'unicode'])
+def test_oversized_source_line_advances_without_losing_unicode(audit, tmp_path, content):
+    from codex_harness.adapters.audit_runner import AuditRunner
+    from codex_harness.domain.policy import POLICY
+    service, _, source, _, git = audit
+    from pathlib import Path
+    (Path(service.verifier.repository) / 'normal').write_text(content, encoding='utf-8')
+    git('add', 'normal')
+    git('commit', '-qm', 'oversized source fixture')
+    source = replace(source, commit=git('rev-parse', 'HEAD'), tree=git('rev-parse', 'HEAD^{tree}'))
+    entries = service.verifier.inventory(source)
+    manifest = {'version': 1, 'repository': source.repository, 'commit': source.commit,
+                'tree': source.tree, 'entries': entries}
+    source = replace(source, manifest_ref=service.artifacts.put(canonical(manifest), 'fixture')['ref'])
+    runner = AuditRunner(tmp_path / 'reader', service.artifacts)
+    path = next(e['path'] for e in entries if base64.b64decode(e['path']) == b'normal')
+    cursor, chunks = (0, 0), []
+    for _ in range(5):
+        receipt = runner.execute(source, ['source-read', path, *map(str, cursor)])
+        output = service.artifacts.document(receipt.output_ref)
+        assert sum(len(s.encode('utf-8')) for s in output['lines']) <= POLICY.source_read_bytes
+        chunks.extend(output['lines'])
+        next_cursor = (output['next_line'], output['next_char'])
+        assert next_cursor > cursor
+        cursor = next_cursor
+        if cursor[0] == output['total_lines']:
+            break
+    assert cursor == (1, 0) and ''.join(chunks) == content
+    assert output['eof'] is True
+
+
 @pytest.mark.parametrize('change', ['tree', 'commit', 'repository', 'omit', 'duplicate', 'blob', 'size', 'mode'])
 def test_changed_source_fails_even_with_rehashed_manifest(audit, change):
     service, _, source, entries, git = audit
