@@ -45,12 +45,20 @@ class AuditExecution:
         return {**definitions[kind], '$defs': definitions}
 
     @staticmethod
-    def partition_schema():
+    def partition_schema(partition=None):
         defs = output_definitions()
         result_schema = schema(paths={'type': 'array', 'items': {'$ref': '#/$defs/PathDisposition'}},
             subsystems={'type': 'array', 'items': {'$ref': '#/$defs/SubsystemAnalysis'}},
             open_questions=STRINGS, cursor=TEXT)
         result_schema['$defs'] = defs
+        if partition is not None:
+            # INV-RESEARCH-002: output identities must match immutable assigned scope.
+            for field, kind, identity in [('paths', 'PathDisposition', 'path'),
+                                          ('subsystems', 'SubsystemAnalysis', 'name')]:
+                if partition[field]:
+                    defs[kind]['properties'][identity] = {'type': 'string', 'enum': list(partition[field])}
+                else:
+                    result_schema['properties'][field]['maxItems'] = 0
         return result_schema
 
     def execute(self, task):
@@ -127,13 +135,19 @@ class AuditExecution:
         require(len(plan['commands']) <= 4, 'Inspection command budget exceeded')
         receipts = [self.audits.execute(task, audit['id'], command) for command in plan['commands']]
         evidence['receipts'] = receipts
-        result_schema = self.partition_schema()
+        result_schema = self.partition_schema(partition)
         answer = self.run_model(task, 'Semantically trace this bounded partition against contracts, callers, '
             'configuration, failure handling and tests. Use only supplied successful runner receipt IDs. '
+            'Return paths records only for identities in partition.paths and subsystem records only '
+            'for names in partition.subsystems. An empty assignment requires an empty output array; '
+            'do not add supporting subsystem records to a path-only partition. Subsystem trace paths '
+            'may reference repository inventory paths. Partial results may omit assigned identities; '
+            'all omitted or unresolved work remains in its existing partition. '
             'Explicitly preserve unreviewed scope, tests not run and open questions. Inventory is not review. '
             'Never infer execution from test file presence. For each executed test in tests, use a JSON '
             'string encoding the exact argv array of its successful execution receipt. source-list and '
-            'source-read are never test execution. Otherwise include that test verbatim in tests_not_run '
+            'source-read are never test execution. Put unexecuted tests in tests_not_run, not tests, '
+            'including each test verbatim '
             'with reason and follow_up. On context limits return partial progress.',
             evidence, result_schema)
         def decode(kind, records):

@@ -943,3 +943,82 @@ def test_affected_records_still_validate_and_parse(audit):
         for version in [0, 2, True, '1']:
             with pytest.raises(ValidationError):
                 validate({**body, 'version': version}, schema)
+
+
+@pytest.mark.parametrize('scope', ['paths', 'subsystems'])
+def test_execution_scopes_output_and_checkpoints_partial_progress(audit, monkeypatch, scope):
+    from types import SimpleNamespace
+
+    from jsonschema import ValidationError, validate
+
+    from codex_harness.adapters.audit_execution import AuditExecution
+    from codex_harness.adapters.output_schema import preflight
+    from codex_harness.domain.research import SubsystemAnalysis
+
+    service, record, _, _, _ = audit
+    activate_fixture(service)
+    partitions = service.partition(record['id'])
+    part = next(p for p in partitions if p[scope])
+    message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_partition',
+        {'audit_id': record['id'], 'partition_id': part['partition_id'],
+         'generation': part['generation']}, 'scoped-output')
+    service.workflow.submit(message)
+    task = service.workflow.claim('worker:github', 'fixture')
+    executor = SimpleNamespace(service=SimpleNamespace(store=service.store),
+                               artifacts=service.artifacts, workflow=service.workflow)
+    execution = AuditExecution(executor, FixtureRunner(service.artifacts))
+    ref = service.artifacts.put('partial semantic trace', 'fixture')['ref']
+    path = asdict(PathDisposition(base64.b64encode(b'normal').decode(), 'semantic',
+        [ref], ['symbol'], 'implementation and callers traced', [], '', []))
+    subsystem = asdict(SubsystemAnalysis('core', [path['path']], ['contract'], ['main'],
+        ['impl'], ['caller'], ['config'], ['git'], ['failure'], [], [], [ref], [], [],
+        [{'test': 'upstream suite', 'reason': 'dependencies unavailable',
+          'follow_up': 'run in verified runner'}]))
+    answer = {'paths': [path] if scope == 'paths' else [],
+              'subsystems': [subsystem] if scope == 'subsystems' else [],
+              'open_questions': ['remaining work'], 'cursor': 'partial'}
+    seen = []
+
+    def run_model(task, objective, evidence, result_schema):
+        seen.append(result_schema)
+        if 'commands' in result_schema['properties']:
+            return {'commands': []}
+        assert evidence['partition'] == part
+        assert 'partition.paths' in objective and 'partition.subsystems' in objective
+        assert 'tests_not_run, not tests' in objective
+        preflight(result_schema)
+        for definition in result_schema['$defs'].values():
+            if 'version' in definition['properties']:
+                assert definition['properties']['version'] == {'type': 'integer', 'const': 1}
+        validate(answer, result_schema)
+        validate({**answer, 'paths': [], 'subsystems': []}, result_schema)
+        # A supporting subsystem on a path-only partition is still forbidden.
+        for invalid in ({**answer, 'paths': [path], 'subsystems': [subsystem]},
+                        {**answer, scope: [{**(path if scope == 'paths' else subsystem),
+                            ('path' if scope == 'paths' else 'name'): 'unassigned'}]}):
+            with pytest.raises(ValidationError):
+                validate(invalid, result_schema)
+        return answer
+
+    monkeypatch.setattr(execution, 'run_model', run_model)
+    saved = execution.execute(task)
+    assert len(seen) == 2 and saved['generation'] == part['generation'] + 1
+    assert saved['paths'] == part['paths'] and saved['subsystems'] == part['subsystems']
+    assert saved['remaining_paths'] == sorted(set(part['paths']) - {path['path']})
+    assert saved['remaining_subsystems'] == part['subsystems']
+    coverage = service.coverage(record['id'])
+    assert len(coverage['remaining_paths']) == (2 if scope == 'paths' else 3)
+    assert coverage['remaining_subsystems'] == ['core']
+    assert not coverage['adoption_eligible']
+    with service.store.transaction() as tx:
+        assert all(tx.get('research_partitions', p['partition_id']) == p
+                   for p in partitions if p['partition_id'] != part['partition_id'])
+        bucket = 'research_paths' if scope == 'paths' else 'research_subsystems'
+        assert [r['record'] for r in tx.scan(bucket)] == answer[scope]
+        assert any(r['record'] == answer[scope][0] for r in tx.scan('research_evidence_history'))
+    # INV-RESEARCH-002: bypassing output validation cannot bypass application scope gates.
+    with pytest.raises(ContractError, match='Cross-partition evidence'):
+        service.checkpoint(task, PartitionCheckpoint(**saved),
+            [PathDisposition(**path)], [SubsystemAnalysis(**subsystem)])
+    generic = AuditExecution.partition_schema()
+    validate({**answer, 'paths': [path], 'subsystems': [subsystem]}, generic)
