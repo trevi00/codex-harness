@@ -21,6 +21,8 @@ def _unique(pairs):
 
 def resolve_policy(text):
     validate_registry()
+    require(all(name in REGISTRY and REGISTRY[name].default == value
+                for name, value in NATIVE_DEFAULTS.items()), 'Native threshold default differs from registry')
     try:
         policy = json.loads(text, object_pairs_hook=_unique)
     except (ValueError, TypeError) as exc:

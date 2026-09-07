@@ -29,7 +29,15 @@ def test_invalid_or_unwired_policy_cannot_be_loaded(text):
         resolve_policy(text)
 
 
-@pytest.mark.parametrize('value,full', [(4, 0), (2, 1)])
+def test_native_default_drift_is_detected(monkeypatch):
+    from codex_harness.adapters import runtime_thresholds
+
+    monkeypatch.setitem(runtime_thresholds.NATIVE_DEFAULTS, 'skill_match.FULL_BODY_MIN_SCORE', 4)
+    with pytest.raises(ContractError, match='default differs'):
+        resolve_policy('{"version":1,"overrides":{}}')
+
+
+@pytest.mark.parametrize('value,full', [(4, 0), (2, 1), (0, 1), (-1, 1), (3.5, 0)])
 def test_packaged_override_changes_actual_router_and_git_proposer_together(policy_repo, value, full):
     root, git = policy_repo
     source = Path(__file__).resolve().parents[1] / 'src'
@@ -57,8 +65,19 @@ path = '.harness/skills/_common/example.md'
 record = {'path':path, 'file':path, 'content_ref':ref, 'pipeline_boost':0}
 _, summary = route_skills(git, artifacts, '.', policy['revision'], 'alpha beta gamma',
     [ContextItem('project-skill:'+path, body, ref, policy['revision'], 15)], [record])
-run = ThresholdProposals(MemoryStore(), artifacts, lambda: current_policy(git)).collect('fixture')
+value = policy['values']['skill_match.FULL_BODY_MIN_SCORE']
+store = MemoryStore()
+with store.transaction() as tx:
+    tx.put('skill_history', 'fixture', {'events': [
+        {'at': f'2026-01-01T00:00:{i:02d}Z', 'top': [
+            {'score':score, 'body_chars':500} for score in (value, value + 2)]}
+        for i in range(40)]})
+run = ThresholdProposals(store, artifacts, lambda: current_policy(git)).collect('fixture')
 doc = artifacts.document(run['evidence_ref'])
+assert len(doc['proposals']) == 1
+proposal = doc['proposals'][0]
+assert proposal['current'] == value
+assert {row['value'] for row in proposal['alternatives']} == {value - 1, value + 1}
 print(json.dumps({'full': summary['full'], 'routing': summary['policy']['min_full_score'],
     'proposal': doc['policy']['values']['skill_match.FULL_BODY_MIN_SCORE']}))
 '''
