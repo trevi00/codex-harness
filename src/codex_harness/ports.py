@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+from typing import ContextManager, Protocol
+
+
+class Transaction(Protocol):
+    def get(self, bucket: str, key: str) -> dict | None: ...
+    def put(self, bucket: str, key: str, body: dict) -> None: ...
+    def scan(self, bucket: str) -> list[dict]: ...
+
+
+class Store(Protocol):
+    def transaction(self) -> ContextManager[Transaction]: ...
+
+
+class MessageBus(Protocol):
+    def publish(self, message: dict) -> str: ...
+
+
+class Runtime(Protocol):
+    def run(self, prompt: str, cwd: str, schema: dict, timeout: int = 120) -> dict: ...
+
+
+class Knowledge(Protocol):
+    def index_python(self, root: str) -> dict: ...
+    def query(self, text: str, depth: int = 1, limit: int = 12) -> list[dict]: ...

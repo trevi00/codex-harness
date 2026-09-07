@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+from dataclasses import asdict
+from uuid import uuid4
+
+from codex_harness.domain.model import (
+    Incident,
+    Organization,
+    digest,
+    envelope,
+    hook_apply,
+    require,
+    utcnow,
+)
+from codex_harness.ports import MessageBus, Store
+
+
+class Harness:
+    def __init__(self, store: Store, organization: Organization):
+        organization.validate()
+        self.store = store
+        self.org = organization
+
+    def record_incident(self, message: dict) -> dict:
+        self.org.authorize(message)
+        require(message["type"] == "incident.report", "Expected incident.report")
+        details = message["what"]["details"]
+        require(set(details) == {"occurrence_id", "root_cause", "scope", "evidence_refs"},
+                "Invalid incident fields")
+        require(isinstance(details["evidence_refs"], list), "Evidence refs must be an array")
+        incident = Incident(details["occurrence_id"], details["root_cause"], details["scope"],
+                            tuple(details["evidence_refs"]))
+        body = asdict(incident)
+        body["evidence_refs"] = list(incident.evidence_refs)
+        body["fingerprint"] = incident.fingerprint
+        with self.store.transaction() as tx:
+            receipt = tx.get("inbox", message["message_id"])
+            if receipt:
+                require(receipt["hash"] == digest(message), "Message ID reused with different content")
+                return receipt["result"]
+            previous = tx.get("incidents", incident.occurrence_id)
+            require(previous is None or previous == body, "Occurrence ID reused with different content")
+            tx.put("incidents", incident.occurrence_id, body)
+            occurrences = [r for r in tx.scan("incidents") if r["fingerprint"] == incident.fingerprint]
+            hook_id = "hook-" + incident.fingerprint[:24]
+            created = False
+            if len(occurrences) >= 2 and tx.get("hooks", hook_id) is None:
+                hook = {"id": hook_id, "fingerprint": incident.fingerprint, "status": "required",
+                        "scope": incident.scope, "root_cause": incident.root_cause,
+                        "occurrences": sorted(r["occurrence_id"] for r in occurrences),
+                        "version": 1, "spec": None, "revision": None, "author": None,
+                        "reviews": [], "canary": None}
+                tx.put("hooks", hook_id, hook)
+                lead = self.org.actor(message["who"]["recipient"])
+                notification = envelope("hook.required", lead.id, lead.parent or "conductor",
+                                        "implement_hook", {"hook_id": hook_id,
+                                        "evidence_refs": sorted({e for r in occurrences
+                                                                for e in r["evidence_refs"]})},
+                                        message["correlation_id"], message["message_id"])
+                self.org.authorize(notification)
+                tx.put("outbox", notification["message_id"], {"message": notification, "sent": False})
+                tx.put("events", str(uuid4()), {"type": "hook.required", "hook_id": hook_id,
+                                               "at": utcnow()})
+                created = True
+            result = {"occurrences": len(occurrences), "duplicate_occurrence": previous is not None,
+                      "hook_id": hook_id if len(occurrences) >= 2 else None, "hook_created": created}
+            tx.put("inbox", message["message_id"], {"hash": digest(message), "result": result})
+            return result
+
+    def get_hook(self, hook_id: str) -> dict:
+        with self.store.transaction() as tx:
+            hook = tx.get("hooks", hook_id)
+            require(hook is not None, "Hook not found")
+            return hook
+
+    def propose(self, hook_id: str, actor: str, spec: dict, revision: str) -> dict:
+        self.org.actor(actor, "worker")
+        require(bool(revision), "Candidate revision required")
+        hook_apply(spec, [], "windows")
+        with self.store.transaction() as tx:
+            hook = tx.get("hooks", hook_id)
+            require(hook is not None and hook["status"] in {"required", "candidate", "rejected"},
+                    "Cannot replace this hook")
+            hook.update(status="candidate", spec=spec, revision=revision, author=actor,
+                        version=hook["version"] + 1, reviews=[], canary=None)
+            tx.put("hooks", hook_id, hook)
+            tx.put("events", str(uuid4()), {"type": "hook.proposed", "hook_id": hook_id,
+                                           "revision": revision, "spec_hash": digest(spec), "at": utcnow()})
+            return hook
+
+    def review(self, hook_id: str, actor: str, revision: str, spec_hash: str,
+               passed: bool, evidence_ref: str) -> dict:
+        reviewer = self.org.actor(actor)
+        require(type(passed) is bool, "Review verdict must be boolean")
+        require(reviewer.role in {"lead", "conductor"} and bool(evidence_ref), "Invalid reviewer/evidence")
+        with self.store.transaction() as tx:
+            hook = tx.get("hooks", hook_id)
+            require(hook is not None and hook["status"] in {"candidate", "reviewed"}, "Not reviewable")
+            require(hook["revision"] == revision and digest(hook["spec"]) == spec_hash, "Stale review")
+            author = self.org.actor(hook["author"], "worker")
+            if reviewer.role == "lead":
+                require(author.parent == actor, "Only the author's lead may review")
+            else:
+                require(any(r["role"] == "lead" and r["passed"] for r in hook["reviews"]),
+                        "Lead review must precede conductor review")
+            require(not any(r["actor"] == actor for r in hook["reviews"]), "Duplicate review")
+            hook["reviews"].append({"actor": actor, "role": reviewer.role, "passed": passed,
+                                    "revision": revision, "spec_hash": spec_hash,
+                                    "evidence_ref": evidence_ref})
+            if not passed:
+                hook["status"] = "rejected"
+            elif reviewer.role == "conductor":
+                hook["status"] = "reviewed"
+            tx.put("hooks", hook_id, hook)
+            return hook
+
+    def record_canary(self, hook_id: str, revision: str, spec_hash: str, checks: dict) -> dict:
+        required_checks = {"reproduction", "normal_case", "cli_start"}
+        require(set(checks) == required_checks and all(type(v) is bool for v in checks.values()),
+                "Canary needs reproduction, normal_case, cli_start booleans")
+        with self.store.transaction() as tx:
+            hook = tx.get("hooks", hook_id)
+            require(hook is not None and hook["status"] == "reviewed", "Reviews must precede canary")
+            require(hook["revision"] == revision and digest(hook["spec"]) == spec_hash, "Stale canary")
+            hook["canary"] = {"checks": checks, "revision": revision, "spec_hash": spec_hash}
+            hook["status"] = "verified" if all(checks.values()) else "rejected"
+            tx.put("hooks", hook_id, hook)
+            return hook
+
+    def activate(self, hook_id: str) -> dict:
+        with self.store.transaction() as tx:
+            hook = tx.get("hooks", hook_id)
+            require(hook is not None and hook["status"] == "verified", "Candidate not verified")
+            # @invariant INV-RELEASE-001: activation is bound to the reviewed artifact.
+            require(hook["canary"]["spec_hash"] == digest(hook["spec"]), "Artifact changed after canary")
+            hook["status"] = "active"
+            tx.put("hooks", hook_id, hook)
+            tx.put("events", str(uuid4()), {"type": "hook.activated", "hook_id": hook_id,
+                                           "revision": hook["revision"], "at": utcnow()})
+            return hook
+
+    def rollback(self, hook_id: str, reason: str) -> None:
+        require(bool(reason), "Rollback requires reason")
+        with self.store.transaction() as tx:
+            hook = tx.get("hooks", hook_id)
+            require(hook is not None and hook["status"] == "active", "Hook not active")
+            hook["status"] = "rolled_back"
+            tx.put("hooks", hook_id, hook)
+            tx.put("events", str(uuid4()), {"type": "hook.rolled_back", "hook_id": hook_id,
+                                           "reason": reason, "at": utcnow()})
+
+    def prepare_command(self, argv: list[str], platform: str) -> list[str]:
+        with self.store.transaction() as tx:
+            hooks = sorted(tx.scan("hooks"), key=lambda x: x["id"])
+        matches = [h for h in hooks if h["status"] == "active"
+                   and hook_apply(h["spec"], argv, platform) != argv]
+        require(len(matches) <= 1, "Conflicting active hooks; explicit resolution required")
+        return hook_apply(matches[0]["spec"], argv, platform) if matches else list(argv)
+
+    def checkpoint(self, agent: str, expected_generation: int, state: dict) -> dict:
+        self.org.actor(agent)
+        require(all(state.get(k) for k in ("next_action", "source_revision", "graph_snapshot")),
+                "Incomplete checkpoint")
+        with self.store.transaction() as tx:
+            old = tx.get("sessions", agent) or {"generation": 0}
+            require(old["generation"] == expected_generation, "Stale session writer")
+            record = {"agent_id": agent, "generation": expected_generation + 1,
+                      "session_id": str(uuid4()), "checkpoint": state}
+            tx.put("sessions", agent, record)
+            return record
+
+    def flush_outbox(self, bus: MessageBus) -> int:
+        count = 0
+        # Serialized for bootstrap correctness. A crash after publish may redeliver;
+        # receiver's message ID must deduplicate it (INV-MESSAGE-001).
+        with self.store.transaction() as tx:
+            for item in tx.scan("outbox"):
+                if not item["sent"]:
+                    bus.publish(item["message"])
+                    item["sent"] = True
+                    tx.put("outbox", item["message"]["message_id"], item)
+                    count += 1
+        return count

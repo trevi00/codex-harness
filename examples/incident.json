@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "message_id": "example-message-001",
+  "type": "incident.report",
+  "correlation_id": "example-improvement-001",
+  "causation_id": null,
+  "who": {
+    "sender": "worker:implementation",
+    "recipient": "lead:improvement",
+    "owner": "lead:improvement"
+  },
+  "what": {
+    "action": "record_incident",
+    "details": {
+      "occurrence_id": "example-occurrence-001",
+      "root_cause": "powershell-codex-ps1-policy",
+      "scope": "examples/windows/codex",
+      "evidence_refs": [
+        "fixture:windows-codex-ps1-policy"
+      ]
+    }
+  },
+  "why": {
+    "objective": "Prevent recurrence of Codex PowerShell launcher failures",
+    "evidence_refs": [
+      "fixture:windows-codex-ps1-policy"
+    ]
+  },
+  "when": {
+    "created_at": "2026-09-07T00:00:00Z",
+    "deadline": null,
+    "after": []
+  },
+  "where": {
+    "repository": "codex-harness",
+    "revision": "bootstrap-example",
+    "environment": "local",
+    "allowed_paths": []
+  },
+  "how": {
+    "constraints": [
+      "Preserve normal executable behavior"
+    ],
+    "acceptance_criteria": [
+      "Record one independent occurrence exactly once"
+    ],
+    "context_ref": null,
+    "result_schema": "six-w.v1"
+  }
+}

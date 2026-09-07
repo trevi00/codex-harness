@@ -1,0 +1,243 @@
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import time
+from dataclasses import asdict
+from pathlib import Path
+from uuid import uuid4
+
+from codex_harness.adapters.bus import RedisBus
+from codex_harness.adapters.canary import executable_canary
+from codex_harness.adapters.codex import CodexRuntime
+from codex_harness.adapters.commands import run_process
+from codex_harness.adapters.contracts import validate_message
+from codex_harness.adapters.knowledge import PostgresKnowledge
+from codex_harness.bootstrap import build, database_url, organization, redis_url
+from codex_harness.domain.model import (
+    ContextItem,
+    ContractError,
+    compile_context,
+    digest,
+    envelope,
+    require,
+    utcnow,
+)
+
+
+def emit(data: object) -> None:
+    print(json.dumps(data, ensure_ascii=False, indent=2), flush=True)
+
+
+def demo(service, scope: str) -> dict:
+    """Scripted bootstrap lifecycle using real persistence, not autonomous agent review."""
+    correlation = "bootstrap-" + str(uuid4())
+    records = []
+    for _ in range(2):
+        message = envelope("incident.report", "worker:implementation", "lead:improvement",
+                           "record_incident", {"occurrence_id": str(uuid4()),
+                           "root_cause": "powershell-codex-ps1-policy", "scope": scope,
+                           "evidence_refs": ["fixture:windows-codex-ps1-policy"]}, correlation)
+        records.append(service.record_incident(validate_message(message)))
+    hook_id = records[-1]["hook_id"]
+    existing = service.get_hook(hook_id)
+    if existing["status"] == "active":
+        return {"mode": "scripted-bootstrap", "already_active": hook_id, "incidents": records}
+    spec = {"kind": "executable_alias", "platform": "windows", "match": "codex.ps1",
+            "replacement": "codex.cmd"}
+    revision = "spec-sha256:" + digest(spec)
+    service.propose(hook_id, "worker:implementation", spec, revision)
+    canary = executable_canary(spec)
+    for actor in ("lead:improvement", "conductor"):
+        service.review(hook_id, actor, revision, digest(spec), True,
+                       "fixture:scripted-review-not-llm")
+    service.record_canary(hook_id, revision, digest(spec), canary["checks"])
+    if all(canary["checks"].values()):
+        service.activate(hook_id)
+    checkpoint = service.checkpoint("worker:implementation", _generation(service, "worker:implementation"),
+                                    {"next_action": "apply active hooks before the next command",
+                                     "source_revision": revision, "graph_snapshot": "bootstrap-fixture",
+                                     "hook_id": hook_id})
+    return {"mode": "scripted-bootstrap; no autonomous PR review or deployment",
+            "incidents": records, "hook": service.get_hook(hook_id), "canary": canary,
+            "prepared_command": service.prepare_command(["codex.ps1", "--version"], "windows"),
+            "checkpoint": checkpoint}
+
+
+def _generation(service, agent: str) -> int:
+    with service.store.transaction() as tx:
+        return (tx.get("sessions", agent) or {"generation": 0})["generation"]
+
+
+def serve(service, agent: str, once: bool) -> None:
+    service.org.actor(agent)
+    bus = RedisBus(redis_url())
+    consumer = f"{agent}:{uuid4()}"
+    last_activity = time.monotonic()
+    emit({"status": "listening", "agent_id": agent, "mode": "scripted-message-runtime"})
+    while True:
+        row = bus.receive(agent, consumer)
+        if row:
+            entry_id, fields = row
+            try:
+                message = bus.decode(fields)
+                require(message["who"]["recipient"] == agent, "Message routed to wrong agent")
+                service.org.authorize(message)
+                if message["type"] == "incident.report":
+                    result = service.record_incident(message)
+                else:
+                    with service.store.transaction() as tx:
+                        old = tx.get("deliveries", message["message_id"])
+                        require(old is None or old["hash"] == digest(message), "Conflicting message ID")
+                        result = {"message": message, "hash": digest(message),
+                                  "status": "awaiting_handler", "agent": agent}
+                        tx.put("deliveries", message["message_id"], result)
+                service.flush_outbox(bus)
+                bus.ack(agent, entry_id)
+                emit({"message_id": message["message_id"], "result": result})
+                last_activity = time.monotonic()
+            except (ContractError, json.JSONDecodeError, KeyError) as exc:
+                bus.dead_letter(agent, entry_id, fields, str(exc))
+                emit({"rejected": entry_id, "reason": str(exc)})
+        if once:
+            break
+        if time.monotonic() - last_activity >= 3600:
+            emit({"status": "idle_exit", "agent": agent, "at": utcnow()})
+            return
+
+
+def parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description="Codex self-harness bootstrap")
+    commands = p.add_subparsers(dest="command", required=True)
+    commands.add_parser("init-db")
+    commands.add_parser("doctor")
+    commands.add_parser("organization")
+    v = commands.add_parser("validate")
+    v.add_argument("file")
+    d = commands.add_parser("demo")
+    d.add_argument("--scope", default="bootstrap/windows/codex")
+    i = commands.add_parser("incident")
+    i.add_argument("file")
+    commands.add_parser("flush")
+    send = commands.add_parser("send")
+    send.add_argument("file")
+    run = commands.add_parser("run-command")
+    run.add_argument("--timeout", type=int, default=120)
+    run.add_argument("argv", nargs=argparse.REMAINDER)
+    s = commands.add_parser("serve")
+    s.add_argument("--agent", required=True)
+    s.add_argument("--once", action="store_true")
+    index = commands.add_parser("index")
+    index.add_argument("root", nargs="?", default=".")
+    q = commands.add_parser("query")
+    q.add_argument("text")
+    context = commands.add_parser("context")
+    context.add_argument("query")
+    context.add_argument("--agent", default="worker:implementation")
+    context.add_argument("--budget", type=int, default=12000)
+    inspect = commands.add_parser("inspect")
+    inspect.add_argument("bucket", choices=["incidents", "hooks", "sessions", "events", "deliveries", "outbox"])
+    rollback = commands.add_parser("rollback-hook")
+    rollback.add_argument("hook_id")
+    rollback.add_argument("--reason", required=True)
+    canary = commands.add_parser("canary")
+    canary.add_argument("--live", action="store_true", help="Execute a real Codex file task (uses account quota)")
+    return p
+
+
+def main() -> None:
+    args = parser().parse_args()
+    try:
+        if args.command == "organization":
+            emit({"agents": [asdict(a) for a in organization().agents.values()]})
+            return
+        if args.command == "validate":
+            message = validate_message(json.loads(Path(args.file).read_text(encoding="utf-8")))
+            organization().authorize(message)
+            emit({"valid": True, "message_id": message["message_id"]})
+            return
+        if args.command == "canary":
+            runtime = CodexRuntime()
+            result = runtime.probe()
+            if args.live:
+                import tempfile
+
+                with tempfile.TemporaryDirectory(prefix="harness-canary-") as directory:
+                    fixture = Path(directory) / "input.txt"
+                    fixture.write_text("HARNESS_CANARY_42", encoding="utf-8")
+                    schema = {"type": "object", "additionalProperties": False,
+                              "properties": {"value": {"type": "string"}}, "required": ["value"]}
+                    run = runtime.run("Read input.txt, write its exact contents to output.txt. "
+                                      "Return the exact input in the value field. Use no network.",
+                                      directory, schema)
+                    output = Path(directory) / "output.txt"
+                    result["live_passed"] = (run["answer"]["value"] == "HARNESS_CANARY_42"
+                                             and output.exists()
+                                             and output.read_text(encoding="utf-8").strip() == "HARNESS_CANARY_42")
+                    result["event_count"] = len(run["events"])
+            emit(result)
+            if not result["passed"] or result.get("live_passed") is False:
+                raise SystemExit(1)
+            return
+        service = build()
+        if args.command == "init-db":
+            service.store.migrate()
+            emit({"migrated": True})
+        elif args.command == "doctor":
+            with service.store.transaction() as tx:
+                hooks = tx.scan("hooks")
+            emit({"postgres": True, "redis": RedisBus(redis_url()).client.ping(),
+                  "organization_valid": True, "hooks": len(hooks),
+                  "active_hooks": sum(h["status"] == "active" for h in hooks)})
+        elif args.command == "demo":
+            emit(demo(service, args.scope))
+        elif args.command == "incident":
+            emit(service.record_incident(validate_message(json.loads(Path(args.file).read_text(encoding="utf-8")))))
+        elif args.command == "flush":
+            emit({"published": service.flush_outbox(RedisBus(redis_url()))})
+        elif args.command == "send":
+            message = validate_message(json.loads(Path(args.file).read_text(encoding="utf-8")))
+            service.org.authorize(message)
+            emit({"stream_id": RedisBus(redis_url()).publish(message)})
+        elif args.command == "run-command":
+            argv = args.argv[1:] if args.argv[:1] == ["--"] else args.argv
+            require(bool(argv), "Command argv required after --")
+            command = service.prepare_command(argv, "windows" if os.name == "nt" else "linux")
+            result = run_process(command, timeout=args.timeout)
+            emit({"argv": command, "exit_code": result.returncode, "stdout": result.stdout,
+                  "stderr": result.stderr})
+            if result.returncode:
+                raise SystemExit(result.returncode)
+        elif args.command == "serve":
+            serve(service, args.agent, args.once)
+        elif args.command == "index":
+            emit(PostgresKnowledge(database_url()).index_python(args.root))
+        elif args.command == "query":
+            emit(PostgresKnowledge(database_url()).query(args.text))
+        elif args.command == "context":
+            actor = service.org.actor(args.agent)
+            hits = PostgresKnowledge(database_url()).query(args.query)
+            items = [ContextItem(h["id"], h["body"], h["source_ref"], h["revision"]) for h in hits]
+            snapshot = digest(sorted({h["properties"]["snapshot"] for h in hits}))
+            packet = compile_context(actor.id, "query:" + args.query, snapshot,
+                                     {"role": actor.role, "objective": args.query,
+                                      "acceptance_criteria": ["Return grounded evidence"],
+                                      "policy": "bootstrap-v1"}, items, args.budget, 2000)
+            emit(asdict(packet))
+        elif args.command == "inspect":
+            with service.store.transaction() as tx:
+                emit(tx.scan(args.bucket))
+        elif args.command == "rollback-hook":
+            service.rollback(args.hook_id, args.reason)
+            emit({"rolled_back": args.hook_id})
+    except (ValueError, RuntimeError) as exc:
+        print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        raise SystemExit(1) from exc
+
+
+if __name__ == "__main__":
+    if os.name == "nt":
+        sys.stdout.reconfigure(encoding="utf-8")
+    main()

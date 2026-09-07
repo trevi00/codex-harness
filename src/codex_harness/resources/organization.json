@@ -1,0 +1,40 @@
+{
+  "agents": [
+    {
+      "id": "conductor",
+      "role": "conductor",
+      "parent": null,
+      "team": "control"
+    },
+    {
+      "id": "lead:research",
+      "role": "lead",
+      "parent": "conductor",
+      "team": "research"
+    },
+    {
+      "id": "lead:improvement",
+      "role": "lead",
+      "parent": "conductor",
+      "team": "improvement"
+    },
+    {
+      "id": "worker:github",
+      "role": "worker",
+      "parent": "lead:research",
+      "team": "research"
+    },
+    {
+      "id": "worker:geeknews",
+      "role": "worker",
+      "parent": "lead:research",
+      "team": "research"
+    },
+    {
+      "id": "worker:implementation",
+      "role": "worker",
+      "parent": "lead:improvement",
+      "team": "improvement"
+    }
+  ]
+}
