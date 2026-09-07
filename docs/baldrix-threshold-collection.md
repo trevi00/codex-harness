@@ -72,3 +72,41 @@ candidate when neither candidate passes; the corpus and calculation basis permit
 replay, but the other rejected candidate's report is not individually archived yet.
 Unknown timestamps remain in training and can count toward that sample floor; their
 count is explicit. These source semantics must not be read as native success proof.
+
+Next review integration trace: `Executor.decision` distinguishes `audit_review`,
+`research_lead`, `proposal` and `review_*`; existing `proposal` acceptance invokes
+`require_dispatch` and is bound to source-adoption evidence. A calculated numeric
+record cannot simply be inserted into that phase to bypass source audit. Introduce
+explicit review input/binding and leased completion handling before queueing a lead
+or conductor decision, then preserve the existing candidate/CLI-canary release path.
+Current collection does not queue any decision or assign itself reviewer authority.
+
+Final runtime verification at `54072b9b905b876faf313edea9cf4635397e364e`:
+
+- Windows PostgreSQL/Redis: 456 passed, 7 skipped;
+  `sha256:bc2ad49e8943462e2ba818bdc5e97a7497a08e8e6b820dd905925fd03111e992`.
+- Linux PostgreSQL/Redis: 463 passed, no skips;
+  `sha256:713bee7d4fc619a5d755e858b49d0a92413af140f12937d824efab1fc0513344`.
+- Actual CLI canary with 92-file immutable image match:
+  `sha256:af9c01ab3b3c9a61b9e3990164a8cc38ee4255672866b5e1a96423be178ed063`.
+- Actual proposal CLI/PostgreSQL concurrency, empty-admission and legacy checks:
+  `sha256:545927e853d73662ef0293f5c553347201486e16b58c8575506d21a9cd6c40fd`.
+- Actual Claude follow-up ACCEPT:
+  `sha256:c3450d869848a7b48da3d56461b58160314902dfd7d668f119d1c658df325073`.
+
+Review reconciliation: `commands.run_process` uses `Popen(text=True, encoding='utf-8')`,
+so both Git output and on-disk `read_text` normalize CRLF. The source import key is
+`digest([project, source])`; different physical segments never share a record. For
+the same segment, consumed-prefix hashes forbid replacement/truncation, and each
+new `source_ref` archives the entire input snapshot, including prior retained lines.
+Thus the suggested cross-segment lineage loss does not follow from this importer.
+Additional CRLF and multi-append collection tests would strengthen these guarantees.
+
+Before leased review, pin explicit tests for the unconditional task-success blocker
+and rejected-reference row. Consider archiving every candidate report: upstream
+currently resolves accepted ties in raise-first iteration order (covered by domain
+tests), and keeps only the last rejected candidate. Hysteresis applies to training;
+holdout requires any positive delta. These are reference semantics, not calibrated
+native significance thresholds. Evidence-writer/store implementations and external
+dependencies are not included in the ten-file policy binding; the broader image
+canary binds all packaged source, but neither mechanism proves task improvement.
