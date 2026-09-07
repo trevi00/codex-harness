@@ -471,5 +471,10 @@
         "exit_code": 0
       }
     ]
+  },
+  "activation_provenance": {
+    "reason": "Bind this previously reviewed script to the mandatory hook release lifecycle; the previous runtime omitted hook_id during rework.",
+    "prior_code_revision": "5ea84fb4672fbd425a24f87432fcafab08505181",
+    "incident_scope": "docker/linux/codex-read-only-review"
   }
 }
