@@ -69,12 +69,14 @@ def require_adoption(tx, details):
     provenance(details)
     require(approval['binding'] == binding(tx, approval['audit_id'], approval['proposal']),
             'Research adoption deferred: stale evidence, graph, revision or policy')
+    return approval
 
 
 def inspect_approval(tx, details, artifacts):
     """Re-read immutable bytes at execution, including transitive evidence handles."""
-    require_adoption(tx, details)
-    if not research_origin(details):
+    # INV-RESEARCH-004: inspect exactly the approval admitted above, even without audit_id.
+    approval = require_adoption(tx, details)
+    if approval is None:
         return
     import re
 
@@ -91,14 +93,6 @@ def inspect_approval(tx, details, artifacts):
             require(re.fullmatch(r'sha256:[0-9a-f]{64}', value) is not None,
                     'Invalid declared artifact reference')
             references.add(value)
-    def approval_ids(value):
-        if isinstance(value, dict):
-            return ([value['audit_approval']] if 'audit_approval' in value else []) + [
-                i for v in value.values() for i in approval_ids(v)]
-        if isinstance(value, list):
-            return [i for v in value for i in approval_ids(v)]
-        return []
-    approval = tx.get('research_approvals', approval_ids(details)[0])
     collect(approval)
     collect(tx.get('research_audits', approval['audit_id']))
     for bucket in (*AUDIT_EVIDENCE_BUCKETS, 'research_receipts'):

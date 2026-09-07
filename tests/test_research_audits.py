@@ -453,7 +453,10 @@ def test_host_output_digests_are_not_artifact_edges_but_declared_children_are(au
 
 
 @pytest.mark.parametrize('damage', ['missing', 'corrupt'])
-def test_checkpoint_only_evidence_survives_continuation_and_is_required_for_adoption(audit, damage):
+@pytest.mark.parametrize('include_audit_id', [False, True])
+def test_checkpoint_only_evidence_survives_continuation_and_is_required_for_adoption(
+        audit, damage, include_audit_id):
+    from codex_harness.application.audit_gate import inspect_approval
     service, record, source, _, _ = audit
     activate_fixture(service)
     evidence = service.artifacts.put('checkpoint-only evidence', 'fixture')['ref']
@@ -467,12 +470,21 @@ def test_checkpoint_only_evidence_survives_continuation_and_is_required_for_adop
     approve_fixture(service, 'lead:research')
     approve_fixture(service, 'conductor')
     assert service.coverage(record['id'])['adoption_eligible']
+    with service.store.transaction() as tx:
+        approval = next(r for r in tx.scan('research_approvals') if r['audit_id'] == record['id'])
+        details = {'proposal': approval['proposal'], 'audit_approval': approval['binding']}
+        if include_audit_id:
+            details['audit_id'] = record['id']
+        inspect_approval(tx, details, service.artifacts)
     path = service.artifacts.root / (evidence[7:] + '.txt')
     if damage == 'missing':
         path.unlink()
     else:
         path.write_text('tampered checkpoint evidence')
     assert not service.coverage(record['id'])['adoption_eligible']
+    with service.store.transaction() as tx:
+        with pytest.raises((FileNotFoundError, ContractError)):
+            inspect_approval(tx, details, service.artifacts)
 
 
 @pytest.mark.parametrize('change', ['graph', 'evidence', 'receipt', 'review_receipt', 'policy', 'revision'])
