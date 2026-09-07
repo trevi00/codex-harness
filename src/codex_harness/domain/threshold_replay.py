@@ -102,13 +102,24 @@ def replay_report(events, **options):
     entries = [entry for event in events for entry in top_entries(event)]
     sized = sum(isinstance(entry.get('body_chars'), int) and not isinstance(entry['body_chars'], bool)
                 and entry['body_chars'] >= 0 for entry in entries)
+    usable_events = partially_sized_events = 0
+    for event in events:
+        scored = [entry for entry in top_entries(event) if finite_number(entry.get('score'))]
+        usable = sum(isinstance(entry.get('body_chars'), int)
+                     and not isinstance(entry['body_chars'], bool) and entry['body_chars'] >= 0
+                     for entry in scored)
+        usable_events += usable > 0
+        partially_sized_events += 0 < usable < len(scored)
     return {'reference_model': 'baldrix-b9586c59-total-score-raw-body', 'gate': asdict(result),
             'observations': len(events), 'entries': len(entries), 'sized_entries': sized,
             'missing_or_invalid_sizes': len(entries) - sized,
+            'guard_usable_events': usable_events,
+            'guard_skipped_events': len(events) - usable_events,
+            'guard_partially_sized_events': partially_sized_events,
             'unknown_timestamps': sum(timestamp(event.get('at') if isinstance(event, dict) else None)
                                       is None for event in events),
             'advisory_only': True, 'policy_changed': False,
             'limitations': ['Total scores, not native base-score admission.',
                 'Raw character sum, not per-body reduction or the final UTF-8 context compiler.',
-                'Only recorded top matches are available; unrecorded candidates cannot be replayed.',
+                'Only recorded top matches are available; lowering thresholds can undercount admissions and pressure.',
                 'Reference guard skips unsized entries; acceptance is not a coverage guarantee.']}

@@ -13,6 +13,7 @@ from codex_harness.domain.threshold_replay import (
     evaluate_threshold_change,
     full_body_admit_precision,
     non_truncation_rate,
+    replay_report,
     split_by_holdout,
 )
 
@@ -60,6 +61,18 @@ def test_reference_pressure_replays_sizes_instead_of_recorded_truncation():
     assert math.isnan(non_truncation_rate([{'top': [{'score': 3}]}], 3))
     assert full_body_admit_precision([], 3) == 1
     assert evaluate(corpus(), min_corpus=0).reason == 'invalid_min_corpus'
+
+
+def test_report_exposes_actual_guard_denominator_and_partial_coverage():
+    events = [{'top': [{'score': 3, 'body_chars': 10}, {'score': 5}]},
+              {'top': [{'score': 3, 'body_chars': 20}]},
+              {'top': [{'score': 3}]},
+              {'top': [{'score': True, 'body_chars': 10}]}]
+    report = replay_report(events, old_value=3, proposed_value=4,
+                           holdout_boundary='2026-02-01T00:00:00Z')
+    assert report['guard_usable_events'] == 2
+    assert report['guard_skipped_events'] == 2
+    assert report['guard_partially_sized_events'] == 1
 
 
 def test_body_size_enrichment_does_not_recount_or_rewrite_old_observation():
