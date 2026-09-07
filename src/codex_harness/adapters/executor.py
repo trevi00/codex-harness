@@ -10,6 +10,7 @@ from uuid import uuid4
 from codex_harness.adapters.app_server import AppServer
 from codex_harness.adapters.embeddings import LocalEmbeddings
 from codex_harness.adapters.hooks import NativeHooks
+from codex_harness.adapters.project_skills import project_context
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import (
@@ -78,6 +79,8 @@ class Executor:
         if evidence.get("hook_contract"):
             task_contract["hook_contract"] = evidence["hook_contract"]
         items = [ContextItem(raw["ref"], canonical(evidence), raw["ref"], digest(evidence), 10)]
+        skill_items, skill_selection = project_context(self.git, self.artifacts, cwd, basis_revision)
+        items.extend(skill_items)
         if self.knowledge:
             query = task_contract.get("objective", objective) if isinstance(task_contract, dict) else objective
             encoder = LocalEmbeddings(str(self.artifacts.root.parent / "models"))
@@ -93,6 +96,7 @@ class Executor:
                         continue
                 items.append(ContextItem(hit["id"], hit["body"], hit["source_ref"], hit["revision"]))
         required = {"role": agent, "objective": objective,
+                                  "project_skills": skill_selection,
                                   "acceptance_criteria": ["Return verifiable evidence and explicit uncertainty"],
                                   "task_contract": task_contract,
                                   "versions": {"repository": basis_revision,
