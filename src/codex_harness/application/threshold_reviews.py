@@ -10,8 +10,12 @@ class ThresholdReviews:
     def _row(self, tx, row_id):
         row = tx.get('threshold_proposals', row_id)
         require(row is not None and row['activation_ready'] is False
+                and row['status'] == 'calculated'
                 and 'native_task_success_and_release_review_required' in row['activation_blockers'],
                 'Calculated threshold record required')
+        run = tx.get('threshold_proposal_runs', row['run_id'])
+        require(run is not None and run['activation_ready'] is False and row in run['proposals'],
+                'Threshold row is not bound to its collection run')
         document = self.artifacts.document(row['evidence_ref'])
         require(document['project_key'] == row['project_key']
                 and row['proposal'] in document['proposals'], 'Threshold artifact binding changed')
@@ -47,10 +51,13 @@ class ThresholdReviews:
             'input': {'request_id': request['id']}, 'message': message, 'status': 'pending', 'attempt': 0})
 
     def _prepare(self, tx, lease):
+        require(lease.get('_bucket') == 'decisions_pending', 'Threshold decision lease required')
         current = self.workflow._owned(tx, lease)
+        require(current['actor'] == lease.get('actor'), 'Threshold lease actor mismatch')
         require(current['phase'] == 'threshold_review', 'Wrong threshold decision phase')
         request = tx.get('threshold_review_requests', current['input']['request_id'])
         require(request is not None, 'Threshold review request missing')
+        require(current['id'] == digest([request['id'], current['actor']]), 'Threshold decision identity mismatch')
         expected = {'awaiting_lead': 'lead:improvement', 'awaiting_conductor': 'conductor'}.get(request['status'])
         require(current['actor'] == expected, 'Threshold review order changed')
         row = self._row(tx, request['row_id'])
@@ -84,6 +91,10 @@ class ThresholdReviews:
         require(not inspection_blocked or result['accepted'] is False,
                 'Blocked threshold execution cannot approve')
         if not inspection_blocked:
+            answer = receipt['answer']
+            require(isinstance(answer, dict) and type(answer.get('accepted')) is bool
+                    and type(answer.get('blocked')) is bool and isinstance(answer.get('reason'), str),
+                    'Threshold execution verdict missing')
             require(all(result.get(key) == value for key, value in receipt['answer'].items()),
                     'Threshold assessment differs from execution')
         blocked = bool(result.get('blocked') or result.get('inspection_blocked'))

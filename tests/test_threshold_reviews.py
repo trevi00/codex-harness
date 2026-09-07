@@ -10,7 +10,7 @@ from codex_harness.application.service import Harness
 from codex_harness.application.threshold_proposals import ThresholdProposals
 from codex_harness.application.threshold_reviews import ThresholdReviews
 from codex_harness.bootstrap import organization
-from codex_harness.domain.model import canonical, digest
+from codex_harness.domain.model import ContractError, canonical, digest
 
 
 @pytest.fixture
@@ -173,3 +173,41 @@ def test_receipt_from_previous_generation_is_not_reused(policy_repo, tmp_path, m
     assert executor.decide_one('lead:improvement')['status'] == 'retry'
     with executor.service.store.transaction() as tx:
         assert tx.get('threshold_review_requests', request['id'])['reviews'] == []
+
+
+@pytest.mark.parametrize('override', [{'actor': 'conductor'}, {'_bucket': 'tasks'}])
+def test_caller_cannot_change_lease_actor_or_aggregate(policy_repo, tmp_path, monkeypatch, override):
+    executor, reviews, _ = setup_review(policy_repo, tmp_path)
+    original = runtime(executor, [])
+    def run(*args, **kwargs):
+        with pytest.raises(ContractError):
+            reviews.prepare({**kwargs['lease'], **override})
+        return original(*args, **kwargs)
+    monkeypatch.setattr(executor, '_run', run)
+    assert executor.decide_one('lead:improvement')['status'] == 'succeeded'
+
+
+def test_empty_execution_answer_cannot_satisfy_assessment(policy_repo, tmp_path, monkeypatch):
+    executor, _, request = setup_review(policy_repo, tmp_path)
+    original = runtime(executor, [])
+    def run(*args, **kwargs):
+        result = original(*args, **kwargs)
+        receipt = executor.artifacts.document(result['execution_ref'])
+        receipt['answer'] = {}
+        result['execution_ref'] = executor.artifacts.put(canonical(receipt), 'empty-fixture-answer')['ref']
+        return result
+    monkeypatch.setattr(executor, '_run', run)
+    assert executor.decide_one('lead:improvement')['status'] == 'retry'
+    with executor.service.store.transaction() as tx:
+        assert tx.get('threshold_review_requests', request['id'])['reviews'] == []
+
+
+def test_collection_run_membership_is_required(policy_repo, tmp_path):
+    executor, reviews, request = setup_review(policy_repo, tmp_path)
+    with executor.service.store.transaction() as tx:
+        row = tx.get('threshold_proposals', request['row_id'])
+        run = tx.get('threshold_proposal_runs', row['run_id'])
+        run['proposals'] = []
+        tx.put('threshold_proposal_runs', run['id'], run)
+    with pytest.raises(ContractError, match='collection run'):
+        reviews.request(request['row_id'])

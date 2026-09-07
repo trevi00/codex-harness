@@ -46,6 +46,20 @@ can record its blockage, while an ordinary interrupted execution cannot complete
 Evidence contains an artifact-root path for bounded reads, so moving that root changes
 input/recovery identity and requires fresh execution.
 
+The application also checks the lease's actor and aggregate against the stored
+decision, verifies its request/actor-derived identity, requires membership in the
+original calculated run, and rejects missing execution verdict fields.
+
+Binding limitations: the enumerated 20-file set does not include all sandbox/context
+assembly code or external dependencies; it is not a whole-runtime attestation. The
+immutable image canary separately compares all packaged source files. Current-policy
+comparison is conservatively tied to the whole Git HEAD, so even an unrelated commit
+requires recollection. The post-execution Git check is not atomic with the PostgreSQL
+commit; the assessment records a captured basis and never activation authority.
+Artifact reads currently occur inside request/input-validation transactions. These
+performance and repeat-round limitations remain explicit follow-up work. Conductor
+execution is separate but receives the lead assessment; it is not a blind review.
+
 Unit tests substitute model execution, while using actual Git checkouts and content
 artifacts. They cover ordered completion, rejected/blocked lead decisions, wrong
 receipt identity, mid-execution record/policy changes and stale generations. Actual
