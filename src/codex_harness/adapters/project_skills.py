@@ -3,6 +3,7 @@ from pathlib import Path
 
 import yaml
 
+from codex_harness.adapters.project_pipeline import pipeline_context
 from codex_harness.domain.model import ContextItem, ContractError, canonical, require
 from codex_harness.domain.project_skills import normalize_profile, select_skill_paths
 
@@ -85,13 +86,17 @@ def project_context(git, artifacts, cwd, revision):
     raw = git._git('ls-tree', '-rz', revision, '--', '.harness', cwd=cwd, strip=False)
     inventory = {entry.split('\t', 1)[1]: entry.split(' ', 1)[0]
                  for entry in raw.split('\0') if '\t' in entry}
-    if PROFILE not in inventory and not any(p.startswith(SKILLS) for p in inventory):
+    if PROFILE not in inventory and '.harness/stages.yaml' not in inventory and not any(
+            p.startswith(SKILLS) for p in inventory):
         return [], {'status': 'not_configured', 'selected': 0}
     if PROFILE in inventory:
         require(inventory[PROFILE] in {'100644', '100755'}, 'Profile must be a regular Git file')
     text = git._git('show', revision + ':' + PROFILE, cwd=cwd, strip=False) if PROFILE in inventory else None
     profile = parse_profile(text) if text is not None else normalize_profile({})
     selection = select_skill_paths(profile, [p[len(SKILLS):] for p in inventory if p.startswith(SKILLS)])
+    pipeline = pipeline_context(git, artifacts, cwd, revision, profile, load_yaml)
+    recommended = {name for recommendation in pipeline['recommendations']
+                   for name in recommendation['skills']}
     items, records = [], []
     for relative in selection:
         path = SKILLS + relative
@@ -99,13 +104,19 @@ def project_context(git, artifacts, cwd, revision):
         body = git._git('show', revision + ':' + path, cwd=cwd, strip=False)
         require(len(body.encode('utf-8')) <= 1024 * 1024, 'Skill exceeds input size limit')
         stored = artifacts.put(body, f'git:{revision}:{path}')
+        boost = 3 if Path(relative).name in recommended else 0
         records.append({'path': path, 'content_ref': stored['ref'], 'revision': revision,
+                        'pipeline_boost': boost,
                         'file': str(artifacts.root / (stored['ref'][7:] + '.txt'))})
-        items.append(ContextItem('project-skill:' + path, body, stored['ref'], revision, 15))
-    manifest = artifacts.put(canonical({'profile': profile, 'revision': revision, 'skills': records}),
+        items.append(ContextItem('project-skill:' + path, body, stored['ref'], revision, 15 + boost))
+    manifest = artifacts.put(canonical({'profile': profile, 'revision': revision, 'skills': records,
+                                         'pipeline': pipeline}),
                              'project-skill-selection')
     return items, {'status': 'configured' if text is not None else 'common_only',
                    'selected': len(items), 'manifest_ref': manifest['ref'],
+                   'pipeline': [{'language': r['language'], 'stage_id': r.get('stage', {}).get('id'),
+                                 'phase': r.get('phase', ''), 'verified_complete': False}
+                                for r in pipeline['recommendations']],
                    'file': str(artifacts.root / (manifest['ref'][7:] + '.txt')),
                    'instruction': 'Read the manifest with bounded reads for profile metadata and '
                                   'skill file handles; read omitted skill bodies from those files.'}

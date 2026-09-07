@@ -48,3 +48,13 @@ must not be read as evidence that pending execution or rollout integrations exis
 | ID | Contract |
 |---|---|
 | INV-PROJECT-001 | Git-pinned project YAML controls eligible skill paths. Missing configuration permits common skills only; invalid profiles fail explicitly. Selected regular Git files receive immutable content references and pass through the bounded context compiler. Initialization never overwrites an existing project definition. See baldrix-project-routing.md for scope and outstanding full-migration work. |
+
+
+## INV-PIPELINE-001
+
+Pipeline output presence is a recommendation signal, not a workflow completion or
+approval. Definitions and observed project paths are bound to Git revisions; bundled
+upstream assets retain hashes and source provenance. Dirty/untracked outputs cannot
+advance recommendations. Pipeline priority cannot include a stack-ineligible skill.
+Full recommendation evidence lives in the project-skill manifest, whose digest also
+invalidates recovery after definition/output changes. Gate commands are inert data.
