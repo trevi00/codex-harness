@@ -98,6 +98,9 @@ class AuditExecution:
                 'Stale partition assignment')
         evidence['partition'] = partition
         plan = self.run_model(task, 'Select bounded source inspection or test commands for this partition. '
+            'For source inspection prefer ["source-list", "0"] (100 entries per page) or '
+            '["source-read", "BASE64_PATH_FROM_MANIFEST", "0"] (zero-based line offset, 120 lines). '
+            'These read immutable objects without running repository code. Follow next_line for coverage. '
             'Commands run in a networkless, read-only source tree with inert symlinks and no installs. '
             'Do not claim commands ran. Return at most four commands.', evidence,
             schema(commands={'type': 'array', 'maxItems': 4, 'items': STRINGS}))
@@ -131,7 +134,7 @@ class AuditExecution:
     def review(self, task):
         data = task['input']
         # Successful command inspection is mandatory even if the model's verdict is positive.
-        receipt = self.audits.execute(task, data['audit_id'], ['find', '.', '-type', 'f'])
+        receipt = self.audits.execute(task, data['audit_id'], ['source-list'])
         blocked = receipt['receipt']['inspection_blocked'] or receipt['receipt']['exit_status'] != 0
         if blocked:
             result = {'accepted': False, 'inspection_blocked': True, 'execution_ref': receipt['receipt']['output_ref']}

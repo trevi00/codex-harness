@@ -277,7 +277,10 @@ class Executor:
                 result["coverage_status"] = "discovery_only"
                 result["adoption_eligible"] = False
             elif action == "plan":
-                result = self._run(agent, task["id"], "Create an implementable improvement plan", details,
+                result = self._run(agent, task["id"], "Create an implementable improvement plan. "
+                                   "Describe the future implementer's authorized changes. Current-turn "
+                                   "review/planning restrictions do not prohibit the downstream implementer "
+                                   "from editing its assigned workspace; do not copy them into the objective.", details,
                                    str(self.git.repository), PLAN, True, heartbeat, task)
                 result["origin"] = details
                 if details.get("plan", {}).get("origin", {}).get("hook"):

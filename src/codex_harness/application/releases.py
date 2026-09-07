@@ -11,6 +11,35 @@ class Releases:
     def __init__(self, store, organization):
         self.store, self.org = store, organization
 
+    def reconcile_audits(self):
+        """Recover derived activation after an incumbent controller promotes the new runtime."""
+        from dataclasses import asdict
+        with self.store.transaction() as tx:
+            active = tx.get('deployment', 'active') or {}
+            record = tx.get('releases', active.get('release_id', ''))
+            if not record or record['status'] != 'active' or record['candidate'].get('audit_lifecycle_version') != 1:
+                return None
+            control = tx.get('research_control', 'activation')
+            if control and (control.get('release_id') == active['release_id'] or
+                            control.get('rolled_back_release') == active['release_id']):
+                return control  # Never undo a pause or rollback for the same release.
+            require(record['candidate']['revision'] == active['revision']
+                    and record['policy_hash'] == digest(record['policy']), 'Invalid active audit release')
+            author = self.org.actor(record['candidate']['author'], 'worker')
+            approved = {r['actor'] for r in record['reviews']
+                        if r['accepted'] and r['revision'] == active['revision'] and r.get('evidence')}
+            require(author.parent in approved and 'conductor' in approved, 'Audit reviews incomplete')
+            require(all(record['checks'].get(k, {}).get('passed') is True
+                        and record['checks'][k].get('evidence')
+                        for k in {'tests', 'cli_start', 'cli_file_task'} | set(record['policy']['checks'])),
+                    'Audit checks incomplete')
+            tx.put('research_control', 'graph', {'revision': active['revision'],
+                'tree': record['candidate']['tree'],
+                'organization': digest({k: asdict(v) for k, v in self.org.agents.items()})})
+            control = {'status': 'active', 'release_id': active['release_id'], 'revision': active['revision']}
+            tx.put('research_control', 'activation', control)
+            return control
+
     def propose(self, candidate: dict, policy: dict) -> dict:
         require(all(candidate.get(key) for key in ("revision", "base", "tree", "author")),
                 "Candidate identity incomplete")

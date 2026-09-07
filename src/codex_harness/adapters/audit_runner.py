@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import os
+import platform
 import subprocess
 import tempfile
 from dataclasses import replace
@@ -31,8 +32,11 @@ class AuditRunner:
                 subprocess.run(['git', '-C', str(target), 'remote', 'add', 'origin', repository],
                                check=True, capture_output=True)
             verifier = GitSourceVerifier(target, self.artifacts)
-            verifier.git('-c', 'protocol.file.allow=never', '-c', 'protocol.ext.allow=never',
-                         'fetch', '--no-tags', '--depth=1', 'origin', commit)
+            present = subprocess.run(['git', '-C', str(target), 'cat-file', '-e', commit + '^{commit}'],
+                                     capture_output=True, timeout=30).returncode == 0
+            if not present:
+                verifier.git('-c', 'protocol.file.allow=never', '-c', 'protocol.ext.allow=never',
+                             'fetch', '--no-tags', '--depth=1', 'origin', commit)
             source = replace(provisional, tree=verifier.git('rev-parse', commit + '^{tree}').decode().strip())
             entries = verifier.inventory(source)
             manifest = {'version': 1, 'repository': repository, 'commit': commit,
@@ -46,6 +50,38 @@ class AuditRunner:
         manifest = self.artifacts.document(source.manifest_ref)
         require(all(manifest[k] == getattr(source, k) for k in ('repository', 'commit', 'tree')),
                 'Runner manifest mismatch')
+        # INV-RESEARCH-003: these built-ins inspect inert objects, never execute source code.
+        if command[0] in {'source-list', 'source-read'}:
+            import hashlib
+            if command[0] == 'source-list':
+                require(len(command) in {1, 2}, 'Invalid source-list arguments')
+                start = int(command[1]) if len(command) == 2 else 0
+                require(start >= 0, 'Invalid inventory offset')
+                output = {'entries': manifest['entries'][start:start + 100],
+                          'total': len(manifest['entries']), 'next_offset': start + 100}
+            else:
+                require(len(command) == 3, 'Use source-read BASE64_PATH START_LINE')
+                entry = next((e for e in manifest['entries'] if e['path'] == command[1]), None)
+                require(entry is not None and entry['mode'] != '160000', 'Unknown or submodule path')
+                envelope = self.artifacts.document(entry['artifact_ref'])
+                raw = base64.b64decode(envelope['data'], validate=True)
+                require(hashlib.sha256(raw).hexdigest() == envelope['bytes_sha256'], 'Invalid source bytes')
+                start = int(command[2])
+                require(start >= 0, 'Invalid source line offset')
+                lines = raw.decode('utf-8', errors='replace').splitlines()
+                selected, size = [], 0
+                for line in lines[start:start + 120]:
+                    size += len(line.encode('utf-8'))
+                    if size > 24000:
+                        break
+                    selected.append(line)
+                output = {'path': entry['path'], 'lines': selected, 'start_line': start,
+                          'next_line': start + len(selected), 'total_lines': len(lines),
+                          'object_id': entry['object_id'], 'bytes_sha256': envelope['bytes_sha256']}
+            ref = self.artifacts.put(canonical(output), 'inert-source-inspection')['ref']
+            return ExecutionReceipt(source, digest({'runner': 'inert-source-reader-v1'}), command,
+                                    'inert-objects-no-code-execution', 0, ref,
+                                    'harness:inert-source-reader-v1', False)
         # INV-RESEARCH-003: never mount the active harness, credentials or artifact store.
         # Symlinks and gitlinks remain inert files; commands cannot follow upstream links.
         with tempfile.TemporaryDirectory(prefix='inspection-', dir=self.root) as directory:
@@ -75,6 +111,6 @@ class AuditRunner:
                 output, status = {'argv': argv, 'error': str(exc)}, 125
             blocked = status != 0 and ('bwrap:' in canonical(output) or status == 125)
             ref = self.artifacts.put(canonical(output), 'isolated-inspection')['ref']
-            return ExecutionReceipt(source, digest({'runner': 'bubblewrap-v1', 'platform': os.uname()}),
+            return ExecutionReceipt(source, digest({'runner': 'bubblewrap-v1', 'platform': platform.uname()}),
                 command, 'bubblewrap-unshare-all-readonly-source-inert-links', status, ref,
                 'harness:isolated-source-runner-v1', blocked)

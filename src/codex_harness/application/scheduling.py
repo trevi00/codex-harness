@@ -25,11 +25,13 @@ def schedule_research(service, now: float | None = None) -> int:
 
 def schedule_audits(service) -> int:
     """One durable assignment per partition generation; unfinished scope survives budgets."""
+    from codex_harness.application.releases import Releases
     from codex_harness.domain.model import digest
+    Releases(service.store, service.org).reconcile_audits()
     created = 0
     with service.store.transaction() as tx:
         control = tx.get('research_control', 'activation') or {}
-        if control.get('status') == 'paused':
+        if control.get('status') != 'active':
             return 0
         for discovery in tx.scan('research_discoveries'):
             key = 'map:' + discovery['id']

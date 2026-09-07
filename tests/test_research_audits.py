@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import subprocess
 from dataclasses import asdict, replace
 
@@ -34,7 +35,8 @@ def audit(tmp_path):
     (repo / 'normal').write_text('source')
     git('add', '.')
     # INV-GRAPH-001: Git paths need not be representable on the host filesystem.
-    for mode, name, body in [('100644', b'space\tand\nnewline', b'\xff\x00\xfe'),
+    raw_name = b'space and name' if os.name == 'nt' else b'space\tand\nnewline'
+    for mode, name, body in [('100644', raw_name, b'\xff\x00\xfe'),
                              ('120000', b'link', b'normal')]:
         oid = subprocess.check_output(['git', '-C', str(repo), 'hash-object', '-w', '--stdin'],
                                       input=body).strip()
@@ -61,10 +63,27 @@ def test_git_inventory_preserves_raw_paths_binary_and_symlink(audit):
     service, record, source, entries, _ = audit
     assert len(entries) == 3
     assert '120000' in {e.mode for e in entries}
-    assert b'space\tand\nnewline' in {base64.b64decode(e.path) for e in entries}
+    raw_name = b'space and name' if os.name == 'nt' else b'space\tand\nnewline'
+    assert raw_name in {base64.b64decode(e.path) for e in entries}
     assert service.import_audit(source, entries, ['core']) == record
     assert service.coverage(record['id'])['reviewed_paths'] == 0
     assert service.coverage(record['id'])['remaining_subsystems'] == ['core']
+
+
+def test_inert_reader_never_executes_repository_code(audit, tmp_path, monkeypatch):
+    from codex_harness.adapters.audit_runner import AuditRunner
+    service, _, source, entries, _ = audit
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Inert inspection spawned a command')
+    monkeypatch.setattr(subprocess, 'Popen', forbidden)
+    runner = AuditRunner(tmp_path / 'runner', service.artifacts)
+    listing = runner.execute(source, ['source-list'])
+    assert listing.exit_status == 0 and not listing.inspection_blocked
+    entry = next(e for e in entries if base64.b64decode(e.path) == b'normal')
+    read = runner.execute(source, ['source-read', entry.path, '0'])
+    assert service.artifacts.document(read.output_ref)['lines'] == ['source']
+    with pytest.raises(ContractError):
+        runner.execute(source, ['source-read', 'arbitrary-path', '0'])
 
 
 @pytest.mark.parametrize('change', ['tree', 'commit', 'repository', 'omit', 'duplicate', 'blob', 'size', 'mode'])
@@ -427,6 +446,8 @@ def test_scheduler_deduplicates_and_resumes_checkpoint_generation(audit):
     from codex_harness.application.scheduling import schedule_audits
     service, record, _, _, _ = audit
     partitions = service.partition(record['id'], 1)
+    assert schedule_audits(service.workflow) == 0  # No unverified bootstrap activation.
+    activate_fixture(service)
     assert schedule_audits(service.workflow) == len(partitions)
     assert schedule_audits(service.workflow) == 0
     with service.store.transaction() as tx:
@@ -527,6 +548,29 @@ def test_acquire_pins_objects_without_checkout(audit, tmp_path, monkeypatch):
     monkeypatch.setattr(GitSourceVerifier, 'git', fixture_fetch)
     acquired, actual, verifier = runner.acquire(source.repository, source.commit)
     assert acquired == source and actual == entries
-    assert commands[0][-1] == source.commit
+    assert commands == []  # Exact cached objects can be verified without network access.
     assert not (target / 'normal').exists()
     assert verifier.verify(acquired, actual)['tree'] == source.tree
+
+
+def test_reconcile_after_incumbent_promotion_preserves_pause(audit):
+    service, _, _, _, _ = audit
+    releases, release = activate_fixture(service)
+    with service.store.transaction() as tx:
+        tx.put('research_control', 'activation', {})
+    assert releases.reconcile_audits()['release_id'] == release['id']
+    with service.store.transaction() as tx:
+        tx.put('research_control', 'activation', {'status': 'paused', 'release_id': release['id']})
+    assert releases.reconcile_audits()['status'] == 'paused'
+
+
+def test_reconcile_refuses_missing_canary(audit):
+    service, _, _, _, _ = audit
+    releases, release = activate_fixture(service)
+    with service.store.transaction() as tx:
+        tx.put('research_control', 'activation', {})
+        row = tx.get('releases', release['id'])
+        row['checks'].pop('cli_file_task')
+        tx.put('releases', row['id'], row)
+    with pytest.raises(ContractError, match='checks incomplete'):
+        releases.reconcile_audits()
