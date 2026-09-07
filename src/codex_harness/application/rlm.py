@@ -18,6 +18,7 @@ class RecursiveContext:
         require(depth <= self.max_depth, "RLM recursion depth exhausted")
         length = length if length is not None else self.artifacts.inspect(reference)["characters"] - start
         require(start >= 0 and length >= 0, "Invalid external context range")
+        children = []
         if length > self.chunk_size:
             require(depth < self.max_depth, "Split input into a smaller RLM task")
             count = (length + self.chunk_size - 1) // self.chunk_size
@@ -39,6 +40,7 @@ class RecursiveContext:
                                     "source": reference, "range": [start, start + length]}),
                                     self.cwd, schema)
         result = {"source": reference, "range": [start, start + length], "depth": depth,
+                  "children": [child["artifact"] for child in children],
                   "answer": response["answer"]}
         receipt = self.artifacts.put(canonical(result), "rlm:" + reference)
         return {**result, "artifact": receipt["ref"]}

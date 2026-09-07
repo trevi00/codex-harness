@@ -48,8 +48,14 @@ class GitWorkspace:
         require(revision != workspace["base"], "Task produced no code change")
         require(not self._git("status", "--porcelain", cwd=path), "Candidate workspace is dirty")
         self._git("fetch", path, "HEAD:refs/heads/" + workspace["branch"])
-        return {**workspace, "revision": revision,
-                "tree": self._git("rev-parse", "HEAD^{tree}", cwd=path), "author": "worker:implementation"}
+        candidate = {**workspace, "revision": revision,
+                     "tree": self._git("rev-parse", "HEAD^{tree}", cwd=path), "author": "worker:implementation"}
+        manifests = [name for name in self._git("diff", "--name-only", workspace["base"], revision, cwd=path).splitlines()
+                     if name.startswith("harness_hooks/") and name.endswith(".json")]
+        require(len(manifests) <= 1, "Split independent hook updates into separate candidates")
+        if manifests:
+            candidate["hook_id"] = Path(manifests[0]).stem
+        return candidate
 
     def inspect(self, revision: str, base: str) -> dict:
         revision = self._git("rev-parse", "--verify", revision + "^{commit}")

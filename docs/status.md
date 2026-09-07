@@ -20,12 +20,13 @@
 - 2026-09-07: [PR #1](https://github.com/trevi00/codex-harness/pull/1) 실제 생성·병합.
   팀원 구현 → 독립 팀장 검수 → 독립 지휘자 검수 → 당시 58개 통합 테스트 → 후보 Docker CLI 파일 작업 → 배포.
   후보 `2883db0158d8036f0d6dbb5411f1af6972b8950f`, 병합 `600aecef31aff706ffb9bb6a565c2852042ff936`.
-- 이후 확장판은 63개 테스트와 Ruff를 통과했다. 실제 PostgreSQL·Redis 통합 테스트 포함.
+- 이후 확장판은 64개 테스트와 Ruff를 통과했다. 실제 PostgreSQL·Redis 통합 테스트 포함.
 - 호스트 및 Docker에서 실제 Codex 파일 작업, 네이티브 훅, 새 스레드 인계, 토큰 관측을 확인했다.
 - 70% 감지는 실제 App Server를 제한된 테스트 컨텍스트 창으로 실행한 검증이다. 전체 모델 창 부하 시험은 아니다.
 - CLI가 없는 별도 Docker 이미지에서 실패·승격 거부·외부 컨트롤러 롤백을 확인했다.
   승인/배포 상태는 격리 fixture이고 실제 운영 포인터는 유지했다.
 - 실제 GitHub·GeekNews 수집과 로컬 다국어 ONNX 임베딩 생성·저장을 확인했다.
+- RLM은 명시적인 합성 자료를 실제 Codex 3회 호출로 분할 분석·통합하는 검증을 통과했다.
 - 최신 진행 상태·검수·배포 증거의 원본은 PostgreSQL과 `.runtime/artifacts`다.
 
 ## 명확한 범위

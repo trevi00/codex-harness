@@ -28,6 +28,7 @@ def test_rlm_reads_external_ranges_and_stops_before_overspending(tmp_path):
     rlm = RecursiveContext(artifacts, Runtime(), str(tmp_path), max_calls=4, chunk_size=3000)
     result = rlm.analyze(ref, "Find the relevant facts")
     assert rlm.calls == 4 and result["range"] == [0, 9000]
+    assert len(result["children"]) == 3
     too_small = RecursiveContext(artifacts, Runtime(), str(tmp_path), max_calls=3, chunk_size=3000)
     with pytest.raises(ContractError, match="budget"):
         too_small.analyze(ref, "Find facts")

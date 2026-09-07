@@ -197,7 +197,8 @@ class Executor:
                 result["candidate"] = self.git.capture(workspace)
                 if hook:
                     result["candidate"]["hook_id"] = hook["id"]
-                    NativeHooks(self.service, self.git, self.artifacts).candidate(hook["id"], result["candidate"])
+                if result["candidate"].get("hook_id"):
+                    NativeHooks(self.service, self.git, self.artifacts).candidate(result["candidate"]["hook_id"], result["candidate"])
                 result["origin"] = details
             elif action == "rebase":
                 heartbeat()

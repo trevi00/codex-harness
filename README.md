@@ -79,6 +79,7 @@ supervisor는 미확인 메시지를 보존하며 스트림을 정리하고, 7�
 uv run python scripts/check.py --integration
 uv run python scripts/verify_runtime.py
 uv run python scripts/verify_failed_canary.py
+uv run python scripts/verify_rlm.py
 ```
 
 실제 모델 카나리아는 계정 할당량을 사용합니다. 정상 파일 작업, 네이티브 훅 실행,

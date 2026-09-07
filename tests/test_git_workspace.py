@@ -50,3 +50,20 @@ def test_main_advance_invalidates_previous_merge_approval(tmp_path):
     git(root, "commit", "-m", "Concurrent change")
     with pytest.raises(ContractError, match="Main changed"):
         adapter.merge(candidate)
+
+
+def test_hook_identity_survives_rework_and_rebase_without_prompt_metadata(tmp_path):
+    root = repository(tmp_path)
+    adapter = GitWorkspace(str(root), str(tmp_path / "workspaces"))
+    workspace = adapter.prepare("hook-work", "HEAD")
+    manifests = Path(workspace["path"]) / "harness_hooks"
+    manifests.mkdir()
+    (manifests / "hook-fixture.json").write_text('{}')
+    candidate = adapter.capture(workspace)
+    assert candidate["hook_id"] == "hook-fixture"
+    candidate.pop("hook_id")  # Simulate metadata from an older runtime.
+    (root / "main.txt").write_text("new base")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "Advance fixture")
+    recovered = adapter.rebase("hook-rebase", candidate, git(root, "rev-parse", "HEAD"))
+    assert recovered["hook_id"] == "hook-fixture"
