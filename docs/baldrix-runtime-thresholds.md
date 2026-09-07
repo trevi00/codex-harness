@@ -54,3 +54,23 @@ Reference replay remains a margin statistic rather than task-quality evidence. T
 22-file policy list is explicitly not an import-closure attestation; project input
 construction and import parsing need broader provenance, alongside native performance
 evaluation, before activation can be justified.
+
+Final supplied-source Claude review at `b61779c9f95be96a88dde273d70f769d8e8e82c9`
+accepted the stated scope (`sha256:ed39844156b51b34117542db838956b30397b4389d34056acaaa4ed722287146`).
+The first review attempt produced no verdict and is not approval
+(`sha256:12488b254f8dd28491c6f5835dd01884266fe966d59cc56e42cf6e5125a84753`).
+Remaining findings include linking the native-consumer set to registry wiring,
+measuring router base-score admission independently of the historical total-score
+metric, provenance for import and project-input constructors, direct missing-policy
+routing tests, revision-argument validation and hot-path resolution cost. The review
+did not run commands; test and canary receipts are separate execution evidence.
+
+Execution evidence for that same runtime revision: Ruff passed; Windows with
+PostgreSQL/Redis had 495 passing tests and 7 skipped
+(`sha256:91a7d5dbf7a4c4ecb9c67063b5932b5a5e5e0308c8c25da6cb25aebd15c7d4b4`);
+Linux had 502 passing tests with no skips
+(`sha256:b73b32a1ffc591d97a65a9d74b79100da643e31e1a0c9fb7f2032e253c5f6775`).
+The actual Codex CLI file canary passed after all 96 packaged source/config/lock
+files matched the immutable image
+(`sha256:a43acaebb73a57f0cf8f94733c24cfb3b696da4af974c27f4628650229ba9cae`).
+These are candidate checks, not deployment or a full-repository migration claim.
