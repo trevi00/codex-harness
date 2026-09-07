@@ -58,3 +58,20 @@ Do not use synthetic test evidence to certify a real reverse workflow.
 
 Claude candidate review, full workflow integration, source adoption approvals and
 exact-candidate Codex CLI canary are still required before promotion.
+
+## Claude candidate review and corrections
+
+Claude reviewed candidate 704ab1d and rejected it on four concrete findings, retained at
+`sha256:5d1922d30ed878aa21c3918b01b10f38b43d8549c6da5ab71a64990aa26c4ffa`:
+
+- A: resolve the tree from the captured commit, not HEAD a second time (ABA race).
+- B: validate artifact sidecar object shape, matching reference and UTF-8 byte count;
+  missing or malformed sidecars fail explicitly. Source/time remain unauthenticated
+  descriptive metadata, never approval provenance.
+- C: add an automated real PostgreSQL concurrency/replay/rebaseline/history test;
+  remove the MemoryStore-specific JSON object-order assertion.
+- D: test actual artifact content modification, not only deletion.
+
+All four have corresponding code/tests in the follow-up candidate. Exact retries must
+reuse the original request payload including expected_generation. The previous receipts
+above apply to earlier candidates; follow-up review and test receipts are recorded in PR #14.

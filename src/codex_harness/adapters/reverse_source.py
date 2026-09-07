@@ -18,7 +18,7 @@ def observe_source(path):
             return {'status': 'unknown', 'repository': repository,
                     'reason': 'Source must identify the Git worktree root'}
         before = git('rev-parse', 'HEAD')
-        tree = git('rev-parse', 'HEAD^{tree}')
+        tree = git('rev-parse', before + '^{tree}')
         dirty = bool(git('status', '--porcelain=v1', '--untracked-files=all',
                          '--ignore-submodules=none'))
         after = git('rev-parse', 'HEAD')

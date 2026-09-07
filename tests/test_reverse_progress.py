@@ -1,4 +1,6 @@
+import json
 from concurrent.futures import ThreadPoolExecutor
+from subprocess import CompletedProcess
 
 import pytest
 
@@ -22,13 +24,13 @@ def source(commit='a'):
             'tree': 'b' * 40, 'status': 'clean'}
 
 
-def test_four_stages_survive_new_service_and_require_real_artifacts(progress):
+def test_four_stages_across_usecase_instances_require_real_artifacts(progress):
     app, ref = progress
     for generation, stage in enumerate(('1-A', '1-B', '1-C', '2')):
         app = ReverseProgress(app.store, app.artifacts)
         row = app.record('p', stage, 'complete', source(), [ref], generation, stage)
     assert row['generation'] == 4
-    assert list(row['releases']) == ['1-A', '1-B', '1-C', '2']
+    assert set(row['releases']) == {'1-A', '1-B', '1-C', '2'}
     assert app.status('p', source())['source_state'] == 'unchanged'
     with pytest.raises(ContractError, match='retained artifacts'):
         app.record('other', '1-A', 'complete', source(), [], 0, 'empty')
@@ -79,6 +81,50 @@ def test_missing_predecessor_evidence_blocks_continuation(progress):
     with pytest.raises((ValueError, OSError, ContractError)):
         app.record('p', '1-B', 'partial', source(), [], 1, 'lost')
     assert app.status('p', source())['progress']['generation'] == 1
+
+
+def test_modified_predecessor_blocks_continuation(progress):
+    app, ref = progress
+    app.record('p', '1-A', 'complete', source(), [ref], 0, 'first')
+    (app.artifacts.root / (ref[7:] + '.txt')).write_text('tampered content')
+    with pytest.raises(ContractError, match='Artifact modified'):
+        app.record('p', '1-B', 'partial', source(), [], 1, 'tampered')
+
+
+@pytest.mark.parametrize('metadata', [None, [], {'ref': 'wrong', 'bytes': 27},
+                                      {'ref': 'original', 'bytes': -1}])
+def test_bad_receipt_metadata_blocks_continuation(progress, metadata):
+    app, ref = progress
+    app.record('p', '1-A', 'complete', source(), [ref], 0, 'first')
+    path = app.artifacts.root / (ref[7:] + '.json')
+    if metadata is None:
+        path.unlink()
+    else:
+        if isinstance(metadata, dict) and metadata['ref'] == 'original':
+            metadata = {**metadata, 'ref': ref}
+        path.write_text(json.dumps(metadata))
+    with pytest.raises(ContractError, match='metadata'):
+        app.record('p', '1-B', 'partial', source(), [], 1, 'bad-metadata')
+
+
+def test_artifact_metadata_counts_utf8_bytes(progress):
+    app, _ = progress
+    ref = app.artifacts.put('한글', 'fixture')['ref']
+    assert app.artifacts.inspect(ref)['metadata']['bytes'] == 6
+
+
+def test_tree_is_resolved_from_captured_commit(monkeypatch, tmp_path):
+    calls = []
+    def run(argv, timeout):
+        args = argv[argv.index('-C') + 2:]
+        calls.append(args)
+        output = {'--show-toplevel': str(tmp_path), 'HEAD': 'a' * 40,
+                  'a' * 40 + '^{tree}': 'b' * 40, 'HEAD^{tree}': 'c' * 40}
+        return CompletedProcess(argv, 0, output.get(args[-1], '') + '\n', '')
+    monkeypatch.setattr('codex_harness.adapters.reverse_source.run_process', run)
+    observed = observe_source(tmp_path)
+    assert observed['commit'] == 'a' * 40 and observed['tree'] == 'b' * 40
+    assert ['rev-parse', 'HEAD^{tree}'] not in calls
 
 
 def test_racing_writers_cannot_lose_a_checkpoint(progress):

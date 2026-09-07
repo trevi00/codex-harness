@@ -3,7 +3,9 @@
 Behavioral reference: Baldrix b9586c59, reverse_prd_checkpoint and
 commands/harness-reverse-prd.md. This is one component, not the full reverse engine.
 """
-from codex_harness.domain.model import digest, require, utcnow
+import re
+
+from codex_harness.domain.model import ContractError, digest, require, utcnow
 from codex_harness.ports import AuditArtifacts, Store
 
 STAGES = ('1-A', '1-B', '1-C', '2')
@@ -16,25 +18,30 @@ class ReverseProgress:
 
     @staticmethod
     def _source(source):
-        import re
-
         require(isinstance(source, dict), 'Source observation required')
         require(source.get('status') == 'clean', 'Source is dirty or unknown')
-        require(bool(source.get('repository')), 'Source repository identity required')
+        require(isinstance(source.get('repository'), str) and bool(source['repository']),
+                'Source repository identity required')
         for name in ('commit', 'tree'):
             require(isinstance(source.get(name), str) and bool(re.fullmatch(
                 r'[0-9a-f]{40}|[0-9a-f]{64}', source[name])), 'Invalid source ' + name)
+        require(len(source['commit']) == len(source['tree']), 'Mixed source hash formats')
         return {k: source[k] for k in ('repository', 'commit', 'tree')}
 
     def status(self, project, source):
         with self.store.transaction() as tx:
             row = tx.get('reverse_progress', project)
-        if source.get('status') != 'clean':
+        if not isinstance(source, dict):
+            state = 'unknown'
+        elif source.get('status') != 'clean':
             state = source.get('status') if source.get('status') == 'dirty' else 'unknown'
-        elif row is None:
-            state = 'not_started'
         else:
-            state = 'unchanged' if row['source'] == self._source(source) else 'changed'
+            try:
+                pinned = self._source(source)
+                state = ('not_started' if row is None else
+                         'unchanged' if row['source'] == pinned else 'changed')
+            except ContractError:
+                state = 'unknown'
         return {'project': project, 'source_state': state, 'progress': row}
 
     def record(self, project, stage, status, source, artifact_refs, expected_generation,
@@ -78,9 +85,10 @@ class ReverseProgress:
                     self.artifacts.inspect(ref)
             old = releases.get(stage)
             require(not old or old['status'] != 'complete', 'Completed stage is immutable')
-            releases[stage] = {'status': status, 'artifact_refs': refs, 'at': utcnow()}
+            at = utcnow()
+            releases[stage] = {'status': status, 'artifact_refs': refs, 'at': at}
             result = {'project': project, 'generation': generation + 1, 'source': pinned,
-                      'releases': releases, 'at': utcnow()}
+                      'releases': releases, 'at': at}
             tx.put('reverse_progress', project, result)
             tx.put('reverse_history', digest({'project': project, 'generation': generation + 1}),
                    result)

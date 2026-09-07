@@ -266,3 +266,35 @@ def test_postgres_measurement_observations(pgstore, tmp_path):
     assert len(rows) == 3
     assert {r['metric_id'] for r in rows} == {r['metric_id'] for r in results}
     assert all(r['repository_revision'] == 'a' * 40 for r in rows)
+
+
+def test_postgres_reverse_progress_concurrency_replay_and_history(pgstore, tmp_path):
+    from codex_harness.adapters.artifacts import FileArtifacts
+    from codex_harness.application.reverse_progress import ReverseProgress
+
+    artifacts = FileArtifacts(str(tmp_path / 'reverse-artifacts'))
+    ref = artifacts.put('Integration fixture, not production reverse evidence', 'fixture')['ref']
+    source = {'status': 'clean', 'repository': 'fixture', 'commit': 'a' * 40, 'tree': 'b' * 40}
+
+    def attempt(request):
+        app = ReverseProgress(PostgresStore(pgstore.dsn), artifacts)
+        try:
+            return request, app.record('project', '1-A', 'complete', source, [ref], 0, request)
+        except ContractError:
+            return request, None
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(attempt, ['first', 'second']))
+    saved = [(request, row) for request, row in outcomes if row is not None]
+    assert len(saved) == 1
+    request, row = saved[0]
+    reconnected = ReverseProgress(PostgresStore(pgstore.dsn), artifacts)
+    assert reconnected.record('project', '1-A', 'complete', source, [ref], 0, request) == row
+    reconnected.record('project', '1-B', 'complete', source, [ref], 1, 'next')
+    reconnected.record('project', '1-A', 'partial', {**source, 'commit': 'c' * 40},
+                       [], 2, 'rebaseline', rebaseline=True)
+    with pgstore.transaction() as tx:
+        history = tx.scan('reverse_history')
+        assert {r['generation'] for r in history} == {1, 2, 3}
+        assert tx.get('reverse_progress', 'project')['source']['commit'] == 'c' * 40
+        assert next(r for r in history if r['generation'] == 2)['releases']['1-B']['status'] == 'complete'

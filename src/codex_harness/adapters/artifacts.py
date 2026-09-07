@@ -7,7 +7,7 @@ from pathlib import Path
 
 from filelock import FileLock
 
-from codex_harness.domain.model import canonical, require, utcnow
+from codex_harness.domain.model import ContractError, canonical, require, utcnow
 
 
 class FileArtifacts:
@@ -59,8 +59,18 @@ class FileArtifacts:
 
     def inspect(self, reference: str) -> dict:
         text = self._body(reference)
+        try:
+            metadata = json.loads((self.root / (reference[7:] + '.json')).read_text('utf-8'))
+        except (OSError, ValueError) as exc:
+            raise ContractError('Artifact metadata unavailable or invalid') from exc
+        require(isinstance(metadata, dict), 'Artifact metadata must be an object')
+        require(metadata.get('ref') == reference, 'Artifact metadata reference mismatch')
+        require(type(metadata.get('bytes')) is int
+                and metadata['bytes'] == len(text.encode('utf-8')),
+                'Artifact metadata byte count mismatch')
+        # Source/at remain descriptive metadata, not authenticated provenance.
         return {"ref": reference, "characters": len(text), "lines": len(text.splitlines()),
-                "metadata": json.loads((self.root / (reference[7:] + ".json")).read_text("utf-8"))}
+                "metadata": metadata}
 
     def search(self, reference: str, needle: str, limit: int = 20) -> list[dict]:
         require(bool(needle) and 0 < limit <= 100, "Invalid search budget")
