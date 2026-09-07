@@ -4,8 +4,10 @@ from pathlib import PurePosixPath
 
 from codex_harness.domain.model import ContextItem, canonical, digest, require
 from codex_harness.domain.skill_ranking import (
+    FULL_BODY_MIN_SCORE,
     FULL_BODY_TOP_K,
     MAX_CONTEXT_CHARS,
+    MAX_POINTERS,
     PER_BODY_CAP,
     apply_token_budget,
     extract_paths_from_prompt,
@@ -13,15 +15,12 @@ from codex_harness.domain.skill_ranking import (
     score_skill,
 )
 
-FULL_BODY_MIN_SCORE = 3
-MAX_POINTERS = 8
-
 
 def frontmatter(text):
     text = text.lstrip('\ufeff').replace('\r\n', '\n')
     if not text.startswith('---\n'):
         return None, text
-    parts = text.split('\n---', 1)
+    parts = re.split(r'\n---(?:\n|$)', text, maxsplit=1)
     require(len(parts) == 2, 'Malformed skill frontmatter fence')
     meta = {}
     for line in parts[0][4:].splitlines():
@@ -75,11 +74,16 @@ def route_skills(git, artifacts, cwd, revision, objective, items, records):
         bodies[path] = body
     ranked.sort(key=lambda row: (-row[0], row[1]))
     full = [row for row in ranked if by_path[row[1]]['base_score'] >= FULL_BODY_MIN_SCORE][:FULL_BODY_TOP_K]
-    fitted, truncated = apply_token_budget(full, MAX_CONTEXT_CHARS)
+    capped = []
+    truncated = False
+    for score, path, dims, body in full:
+        reduced, cut = fit_top_skill(body, PER_BODY_CAP)
+        capped.append((score, path, dims, reduced))
+        truncated = truncated or cut
+    fitted, budget_cut = apply_token_budget(capped, MAX_CONTEXT_CHARS)
+    truncated = truncated or budget_cut
     output, full_paths = list(legacy), set()
     for score, path, dims, body in fitted:
-        body, cut = fit_top_skill(body, PER_BODY_CAP)
-        truncated = truncated or cut
         full_paths.add(path)
         record = by_path[path]
         record.update(tier='full', rendered_characters=len(body), truncated=body != bodies[path])

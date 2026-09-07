@@ -20,8 +20,9 @@ parent-traversal, symlink, untracked and large-file reads never reach host conte
 Actual Executor passes its objective into project_context. Annotated eligible skills
 are scored, with pipeline +3 recorded separately. Full-body eligibility uses base score
 >=3, top three, shared 4000 characters and 3000 per body. Decision-tree/Gotchas reduction
-and explicit truncation markers retain original intent. Post-allocation per-body fitting
-also bounds oversized sections (the original post-cap path could leave a large section).
+and explicit truncation markers retain original intent. Per-body fitting precedes shared allocation, so freed space can admit lower ranks
+and already-truncated sections are not reinterpreted as complete sections. This adapts
+the original post-cap ordering, which could leave oversized sections and waste space.
 Up to eight weak/pipeline-only pointers enter the context with immutable body handles.
 Additional pointers and unmatched eligible records stay in the external manifest with
 explicit tier labels. Budget-dropped strong matches become pointers, instead of silently
@@ -43,3 +44,6 @@ consumer. Cross-skill requires recommendations, phase guidance, Codex tool hints
 reminders, thin-skill historical advisories, runtime threshold tuning/calibration, all
 skill assets and the rest of Baldrix remain open before OMC and Ouroboros. No full source
 migration or production activation claim follows from component acceptance.
+
+Quoted inline-list entries are unquoted before matching (upstream retained quote marks);
+minimum scores require ASCII decimal digits and closing metadata fences must be bare.

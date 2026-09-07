@@ -25,8 +25,10 @@ def test_path_boundaries_and_supplied_pattern_evidence():
     assert score_skill(meta, '', {'src/authorized.py'}, {'src/authorized.py': 'token'})[1] == 1
     assert score_skill(meta, '', {'src/auth.py'}, {'src/auth.py': 'token'})[:2] == (True, 3)
     assert score_skill(meta, '', {'src/auth.py'}, {})[:2] == (False, 2)
-    with pytest.raises(ContractError):
-        score_skill({'min_score': 'NaN'}, 'test', set(), {})
+    for value in ['NaN', '?', '-1']:
+        with pytest.raises(ContractError):
+            score_skill({'min_score': value}, 'test', set(), {})
+    assert score_skill({'keywords': '''["api", 'rest']'''}, 'api rest', set(), {})[1] == 2
 
 
 def test_large_top_skill_cannot_bypass_shared_budget():
@@ -76,3 +78,44 @@ def test_actual_routing_tiers_filter_stack_and_keep_retrieval_handles(tmp_path):
     assert project_context(git, artifacts, str(root), revision, query)[1] == summary
     changed = project_context(git, artifacts, str(root), revision, 'unrelated')[1]
     assert changed['manifest_ref'] != summary['manifest_ref']
+
+
+def test_composed_budget_fills_lower_rank_and_bounds_pointer_tail(tmp_path):
+    from codex_harness.adapters.skill_routing import route_skills
+    from codex_harness.domain.model import ContextItem
+
+    class EmptyGit:
+        def _git(self, *args, **kwargs):
+            return ''
+
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    items, records = [], []
+    bodies = {'top': 'x' * 3500 + '\n## ???? ??\n' + 'logic' * 12000,
+              'second': 'SECOND', 'legacy': 'LEGACY'}
+    bodies.update({f'weak{i}': 'HIDDEN' for i in range(10)})
+    for name, body in bodies.items():
+        keywords = 'alpha beta gamma delta' if name == 'top' else 'alpha beta gamma' if name == 'second' else 'alpha'
+        source = body if name == 'legacy' else f'---\nkeywords: {keywords}\n---\n{body}'
+        record = artifacts.put(source, 'fixture')
+        path = f'.harness/skills/_common/{name}.md'
+        records.append({'path': path, 'content_ref': record['ref'], 'file': str(tmp_path / name),
+                        'revision': 'a' * 40, 'pipeline_boost': 0})
+        items.append(ContextItem('project-skill:' + path, source, record['ref'], 'a' * 40, 15))
+    rendered, summary = route_skills(EmptyGit(), artifacts, str(tmp_path), 'a' * 40,
+        'alpha beta gamma delta', items, records)
+    assert summary['full'] == 2
+    assert summary['pointers'] == 8 and summary['external_pointers'] == 2
+    assert summary['legacy'] == 1
+    full = [item for item in rendered if item.priority == 18]
+    assert sum(len(item.body) for item in full) <= 4000
+    assert max(len(item.body) for item in full) <= 3000
+    assert any(item.body == 'SECOND' for item in full)
+    assert any(item.body == 'LEGACY' for item in rendered)
+    assert all(record.get('tier') for record in records)
+
+
+def test_frontmatter_requires_a_bare_closing_fence():
+    from codex_harness.adapters.skill_routing import frontmatter
+    with pytest.raises(ContractError, match='fence'):
+        frontmatter('---\nkeywords: test\n---not-a-fence\nbody')
+    assert frontmatter('---\nkeywords: test\n---\nBODY') == ({'keywords': 'test'}, 'BODY')

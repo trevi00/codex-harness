@@ -15,7 +15,7 @@ def split_list_field(value: str) -> list[str]:
         return []
     if s.startswith('[') and s.endswith(']'):
         s = s[1:-1]
-        return [t.strip().rstrip(',').rstrip(';') for t in s.split(',') if t.strip().strip(',')]
+        return [t.strip().rstrip(',').rstrip(';').strip('\"\'') for t in s.split(',') if t.strip().strip(',')]
     return s.split()
 
 _split_list_field = split_list_field
@@ -117,7 +117,7 @@ def score_skill(meta: dict[str, Any], prompt_lower: str, detected_paths: set[str
                         score += 1
                         matched_dims.append(f'pat:{pat}')
     raw_min = str(meta.get('min_score', '1'))
-    require(raw_min.isdigit() and len(raw_min) <= 5, 'Invalid skill minimum score')
+    require(bool(re.fullmatch(r'[0-9]+', raw_min)) and len(raw_min) <= 5, 'Invalid skill minimum score')
     min_score = int(raw_min)
     return (score >= min_score, score, matched_dims)
 
@@ -221,3 +221,6 @@ def extract_paths_from_prompt(prompt):
             if len(cleaned) > 3:
                 paths.add(cleaned)
     return paths
+
+FULL_BODY_MIN_SCORE = 3
+MAX_POINTERS = 8
