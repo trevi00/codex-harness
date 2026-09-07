@@ -41,3 +41,32 @@ def test_research_parsers_capture_primary_links():
         "url": "https://github.com/owner/repo", "title": "owner/repo", "summary": "Useful & small"}
     xml = '<rss><channel><item><title>News</title><link>https://example.org/item</link><description>Evidence</description></item></channel></rss>'
     assert ResearchSources.parse_feed(xml)[0]["url"] == "https://example.org/item"
+
+
+def test_github_readme_uses_resolved_commit_and_byte_bounded_excerpt(tmp_path, monkeypatch):
+    import base64
+    import json
+
+    artifacts = FileArtifacts(str(tmp_path))
+    research = ResearchSources(artifacts)
+    revision = 'a' * 40
+    text = '한글' * 10000
+    api = 'https://api.github.com/repos/owner/repo'
+    responses = {
+        api: {'default_branch': 'feature/main', 'archived': False, 'pushed_at': 'fixture'},
+        api + '/commits/feature%2Fmain': {'sha': revision},
+        api + '/readme?ref=' + revision: {'encoding': 'base64', 'path': 'README.md',
+                                        'content': base64.b64encode(text.encode()).decode()},
+    }
+    calls = []
+    def fetch(url):
+        calls.append(url)
+        return json.dumps(responses[url])
+    monkeypatch.setattr(research, 'fetch', fetch)
+    detail = research.github_detail('https://github.com/owner/repo')
+    assert calls == list(responses)
+    assert detail['revision'] == revision
+    assert len(detail['readme_excerpt'].encode()) <= 10000
+    assert artifacts._body(detail['readme_ref']) == text
+    metadata = artifacts.inspect(detail['readme_ref'])['metadata']
+    assert metadata['source'] == 'https://github.com/owner/repo/blob/' + revision + '/README.md'
