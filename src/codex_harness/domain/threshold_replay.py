@@ -111,16 +111,31 @@ def replay_report(events, **options):
                      for entry in scored)
         usable_events += usable > 0
         partially_sized_events += 0 < usable < len(scored)
+    partitions = None
+    if timestamp(options.get('holdout_boundary')) is not None:
+        trailing, holdout = split_by_holdout(events, options['holdout_boundary'])
+        partitions = {}
+        for name, rows in [('trailing', trailing), ('holdout', holdout)]:
+            counts = {'events': len(rows)}
+            for label, value in [('current', options['old_value']), ('proposed', options['proposed_value'])]:
+                eligible = [[entry for entry in top_entries(event)
+                             if finite_number(entry.get('score')) and finite_number(value)
+                             and entry['score'] >= value] for event in rows]
+                counts[label + '_admitted_entries'] = sum(map(len, eligible))
+                counts[label + '_admitted_events'] = sum(bool(entries) for entries in eligible)
+            partitions[name] = counts
     return {'reference_model': REFERENCE_MODEL, 'gate': asdict(result),
             'observations': len(events), 'entries': len(entries), 'sized_entries': sized,
             'missing_or_invalid_sizes': len(entries) - sized,
             'guard_usable_events': usable_events,
             'guard_skipped_events': len(events) - usable_events,
             'guard_partially_sized_events': partially_sized_events,
+            'partitions': partitions,
             'unknown_timestamps': sum(timestamp(event.get('at') if isinstance(event, dict) else None)
                                       is None for event in events),
             'advisory_only': True, 'policy_changed': False,
             'limitations': ['Total scores, not native base-score admission.',
                 'Raw character sum, not per-body reduction or the final UTF-8 context compiler.',
                 'Only recorded top matches are available; lowering thresholds can undercount admissions and pressure.',
+                'Empty admission scores optimistically; reference acceptance can select zero skills.',
                 'Reference guard skips unsized entries; acceptance is not a coverage guarantee.']}
