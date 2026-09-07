@@ -27,6 +27,8 @@ def main():
             profile = detect_project(args.root)
             require(args.preview or profile['metadata']['detection']['status'] != 'unknown',
                     'No project signals found; use --detect --preview to inspect or --config to specify a stack')
+            require(args.preview or bool(profile['stacks']),
+                    'Only metadata signals found; use --detect --preview or --config to specify a stack')
             result = {'profile': profile, 'written': False} if args.preview else initialize(
                 args.root, yaml.safe_dump(profile, sort_keys=False))
         else:

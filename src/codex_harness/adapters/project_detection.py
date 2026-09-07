@@ -38,12 +38,12 @@ def is_home_directory(root):
     try:
         return root.samefile(home)
     except OSError:
-        return os.path.normcase(str(root)) == os.path.normcase(str(home.resolve()))
+        return os.path.normcase(str(root)) == os.path.normcase(os.path.abspath(home))
 
 
 def detect_project(root):
     root = Path(root).resolve()
-    require(root.is_dir(), 'Project root must exist')
+    require(root.is_dir(), 'Project root must be an existing directory')
     require(not is_home_directory(root), 'Home directory is not an implicit project')
     signals, types, contents = [], set(), {}
     entries = {entry.name for entry in root.iterdir()}
@@ -52,23 +52,25 @@ def detect_project(root):
         if filename not in entries:
             continue
         require(not path.is_symlink() and path.is_file(), 'Manifest must be a regular file: ' + filename)
-        # INV-PROJECT-001: recheck containment if a manifest changes during inspection.
+        # INV-PROJECT-001: narrow replacement races before opening; not an atomic snapshot.
         require(path.resolve().is_relative_to(root), 'Manifest escapes project root')
         with path.open('rb') as stream:
             data = stream.read(262145)
         require(len(data) <= 262144, 'Manifest exceeds detection size limit: ' + filename)
-        signals.append({'path': filename, 'project_type': kind,
+        signals.append({'kind': 'file', 'path': filename, 'project_type': kind,
                         'sha256': hashlib.sha256(data).hexdigest()})
         types.add(kind)
         contents[filename] = data
     workflows = root / '.github/workflows'
     github = root / '.github'
+    if '.github' in entries:
+        require(not github.is_symlink(), 'Workflow parent must not be a symlink')
     if '.github' in entries and github.is_dir() and 'workflows' in {p.name for p in github.iterdir()}:
         require(not workflows.is_symlink() and workflows.is_dir(),
                 'Workflow signal must be a regular directory')
         require(workflows.resolve().is_relative_to(root), 'Workflow directory escapes project root')
         types.add('github-actions')
-        signals.append({'path': '.github/workflows', 'project_type': 'github-actions',
+        signals.append({'kind': 'directory', 'path': '.github/workflows', 'project_type': 'github-actions',
                         'observation': 'directory presence; workflow contents not inspected'})
     stacks, declarations = [], {}
     if 'node' in types:
@@ -101,7 +103,8 @@ def detect_project(root):
         project = pyproject.get('project', {})
         require(isinstance(project, dict), 'Invalid Python project metadata')
         if isinstance(project.get('requires-python'), str):
-            declarations['requires-python'] = project['requires-python']
+            declarations['requires-python'] = [{'field': 'project.requires-python',
+                                               'spec': project['requires-python']}]
     for kind in sorted(types - {'node', 'docker', 'github-actions'}):
         stacks.append({'language': kind})
     return normalize_profile({'stacks': stacks, 'metadata': {'detection': {

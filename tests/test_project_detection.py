@@ -30,7 +30,8 @@ def test_all_upstream_project_types_are_retained_without_executing_files(tmp_pat
         'node', 'python', 'rust', 'go', 'java', 'kotlin', 'flutter', 'godot', 'ruby',
         'docker', 'github-actions'}
     assert len(detection['signals']) == 18
-    assert detection['declarations']['requires-python'] == '>=3.12'
+    assert detection['declarations']['requires-python'] == [
+        {'field': 'project.requires-python', 'spec': '>=3.12'}]
     assert not (tmp_path / '.harness').exists()
     assert {s['language'] for s in profile['stacks']} >= {'typescript', 'python', 'rust', 'java'}
 
@@ -144,3 +145,40 @@ def test_unresolvable_home_is_classified(tmp_path, monkeypatch):
 def test_workflow_signal_uses_exact_directory_names(tmp_path, directory):
     (tmp_path / directory).mkdir(parents=True)
     assert detect_project(tmp_path)['metadata']['detection']['status'] == 'unknown'
+
+
+@pytest.mark.parametrize('signal', ['Dockerfile', '.github/workflows'])
+def test_metadata_only_detection_requires_explicit_stack_before_write(tmp_path, signal):
+    if signal == 'Dockerfile':
+        (tmp_path / signal).write_text('FROM scratch')
+    else:
+        (tmp_path / signal).mkdir(parents=True)
+    profile = detect_project(tmp_path)
+    assert profile['stacks'] == []
+    assert profile['metadata']['detection']['status'] == 'detected'
+    script = Path(__file__).resolve().parents[1] / 'scripts/project_init.py'
+    env = {**os.environ, 'PYTHONPATH': str(script.parents[1] / 'src')}
+    result = subprocess.run([sys.executable, str(script), str(tmp_path), '--detect'],
+                            env=env, capture_output=True, text=True)
+    assert result.returncode == 2 and 'Only metadata signals' in result.stderr
+    assert not (tmp_path / '.harness/tech-stack.yaml').exists()
+
+
+def test_home_identity_stat_failure_still_rejects_same_path(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, 'home', classmethod(lambda cls: tmp_path))
+    def fail_stat(self, other):
+        raise OSError('identity lookup unavailable')
+    monkeypatch.setattr(Path, 'samefile', fail_stat)
+    with pytest.raises(ContractError, match='Home directory'):
+        detect_project(tmp_path)
+
+
+def test_workflow_parent_symlink_is_rejected(tmp_path):
+    target = tmp_path / 'real-github'
+    (target / 'workflows').mkdir(parents=True)
+    try:
+        (tmp_path / '.github').symlink_to(target, target_is_directory=True)
+    except OSError:
+        pytest.skip('Symlinks unavailable for this user')
+    with pytest.raises(ContractError, match='parent must not be a symlink'):
+        detect_project(tmp_path)

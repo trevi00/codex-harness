@@ -18,14 +18,16 @@ for the existing Git-pinned Executor routing to consume it. It never overwrites 
 existing project definition.
 
 Detection reads bounded regular files without evaluating setup.py, Gradle, Gemfiles,
-package scripts or installation commands. Signal metadata records exact content hashes.
+package scripts or installation commands. File signals record exact content hashes; directory signals record presence only,
+with an explicit kind discriminator.
 The result is provisional: filename presence and declared dependencies do not establish
 that a framework is installed or used at runtime. Unknown roots retain empty stacks and
 an explicit unknown detection status in preview; initialization refuses unknown roots
 and directs the caller to preview or explicit configuration. Detection stores a relative
 root marker, never the machine-specific absolute path. Signal names use exact directory
 membership, matching upstream on case-insensitive filesystems too. Docker/CI signals are metadata, not programming
-languages. All other source categories become language candidates.
+languages; metadata-only roots require explicit --config before initialization.
+All other source categories become language candidates.
 
 Node projects distinguish TypeScript by tsconfig.json or declared typescript; otherwise
 the JavaScript toolchain is inferred. Known framework declarations produce framework
@@ -44,3 +46,7 @@ ranking, asset migration, recursive workspace modeling and runtime proof remain 
 Home aliases are checked by filesystem identity, with a normalized path fallback when
 home cannot be statted. An unresolvable home produces a classified contract error before
 writes. Both directory segments of the workflow signal use exact directory membership.
+
+Both workflow directory segments reject symlinks. Declaration values consistently
+use lists of field/spec records. Only recognized npm framework names and typescript
+are retained, so arbitrary npm package names cannot collide with requires-python.
