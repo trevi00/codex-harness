@@ -331,7 +331,7 @@ def complete_fixture_audit(service, record, source):
                     [ref], ['symbol'], 'fixture trace', [], 'fixture-inspection', [receipt['id']])
                  for p in part['paths']]
         systems = [SubsystemAnalysis(name, [e['path'] for e in record['inventory']], ['contract'],
-            ['main'], ['impl'], ['caller'], ['config'], ['git'], ['failure'], ['test'],
+            ['main'], ['impl'], ['caller'], ['config'], ['git'], ['failure'], [json.dumps(['fixture-inspection'])],
             [receipt['id']], [ref], [], [], []) for name in part['subsystems']]
         saved = service.checkpoint(task, replace(PartitionCheckpoint(**part), remaining_paths=[],
                                    remaining_subsystems=[], cursor='done'), paths, systems)
@@ -636,6 +636,38 @@ def test_host_queue_pause_cancels_pending_without_execution(audit):
         assert tx.get('source_execution_requests', request['id'])['status'] == 'cancelled'
 
 
+def test_completed_host_receipt_rechecks_deployment_on_consumption(audit):
+    queue, service, source, task = queued_source_fixture(audit)
+    queue.request(task, source, ['true'])
+    row = queue.claim()
+    queue.complete(row, FixtureRunner(service.artifacts).execute(source, ['true']))
+    assert queue.result(task, row['id'])['status'] == 'succeeded'
+    with service.store.transaction() as tx:
+        tx.put('deployment', 'active', {'release_id': 'changed-after-completion'})
+    with pytest.raises(ContractError, match='superseded before consumption'):
+        queue.result(task, row['id'])
+
+
+@pytest.mark.parametrize('claimed_test', [['source-list'], ['python', 'unexecuted_test.py']])
+def test_inventory_receipt_cannot_clear_claimed_test_coverage(audit, tmp_path, claimed_test):
+    from codex_harness.adapters.audit_runner import AuditRunner
+    from codex_harness.domain.research import SubsystemAnalysis
+    service, record, _, _, _ = audit
+    service.runner = AuditRunner(tmp_path / 'inert-runner', service.artifacts)
+    part = next(p for p in service.partition(record['id']) if p['subsystems'])
+    message = envelope('task.assign', 'lead:research', 'worker:github', 'audit_partition',
+        {'audit_id': record['id'], 'partition_id': part['partition_id']}, 'test-claim')
+    service.workflow.submit(message)
+    task = service.workflow.claim('worker:github', 'fixture')
+    receipt = service.execute(task, record['id'], ['source-list'])
+    analysis = SubsystemAnalysis('core', [record['inventory'][0]['path']], ['contract'], ['main'],
+        ['impl'], ['caller'], ['config'], ['git'], ['failure'], [json.dumps(claimed_test)],
+        [receipt['id']], [receipt['receipt']['output_ref']], [], [], [])
+    with pytest.raises(ContractError, match='Claimed test lacks'):
+        service.checkpoint(task, replace(PartitionCheckpoint(**part), remaining_subsystems=[]), [], [analysis])
+    assert service.coverage(record['id'])['remaining_subsystems'] == ['core']
+
+
 def test_host_restart_reclaims_expired_runner_and_fences_late_result(audit):
     from datetime import datetime, timedelta, timezone
     queue, service, source, task = queued_source_fixture(audit)
@@ -670,7 +702,7 @@ def test_docker_source_runner_uses_only_inert_source_and_immutable_image(audit, 
     assert argv[argv.index('--network') + 1] == 'none'
     assert '--read-only' in argv and '--pids-limit' in argv and '--cap-drop' in argv
     assert argv.count('-v') == 1 and argv[argv.index('-v') + 1].endswith(':/source:ro')
-    assert argv[-4:] == ['sha256:' + 'a' * 64, '120', 'python', '--version']
+    assert argv[-5:] == ['--signal=KILL', '--', '120', 'python', '--version']
     assert observed[-1][:3] == ['docker', 'rm', '-f']
 
 

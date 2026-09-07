@@ -75,6 +75,11 @@ still produces blocked evidence. Symlinks remain inert regular files; gitlinks, 
 and missing upstream dependencies remain explicit gaps. Commands requiring source-tree writes can fail
 in the read-only tree. No unavailable or failed execution establishes complete audit scope.
 
+Subsystem `tests` records executed tests as JSON strings encoding exact argv arrays, matched to
+successful command-execution receipts. Descriptive test names without execution belong verbatim in
+`tests_not_run` with a reason and follow-up. Inert source listing/reading never establishes test
+execution. Result consumption rechecks task authority, activation and deployment after completion.
+
 Completed coverage and resolved partition questions permit adaptation proposals. Independent research
 lead and conductor decisions use separate fenced leases and successful command inspection. Their
 bindings include the source, coverage, referenced execution receipts, proposal, current deployed

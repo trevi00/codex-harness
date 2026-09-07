@@ -158,6 +158,22 @@ class ResearchAudits:
                 require(set(disposition.links) <= set(inventory), 'Unknown generator/original path')
             for analysis in analyses:
                 require(set(analysis.paths) <= set(inventory), 'Unknown subsystem path')
+                # INV-RESEARCH-003: listing files cannot attest that a claimed test command ran.
+                not_run = {test['test'] for test in analysis.tests_not_run}
+                executed = [tx.get('research_receipts', ref)['receipt'] for ref in analysis.receipt_ids]
+                for test in analysis.tests:
+                    if test in not_run:
+                        continue
+                    try:
+                        command = json.loads(test)
+                    except (TypeError, ValueError):
+                        command = None
+                    require(isinstance(command, list) and command and all(isinstance(s, str) for s in command)
+                            and command[0] not in {'source-list', 'source-read'}
+                            and any(r['command'] == command
+                                    and r['isolation'] != 'inert-objects-no-code-execution'
+                                    for r in executed),
+                            'Claimed test lacks matching successful execution command')
             for kind, records, field in [('research_paths', dispositions, 'path'),
                                          ('research_subsystems', analyses, 'name')]:
                 for record in records:

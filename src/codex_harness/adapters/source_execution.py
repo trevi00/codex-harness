@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import os
+import platform
 import re
 import subprocess
 import tempfile
@@ -16,6 +17,8 @@ from codex_harness.domain.model import ContractError, canonical, digest, require
 from codex_harness.domain.policy import POLICY
 from codex_harness.domain.research import ExecutionReceipt, SourceIdentity
 
+DRIVER_HASH = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
 
 class SourceExecutionClient:
     def execute(self, workflow, task, source, command, timeout=POLICY.source_request_seconds):
@@ -23,9 +26,7 @@ class SourceExecutionClient:
         request = queue.request(task, source, command)
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            with workflow.store.transaction() as tx:
-                workflow._owned(tx, task)
-                row = tx.get('source_execution_requests', request['id'])
+            row = queue.result(task, request['id'])
             require(row['status'] != 'cancelled', 'Source execution cancelled')
             if row['status'] == 'succeeded':
                 body = dict(row['receipt'])
@@ -68,6 +69,8 @@ class DockerSourceRunner:
         source.validate()
         require(re.fullmatch(r'sha256:[0-9a-f]{64}', image) is not None, 'Immutable runner image required')
         require(command and all(isinstance(arg, str) and arg for arg in command), 'Invalid command')
+        configuration = {'image': image, 'runner': 'host-docker-v1', 'driver_sha256': DRIVER_HASH,
+                         'host_platform': platform.platform(), 'policy': POLICY.snapshot()}
         manifest = self.artifacts.document(source.manifest_ref)
         require(all(manifest[k] == getattr(source, k) for k in ('repository', 'commit', 'tree')),
                 'Runner source mismatch')
@@ -107,7 +110,8 @@ class DockerSourceRunner:
                         '--tmpfs', '/tmp:rw,nosuid,size=' + str(POLICY.source_scratch_mb) + 'm', '-e', 'HOME=/tmp',
                         '-e', 'PYTHONDONTWRITEBYTECODE=1', '-e', 'PYTHONPATH=/source',
                         '-v', str(root) + ':/source:ro', '-w', '/source',
-                        '--entrypoint', '/usr/bin/timeout', image, str(POLICY.source_execution_seconds), *command]
+                        '--entrypoint', '/usr/bin/timeout', image, '--signal=KILL', '--',
+                        str(POLICY.source_execution_seconds), *command]
                 result = bounded_command(argv, timeout=POLICY.source_execution_seconds + 10)
                 status = result.returncode
                 output = {'argv': argv, 'stdout': result.stdout[-POLICY.source_output_bytes:],
@@ -122,8 +126,9 @@ class DockerSourceRunner:
                     run_process(['docker', 'rm', '-f', name], timeout=20)
                 except (OSError, subprocess.TimeoutExpired):
                     pass  # The in-container deadline also bounds orphaned execution.
-            ref = self.artifacts.put(canonical(output), 'host-isolated-source-execution')['ref']
-        return ExecutionReceipt(source, digest({'image': image, 'runner': 'host-docker-v1'}), command,
+            ref = self.artifacts.put(canonical({**output, 'configuration': configuration}),
+                                     'host-isolated-source-execution')['ref']
+        return ExecutionReceipt(source, digest(configuration), command,
             'docker-networkless-readonly-source-inert-links-no-credentials', status, ref,
             'harness:host-docker-source-runner-v1', blocked)
 

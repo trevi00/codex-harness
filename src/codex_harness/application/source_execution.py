@@ -62,6 +62,17 @@ class SourceExecutions:
                 return row
         return None
 
+    def result(self, task, request_id):
+        with self.store.transaction() as tx:
+            row = tx.get('source_execution_requests', request_id)
+            require(row and row['task']['id'] == task['id']
+                    and row['task']['generation'] == task['generation'], 'Source request owner mismatch')
+            self._validate(tx, task, row['source'])
+            if row['status'] == 'succeeded':
+                require((tx.get('deployment', 'active') or {}).get('release_id') == row['release_id'],
+                        'Execution image superseded before consumption')
+            return row
+
     def complete(self, row, receipt):
         receipt.validate()
         require(asdict(receipt.source) == row['source'] and receipt.command == row['command'],

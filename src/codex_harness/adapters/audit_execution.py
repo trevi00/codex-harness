@@ -115,7 +115,10 @@ class AuditExecution:
         answer = self.run_model(task, 'Semantically trace this bounded partition against contracts, callers, '
             'configuration, failure handling and tests. Use only supplied successful runner receipt IDs. '
             'Explicitly preserve unreviewed scope, tests not run and open questions. Inventory is not review. '
-            'Never infer execution from test file presence. On context limits return partial progress.',
+            'Never infer execution from test file presence. For each executed test in tests, use a JSON '
+            'string encoding the exact argv array of its successful execution receipt. source-list and '
+            'source-read are never test execution. Otherwise include that test verbatim in tests_not_run '
+            'with reason and follow_up. On context limits return partial progress.',
             evidence, result_schema)
         def decode(kind, records):
             return [parse_record({'version': 1, 'kind': kind, 'record': r}) for r in records]
