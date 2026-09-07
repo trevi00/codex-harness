@@ -234,3 +234,103 @@ Current rework checks completed successfully: `uv run ruff check .` (exit 0),
 `uv run pytest` (278 passed, 24 skipped, exit 0), `git diff --check` (exit 0).
 A concurrent `--no-sync` run also passed 278 tests; it is not additional coverage.
 The 24 integration skips leave service behavior unverified in this workspace.
+
+## Assigned usage-limit containment — f3ff7591-e500-446d-9e2b-473f52bd2a02
+
+Baseline: `c0954077dcce6008ddb66574248b6aa782a970a0`, initially clean.
+Implementation candidate: `03b7ca3df130218bcc290504653c9fe9de8723fe`, tree
+`9891bd65cebb8fd3ba5a7ac2be0d48a2220e2eb6`. The documentation commit containing
+this section adds no implementation changes. The actual canary receipt described
+below records its own exact final candidate revision/tree; approvals cannot be
+transferred between revisions (INV-RELEASE-001). No push, merge or deployment.
+
+Confirmed cause: `codex-provider-usage-limit-exceeded`; incident scope:
+`worker:github/codex-turn`. Hash-verified the exact UTF-8 historical artifacts:
+
+- `sha256:2b020dc9bfa2085c369c6b433d800dcc36ed4e4efdd8f49e405e163ebe06cc0c`
+  — task `03de1041-2caf-4ffb-bf5f-e7b18cb5a9c0`, attempt 1.
+- `sha256:3d8090132afcb28d3cfb26fbedeeb9233d103c7364625af1a01aa32d7c7739db`
+  — task `2d2aa014-ba83-4001-b523-8b0e87ef80ac`, attempt 3.
+- Associated diagnoses: `sha256:91a33020413af1f45037a9bb46a4037ebe422d043ba278ff87b9640e644213d6`
+  and `sha256:ab5f1e66557a748f84541930e40de9292e37d4a27a89617a9fae6e33da41d170`.
+- Assignment: `sha256:2417b466971c05b4f6f23923baaa018a7cbedc057ca1486e9e4044db033f7f24`;
+  planning execution reference: `sha256:df4c83029ebe1298586d43903cd05a68288d78f49aa086fc5edd874d50f4ff99`.
+
+The two receipts contain stringified provider errors with the exact code
+`usageLimitExceeded`; reconstructed transport tests parse those fixture strings
+only in tests. Production classification reads the structured `codexErrorInfo`
+field of the current failed AppServer turn. Prompts, model answers, unrelated rate
+limits, malformed codes and `invalid_json_schema` do not establish this cause.
+Inspection-blocked takes precedence. Account identity, quota details, reset timezone
+and quota recovery remain unverified. This work does not alter output schemas or
+claim that the separate historical schema diagnosis has been resolved here.
+
+`ExecutionFailure` carries runner evidence into application policy. `Workflow.fail`
+with `retryable=False` persists terminal failure and attempt history, returning the
+actual record. Task and decision writes check current owner, generation, status and
+lease. Raw provider error, events, thread/turn, task/attempt, revision and immutable
+execution reference are retained. The existing diagnostic route and six-W envelopes
+remain in use. Duplicate assignment delivery and repeated polling cannot claim that
+failed execution. A fresh authorized assignment is the recovery route after external
+quota recovery; no attempts are reset and no account-wide block is inferred.
+
+The standalone stdlib script is `harness_hooks/codex_usage_limit_guard.py`, exact
+UTF-8 Git SHA-256 `7b4f09b09dd64453d5a0468cd84928bdff5bee99e8a1a03ca59354577886f8f4`.
+Its assigned manifest is `harness_hooks/hook-ec928b6c78b06bb571eb45cb.json`.
+SessionStart is only a reminder; deterministic containment belongs to the adapter
+and application. Historical receipt fixtures deliberately produce no hook output:
+they are not native lifecycle inputs. Native positive/negative inputs are separately
+listed in `normal_case`. Existing NativeHooks proposal, canary, activation and rollback
+mechanisms are reused without bypassing release approval.
+
+Inspected `codex --version` (`codex-cli 0.153.4`), `codex app-server --help`, and
+`codex app-server generate-json-schema --experimental --out .runtime/usage-limit/protocol`.
+The installed schema exposes `usageLimitExceeded`, SessionStart and lifecycle completion
+records. Generated schema SHA-256 values:
+
+- `v2/TurnCompletedNotification.json`: `78af2a37391e8e669a4020cb58593e4d3e378756ced79d5fec72374fa69fb94b`.
+- `v2/HookCompletedNotification.json`: `1f146d70303cea6e59752191179e36a273650d63a74d4f9338f9a399da6597d2`.
+- `v2/HooksListResponse.json`: `891dd10ef7f78e59631fce05fff2becddb8004b3c0338dbbbd6b4f17ef1fa64f`.
+
+The [official lifecycle contract](https://learn.chatgpt.com/docs/hooks), fetched
+2026-09-07, documents SessionStart source matching and additional developer context.
+Installed discovery/execution must still be verified; documentation alone is not a canary.
+
+Validation: `uv run ruff check .` passed; `uv run pytest` passed with **323 passed,
+25 skipped**; `git diff --check` passed. Observed-output summary (explicitly an excerpt,
+not a full transcript): `.runtime/usage-limit/a8d9e65c0e34b2c54060319b0ce79a5ccaee2d9f1e7efccb7a4e46e09c431ae5.json`,
+SHA-256 equal to its filename. Early incomplete dependency installation caused an
+`idna.IDNAError` collection failure; a completed `uv` installation and subsequent
+full run passed. An intermediate Ruff import-order error was corrected. Local tests
+cover both historical reconstructions, malformed errors, duplicate delivery, distinct
+tasks, prompt-only incident text, cleanup failure, generic retries, terminal attempt
+history, stale writes, fresh authorization, context limits and native release failures.
+The new PostgreSQL reconnect test and 24 existing service tests were skipped: durable
+service behavior is not claimed verified by MemoryStore executor reconstruction.
+
+Measured offline benefit: one provider submission for the confirmed failed execution,
+then zero submissions across three additional polls and executor reconstruction;
+terminal task identity remains unchanged on duplicate delivery. This is test evidence,
+not a production observation. Production savings and quota recovery are unknown.
+
+Actual installed lifecycle/canary execution uses the final Git bytes, CLI version,
+existing AppServer hook discovery/trust mechanism, and a typed output schema whose
+version has integer type and const=1. Its prompt asks only for developer-context
+observation and prohibits tool use; it does not supply the reminder text. Raw events,
+result or exception, exact revision/tree, schema hash, script hash, CLI version and
+validation outcome are saved in `.runtime/usage-limit/canary.json` and an identical
+content-addressed JSON file there. The final handoff supplies that immutable hash.
+Read the receipt: this document does not predeclare a successful installed lifecycle.
+A model answer or successful process exit without a matching lifecycle completion
+record is insufficient. A provider rejection is a failed execution, not an accepted
+canary. No automatic quota-failed retry is authorized or performed.
+
+Release acceptance remains blocked pending successful actual canary evidence,
+independent lead and conductor command inspections/reviews, and incumbent release
+checks bound to the final revision. No independent review is claimed in this worker
+implementation report. Bubblewrap namespace denial, if observed, is inspection-blocked;
+retain the command evidence without changing permissions or asserting a host cause.
+Hook rollback withdraws the lifecycle component using the existing mechanism. Adapter
+and application rollback requires release rollback; preserve persisted failures and
+immutable evidence. Nothing in this report authorizes quota purchases, account changes,
+activation, push, merge or deployment.

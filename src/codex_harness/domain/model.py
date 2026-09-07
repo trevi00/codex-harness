@@ -14,6 +14,15 @@ class ContractError(ValueError):
     """An input violates a declared contract."""
 
 
+class ExecutionFailure(RuntimeError):
+    """A runner-observed failure, never a model-authored verdict."""
+
+    def __init__(self, cause: str, evidence: dict):
+        super().__init__(cause)
+        self.cause = cause
+        self.evidence = evidence
+
+
 def canonical(value: Any) -> str:
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 

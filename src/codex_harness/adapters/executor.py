@@ -14,6 +14,7 @@ from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import (
     ContextItem,
+    ExecutionFailure,
     canonical,
     compile_context,
     digest,
@@ -178,7 +179,7 @@ class Executor:
                     result = runtime.run(prompt, cwd, schema, POLICY.task_seconds if agent.startswith("worker:") else POLICY.decision_seconds,
                                          on_event=observe, read_only=read_only, on_tick=lambda: observe(None))
             except Exception as exc:
-                if result is None or not result.get("inspection_blocked"):
+                if result is None or not (result.get("inspection_blocked") or result.get("failure")):
                     raise
                 # INV-RELEASE-001 / INV-SESSION-001: cleanup cannot erase a known
                 # blocked result before its artifact and fenced checkpoint are saved.
@@ -186,7 +187,17 @@ class Executor:
             if stage:
                 result.update(elapsed_seconds=time.monotonic() - started,
                               context_ref=context_ref["ref"], research_binding=binding)
+            if result.get("failure"):
+                result.update(task_id=key, attempt=lease.get("attempt") if lease else None,
+                              basis_revision=basis_revision, context_ref=context_ref["ref"])
             evidence_ref = self.artifacts.put(canonical(result), "execution:" + key)
+            if result.get("failure") and not result.get("inspection_blocked"):
+                failure = {**result["failure"], "scope": agent + "/codex-turn",
+                           "execution_ref": evidence_ref["ref"],
+                           "task_id": key, "attempt": lease.get("attempt") if lease else None,
+                           "thread_id": result["thread_id"], "turn_id": result["turn_id"],
+                           "basis_revision": basis_revision, "context_ref": context_ref["ref"]}
+                raise ExecutionFailure(failure["cause"], failure)
             graph = ({"code": self.knowledge.index_python(cwd),
                       "runtime": self.knowledge.project_runtime(self.service.store, self.service.org)}
                      if self.knowledge and result["rotate"] else None)
@@ -321,12 +332,13 @@ class Executor:
                 raise ValueError("Unsupported task action: " + action)
             return self.workflow.complete(task, result, commands)
         except Exception as exc:
-            self.workflow.fail(task, type(exc).__name__ + ": " + str(exc))
+            current = self.workflow.fail_execution(task, exc)
             actor = self.service.org.actor(agent)
             if actor.parent:
                 observation_id = digest({"task": task["id"], "attempt": task["attempt"]})
                 receipt = self.artifacts.put(canonical({"task_id": task["id"], "attempt": task["attempt"],
-                                                       "error": str(exc), "agent": agent}), "execution-failure")
+                                                       "error": str(exc), "agent": agent,
+                                                       "failure": current.get("failure")}), "execution-failure")
                 with self.service.store.transaction() as tx:
                     if tx.get("decisions_pending", observation_id) is None:
                         tx.put("decisions_pending", observation_id, {"id": observation_id,
@@ -336,7 +348,7 @@ class Executor:
                                          "known_causes": [{"root_cause": h["root_cause"], "scope": h["scope"]}
                                                           for h in tx.scan("hooks")]},
                                "status": "pending", "attempt": 0})
-            return {"id": task["id"], "status": "retry", "error": str(exc)}
+            return current
 
     def decide_one(self, agent: str) -> dict | None:
         owner, now = str(uuid4()), datetime.now(timezone.utc)
@@ -479,12 +491,7 @@ class Executor:
                     tx.put("outbox", next_message["message_id"], {"message": next_message, "sent": False})
             return current
         except Exception as exc:
-            with self.service.store.transaction() as tx:
-                current = tx.get("decisions_pending", decision["id"])
-                if current["owner"] == owner:
-                    current.update(status="retry", error=str(exc))
-                    tx.put("decisions_pending", decision["id"], current)
-            return {"id": decision["id"], "status": "retry", "error": str(exc)}
+            return self.workflow.fail_execution({**decision, "_bucket": "decisions_pending"}, exc)
 
     def _review_hook(self, candidate, agent, result):
         if candidate.get("hook_id"):
