@@ -1,0 +1,10 @@
+usage: harness [-h]
+               {init-db,seed-research-backlog,doctor,status,cleanup,organization,validate,demo,incident,flush,send,run-command,serve,research,improve,execute-one,cancel,rebase,artifact,index,query,embed,project-graph,rlm,context,inspect,rollback-hook,canary} ...
+
+Codex self-harness bootstrap
+
+positional arguments:
+  {init-db,seed-research-backlog,doctor,status,cleanup,organization,validate,demo,incident,flush,send,run-command,serve,research,improve,execute-one,cancel,rebase,artifact,index,query,embed,project-graph,rlm,context,inspect,rollback-hook,canary}
+
+options:
+  -h, --help            show this help message and exit

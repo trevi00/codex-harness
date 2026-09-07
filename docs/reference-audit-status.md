@@ -24,3 +24,15 @@ Binary/non-UTF-8 entries retain object IDs and hashes, and require separate insp
 The earlier notes in references.md remain limited-scope observations. No upstream
 repository is designated fully analyzed or safe to copy on the basis of this inventory.
 Reviewers must use research-standard.md and retain source-to-implementation evidence.
+
+## Audit lifecycle implementation
+
+The five pins above remain packaged in `resources/research-backlog.json`. The seed use case validates
+historical manifests and preserves original PostgreSQL records. The scheduler now acquires pinned Git
+objects and queues bounded semantic audit partitions; imports themselves do not mark coverage.
+No live seed or semantic review of these five repositories was performed in this task.
+
+The acquisition, runner receipt, independent review, scheduling and release/rollback paths are described
+in `research-standard.md`. This candidate's local checks and verification limitations are recorded in
+`audit-lifecycle-review-evidence.md`. Fixture reviews/canaries must not be interpreted as production
+verification. All upstream coverage statuses in the table remain unchanged.

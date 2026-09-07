@@ -15,6 +15,15 @@ class RuntimePolicy:
     recurrence_threshold: int = 2
     artifact_retention_days: int = 7
     stream_retention_entries: int = 1000
+    source_execution_seconds: int = 120
+    source_request_seconds: int = 300
+    source_memory_mb: int = 512
+    source_cpus: int = 1
+    source_pids: int = 128
+    source_scratch_mb: int = 128
+    source_output_bytes: int = 65536
+    source_read_bytes: int = 24000
+    source_read_lines: int = 120
 
     def snapshot(self) -> dict:
         return asdict(self)

@@ -11,6 +11,38 @@ class Releases:
     def __init__(self, store, organization):
         self.store, self.org = store, organization
 
+    def reconcile_audits(self):
+        """Recover derived activation after an incumbent controller promotes the new runtime."""
+        from dataclasses import asdict
+        with self.store.transaction() as tx:
+            active = tx.get('deployment', 'active') or {}
+            record = tx.get('releases', active.get('release_id', ''))
+            if not record or record['status'] != 'active' or record['candidate'].get('audit_lifecycle_version') != 1:
+                return None
+            control = tx.get('research_control', 'activation')
+            # INV-RESEARCH-004: rollback pauses survive restoration of another release,
+            # including legacy records that identify only the removed release.
+            if control and (control.get('status') == 'paused' or
+                            control.get('release_id') == active['release_id'] or
+                            control.get('rolled_back_release') == active['release_id']):
+                return control  # Never undo a pause or rollback for the same release.
+            require(record['candidate']['revision'] == active['revision']
+                    and record['policy_hash'] == digest(record['policy']), 'Invalid active audit release')
+            author = self.org.actor(record['candidate']['author'], 'worker')
+            approved = {r['actor'] for r in record['reviews']
+                        if r['accepted'] and r['revision'] == active['revision'] and r.get('evidence')}
+            require(author.parent in approved and 'conductor' in approved, 'Audit reviews incomplete')
+            require(all(record['checks'].get(k, {}).get('passed') is True
+                        and record['checks'][k].get('evidence')
+                        for k in {'tests', 'cli_start', 'cli_file_task'} | set(record['policy']['checks'])),
+                    'Audit checks incomplete')
+            tx.put('research_control', 'graph', {'revision': active['revision'],
+                'tree': record['candidate']['tree'],
+                'organization': digest({k: asdict(v) for k, v in self.org.agents.items()})})
+            control = {'status': 'active', 'release_id': active['release_id'], 'revision': active['revision']}
+            tx.put('research_control', 'activation', control)
+            return control
+
     def propose(self, candidate: dict, policy: dict) -> dict:
         require(all(candidate.get(key) for key in ("revision", "base", "tree", "author")),
                 "Candidate identity incomplete")
@@ -83,6 +115,20 @@ class Releases:
             pointer = {"release_id": release_id, "revision": record["candidate"]["revision"],
                        "previous": {"release_id": active["release_id"]} if active else None, "at": utcnow()}
             tx.put("deployment", "active", pointer)
+            # INV-RESEARCH-004: activation follows the exact candidate's incumbent checks.
+            if record['candidate'].get('audit_lifecycle_version') == 1:
+                require(all(record['checks'].get(k, {}).get('passed')
+                            for k in ('tests', 'cli_start', 'cli_file_task')),
+                        'Audit activation requires actual CLI canary')
+                from dataclasses import asdict
+                tx.put('research_control', 'graph', {'revision': pointer['revision'],
+                    'tree': record['candidate']['tree'],
+                    'organization': digest({k: asdict(v) for k, v in self.org.agents.items()})})
+                tx.put('research_control', 'activation', {'status': 'active',
+                    'release_id': release_id, 'revision': pointer['revision']})
+            elif tx.get('research_control', 'activation'):
+                tx.put('research_control', 'activation', {'status': 'paused',
+                    'reason': 'active candidate does not declare audit lifecycle'})
             record["status"] = "active"
             tx.put("releases", release_id, record)
             tx.put("events", str(uuid4()), {"type": "release.promoted", **pointer})
@@ -100,6 +146,11 @@ class Releases:
             hook = tx.get("hooks", hook_id) if hook_id else None
             if hook and hook["revision"] == record["candidate"]["revision"]:
                 tx.put("hooks", hook_id, hook.get("previous_active") or {**hook, "status": "rolled_back"})
+            # INV-RESEARCH-004: retain evidence and bind the pause to the restored deployment.
+            if tx.get('research_control', 'activation'):
+                tx.put('research_control', 'activation', {'status': 'paused',
+                    'release_id': active['previous']['release_id'],
+                    'reason': reason, 'rolled_back_release': expected_active})
             record.update(status="rolled_back", rollback_reason=reason)
             tx.put("releases", expected_active, record)
             previous = tx.get("deployment_history", active["previous"]["release_id"]) or active["previous"]

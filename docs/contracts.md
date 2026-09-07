@@ -16,3 +16,17 @@ Organization SSOT: `src/codex_harness/resources/organization.json`.
 Wire schema SSOT: `src/codex_harness/resources/message.schema.json`.
 Runtime policy SSOT: `src/codex_harness/domain/policy.py`.
 The trusted local-process identity boundary is documented in status.md; validation is not authentication.
+
+## Research enforcement stage
+
+| ID | Contract |
+|---|---|
+| INV-RESEARCH-001 | Discovery and historical inventory never imply semantic review. Versioned imports preserve original reference records. Source verification reconciles every raw Git path and object against the pinned commit/tree, not just a manifest hash. |
+| INV-RESEARCH-002 | Partition scope is immutable. Checkpoints require an authorized assigned task, current lease and task/partition generations; evidence history and continuation outbox writes commit atomically. Remaining work reconciles with recorded evidence. |
+| INV-RESEARCH-003 | Model-authored receipt IDs are not runner evidence. Missing execution, binary inspection or unresolved subsystem work cannot establish completion. Record tests not run with reasons and follow-up. |
+| INV-RESEARCH-004 | Both discovery feeds and legacy approvals lack adoption authority. Positive eligibility requires complete coverage and ordered independent reviews bound to source/evidence/proposal, deployed revision/policy and graph. Revalidate approval and immutable bytes before execution. Verified release activation enables dispatch; rollback pauses it without deleting evidence. |
+
+Audit wire schema: `src/codex_harness/resources/research.schema.json`.
+Dormant seed definitions: `src/codex_harness/resources/research-backlog.json`.
+Remaining integration work is explicit in `docs/research-standard.md`; these invariant definitions
+must not be read as evidence that pending execution or rollout integrations exist.

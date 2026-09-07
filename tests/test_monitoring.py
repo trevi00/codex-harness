@@ -10,6 +10,24 @@ from codex_harness.adapters.monitoring_web import handler
 from codex_harness.application.monitoring import Monitoring, initiatives
 
 
+def test_audit_progress_keeps_missing_checkpoints_unknown_and_pause_visible():
+    from codex_harness.adapters.monitoring import audit_progress
+    data = {'reference_audits': [{'id': 'legacy', 'repository': 'repo', 'revision': 'rev',
+                                'files': 2, 'status': 'inventoried_not_reviewed'}],
+            'research_audits': [{'id': 'audit', 'source': {'repository': 'repo', 'commit': 'rev',
+                'manifest_ref': 'manifest'}, 'inventory': ['a', 'b'], 'status': 'source_verified_not_reviewed'}]}
+    row = audit_progress(data, {})[0]
+    assert row['remaining_paths'] is None
+    assert row['dispatch_status'] == 'inactive'
+    data['research_partitions'] = [{'audit_id': 'audit', 'remaining_paths': ['a'],
+        'remaining_subsystems': ['storage'], 'open_questions': ['test not run']}]
+    row = audit_progress(data, {'status': 'paused'})[0]
+    assert row['remaining_paths'] == row['remaining_subsystems'] == row['open_questions'] == 1
+    assert row['dispatch_status'] == 'paused'
+    assert row['independent_review'] == 'not_certified_by_monitor'
+    assert len(audit_progress(data, {})) == 1
+
+
 def test_completed_implementation_does_not_hide_blocked_review():
     now = datetime.now(timezone.utc)
     facts = {'tasks': [{'id': 'impl', 'correlation': 'goal', 'phase': 'implement',

@@ -230,3 +230,28 @@ def test_tree_sitter_graph_vector_and_failed_reindex(pgstore, tmp_path):
     with pytest.raises(ContractError, match="Parse failed"):
         knowledge.index_python(str(tmp_path))
     assert knowledge.query("recover")
+
+
+def test_postgres_audit_checkpoint_reconnect_and_stale_write(pgstore, tmp_path):
+    from dataclasses import replace
+
+    from codex_harness.adapters.artifacts import FileArtifacts
+    from codex_harness.application.research import ResearchAudits
+    from codex_harness.application.workflow import Workflow
+    from codex_harness.domain.research import PartitionCheckpoint
+
+    workflow = Workflow(pgstore, organization())
+    audits = ResearchAudits(pgstore, None, FileArtifacts(str(tmp_path / 'evidence')), workflow)
+    with pgstore.transaction() as tx:
+        tx.put('research_audits', 'fixture', {'id': 'fixture', 'inventory': [], 'subsystems': ['core']})
+    partition = PartitionCheckpoint(**audits.partition('fixture')[0])
+    message = envelope('task.assign', 'lead:research', 'worker:github', 'research',
+                       {'audit_id': 'fixture', 'partition_id': partition.partition_id}, 'fixture')
+    workflow.submit(message)
+    task = workflow.claim('worker:github', 'first')
+    saved = audits.checkpoint(task, replace(partition, cursor='resume'), [], [])
+    reconnected = ResearchAudits(PostgresStore(pgstore.dsn), None, audits.artifacts, workflow)
+    assert reconnected.partition('fixture') == [saved]
+    with pytest.raises(ContractError, match='Stale partition'):
+        reconnected.checkpoint(task, partition, [], [])
+    assert reconnected.coverage('fixture')['remaining_subsystems'] == ['core']

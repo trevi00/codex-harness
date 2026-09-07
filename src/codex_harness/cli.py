@@ -117,6 +117,8 @@ def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Codex self-harness bootstrap")
     commands = p.add_subparsers(dest="command", required=True)
     commands.add_parser("init-db")
+    seed = commands.add_parser("seed-research-backlog")
+    seed.add_argument("--artifacts", required=True)
     commands.add_parser("doctor")
     commands.add_parser("status")
     cleanup = commands.add_parser("cleanup")
@@ -221,6 +223,15 @@ def main() -> None:
         if args.command == "init-db":
             service.store.migrate()
             emit({"migrated": True})
+        elif args.command == "seed-research-backlog":
+            from codex_harness.adapters.artifacts import FileArtifacts
+            from codex_harness.application.research import ResearchAudits
+
+            audits = ResearchAudits(service.store, None, FileArtifacts(args.artifacts),
+                                    Workflow(service.store, service.org))
+            records = audits.seed_backlog()
+            emit([{k: r[k] for k in ("id", "repository", "priority", "status", "activation",
+                                     "reviewed_paths")} for r in records])
         elif args.command == "doctor":
             with service.store.transaction() as tx:
                 hooks = tx.scan("hooks")
