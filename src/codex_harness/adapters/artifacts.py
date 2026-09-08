@@ -7,7 +7,7 @@ from pathlib import Path
 
 from filelock import FileLock
 
-from codex_harness.domain.model import canonical, require, utcnow
+from codex_harness.domain.model import ContractError, canonical, require, utcnow
 
 
 class FileArtifacts:
@@ -53,14 +53,31 @@ class FileArtifacts:
         require(isinstance(value, dict), "Evidence document must be an object")
         return value
 
+    def text(self, reference: str, max_bytes: int) -> str:
+        """One integrity-checked bounded document read for mechanical consumers."""
+        require(type(max_bytes) is int and 0 < max_bytes <= 1024 * 1024, 'Invalid text budget')
+        body = self._body(reference)
+        require(len(body.encode('utf-8')) <= max_bytes, 'Artifact exceeds text budget')
+        return body
+
     def read(self, reference: str, start: int = 0, length: int = 8000) -> str:
         require(start >= 0 and 0 < length <= 32000, "Artifact read exceeds budget")
         return self._body(reference)[start:start + length]
 
     def inspect(self, reference: str) -> dict:
         text = self._body(reference)
+        try:
+            metadata = json.loads((self.root / (reference[7:] + '.json')).read_text('utf-8'))
+        except (OSError, ValueError) as exc:
+            raise ContractError('Artifact metadata unavailable or invalid') from exc
+        require(isinstance(metadata, dict), 'Artifact metadata must be an object')
+        require(metadata.get('ref') == reference, 'Artifact metadata reference mismatch')
+        require(type(metadata.get('bytes')) is int
+                and metadata['bytes'] == len(text.encode('utf-8')),
+                'Artifact metadata byte count mismatch')
+        # Source/at remain descriptive metadata, not authenticated provenance.
         return {"ref": reference, "characters": len(text), "lines": len(text.splitlines()),
-                "metadata": json.loads((self.root / (reference[7:] + ".json")).read_text("utf-8"))}
+                "metadata": metadata}
 
     def search(self, reference: str, needle: str, limit: int = 20) -> list[dict]:
         require(bool(needle) and 0 < limit <= 100, "Invalid search budget")

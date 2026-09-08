@@ -67,8 +67,11 @@ class ReleaseRunner:
         test_env = {**os.environ, "HARNESS_INTEGRATION": "1",
                     "HARNESS_DATABASE_URL": self.service.store.dsn,
                     "HARNESS_REDIS_URL": os.environ.get("HARNESS_REDIS_URL", "redis://127.0.0.1:56379/0")}
+        # INV-RELEASE-001: incumbent tests may import sibling test helpers under
+        # importlib mode. Expose only that test directory, not incumbent src.
+        incumbent_env = {**test_env, "PYTHONPATH": str(Path(incumbent) / "tests")}
         tests = self._check([str(python), "-m", "pytest", str(Path(incumbent) / "tests"),
-                             "-c", str(Path(incumbent) / "pyproject.toml"), "--import-mode=importlib", "-q"], path, env=test_env)
+                             "-c", str(Path(incumbent) / "pyproject.toml"), "--import-mode=importlib", "-q"], path, env=incumbent_env)
         candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path, env=test_env)
         tests = {"passed": tests["passed"] and candidate_tests["passed"],
                  "evidence": self.artifacts.put(canonical({"incumbent": tests, "candidate": candidate_tests}),

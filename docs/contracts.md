@@ -5,7 +5,9 @@
 | INV-MESSAGE-001 | All messages are six-W JSON. IDs cannot identify two payloads. DB commit precedes ACK; delivery is at-least-once. Reports match durable completed executions. |
 | INV-RECURRENCE-001 | Two independent occurrences with the same confirmed cause/scope require a hook. Redelivery is not recurrence. Active-hook recurrence requires a version update while preserving the previous verified version. |
 | INV-CONTEXT-001 | Required role, goal, acceptance, policy and provenance are never silently truncated. UTF-8 bytes are a conservative composition budget, distinct from measured tokens. External evidence is bounded data. |
+| INV-ARTIFACT-001 | Artifact queries address one exact SHA-256 reference under one explicit store root, validate the retained bytes, and emit a deterministic JSON projection whose complete successful stdout is within the requested character limit. JSON pointers follow RFC 6901; paging and search expose explicit continuation cursors. The limit bounds reader output, not arbitrary tool or provider usage. |
 | INV-RELEASE-001 | Exact commit/tree and incumbent policy bind lead review, conductor review, incumbent tests and actual CLI canaries. Failed checks cannot promote. Changed commits require new approvals. |
+| INV-MODEL-001 | Unqualified tasks run on Astra. Difficulty, model answers and narrow transfer pilots cannot authorize Sol/Terra production routing; versioned task qualification and enforced transfer gates are required. |
 | INV-SESSION-001 | Current context at 70% requests safe-point handoff. Checkpoint generation and execution lease fence stale writers. Busy agents do not hibernate; identity survives replacement. |
 | INV-GRAPH-001 | Git owns definitions; PostgreSQL owns runtime facts. Graph/vectors are versioned derived views. Unchanged symbols retain IDs; stale evidence cannot enter commit-bound review. |
 | INV-RECOVERY-001 | An external host controller restores the previous deployment without Codex. Images are pinned; rollback withdraws that release's hook. Destructive schema downgrade is outside this contract. |
@@ -36,3 +38,85 @@ must not be read as evidence that pending execution or rollout integrations exis
 | ID | Contract |
 |---|---|
 | INV-METRIC-001 | Git versions metric populations and formulas; PostgreSQL retains observations bound to immutable inputs and repository revision. Retries retain failed attempt outcomes. Missing, invalid, stale, future or insufficient evidence is unknown. Undefined targets remain observational. Measurements never authorize promotion or replace independent reviews and actual CLI canaries. |
+
+## Reverse workflow progress
+
+| ID | Contract |
+|---|---|
+| INV-REVERSE-001 | Reverse-stage records bind source repository, commit, tree and retained artifacts. Unknown or dirty source cannot authorize continuation. Requests are idempotent and generation-fenced; complete predecessors are required; explicit rebaseline preserves prior history. Component integrity is not source-adoption, semantic-quality or deployment approval. See baldrix-reverse-progress.md for remaining integration scope. |
+
+## Project context routing
+
+| ID | Contract |
+|---|---|
+| INV-PROJECT-001 | Git-pinned project YAML controls eligible skill paths. Missing configuration permits common skills only; invalid profiles fail explicitly. Selected regular Git files receive immutable content references and pass through the bounded context compiler. Initialization never overwrites an existing project definition. See baldrix-project-routing.md for scope and outstanding full-migration work. |
+
+
+## INV-PIPELINE-001
+
+Pipeline output presence is a recommendation signal, not a workflow completion or
+approval. Definitions and observed project paths are bound to Git revisions; bundled
+upstream assets retain hashes and source provenance. Dirty/untracked outputs cannot
+advance recommendations. Pipeline priority cannot include a stack-ineligible skill.
+Full recommendation evidence lives in the project-skill manifest, whose digest also
+invalidates recovery after definition/output changes. Gate commands are inert data.
+
+
+## INV-SKILL-001
+
+Prompt relevance and pipeline boosts are recorded separately. A pipeline-only match
+cannot satisfy the full-body score threshold. Annotated skill content uses bounded
+full-body/pointer tiers; complete bytes remain in immutable artifacts. Pattern evidence
+comes only from regular files at the captured Git revision, never host paths or dirty
+files. Prompt identity is part of the skill manifest and session recovery binding.
+
+Cross-skill references are advisory one-hop links within the eligible inventory; they
+cannot activate an excluded stack. Ambiguous/unavailable names remain explicit. Full
+reference evidence survives advisory truncation via immutable handles, and non-skill
+guidance never inflates selected/included/omitted skill counters.
+
+## INV-SKILL-HISTORY-001
+
+Skill-history observations are project/content-bound compiled selections, never success
+attestations. Retry delivery cannot add samples, including after hot-window eviction.
+Leased writes require current task ownership in the same transaction. A task excludes
+its own observation from historical assessment. Advisory text and its full skill body
+are included or omitted atomically; assessment provenance binds session recovery.
+# INV-SKILL-IMPORT-001
+
+Legacy skill telemetry imports bind exact raw bytes to a project/source segment and
+advance only a validated append-only prefix. Replays do not add observations; changed
+committed prefixes fail. Historical timestamps and unknown content versions are not
+replaced with import time or current skill identity. Imported archives do not mutate
+live history or become authority to activate skills, hooks, thresholds or releases.
+
+## INV-THRESHOLD-PROPOSAL-001
+
+Numeric proposals use a closed registry disjoint from locked source invariants.
+They bind supplied effective current values, Git policy revision, corpus and registry
+digests, and temporal holdout evidence. A single allowed step must improve training
+beyond hysteresis and pass independent reference replay. Reference acceptance alone
+never grants native activation authority. Staging and apply must verify the supplied
+basis against authoritative Git and runtime state before changing policy.
+
+## INV-THRESHOLD-REVIEW-001
+
+Threshold assessments require a live execution lease, immutable calculated evidence,
+current Git-bound policy and separate lead then conductor execution. Receipt identity
+must match the actor, decision, input and revision. Review completion and downstream
+review queueing are atomic. An assessment never authorizes implementation, source
+adoption, policy activation or deployment; existing approval gates remain required.
+
+## INV-THRESHOLD-POLICY-001
+
+Native routing and proposal collection resolve the same packaged Git threshold
+definition. Only implemented, unlocked registry consumers accept finite numeric
+overrides. Invalid definitions fail explicitly. Resolved values and definition
+identity accompany routing evidence; a calculated or assessed proposal cannot write
+the active definition. Candidate promotion and rollback retain release authority.
+## INV-NATIVE-REPLAY-001
+
+Native comparison uses the live admission/budget function and immutable full routing
+inputs. Recorded full-body hashes, count and truncation must reproduce before any
+counterfactual is reported. Missing evidence is unavailable, never success. Selection
+and character pressure do not authorize activation or establish task success.

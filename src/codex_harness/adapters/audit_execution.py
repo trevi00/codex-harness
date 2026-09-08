@@ -34,10 +34,12 @@ class AuditExecution:
                                     executor.workflow, runner)
 
     def run_model(self, task, objective, evidence, result_schema):
+        workload = "final_validation" if task.get('phase') == 'audit_review' else "design"
         return self.executor._run(task.get('agent', task.get('actor')), task['id'], objective,
             evidence, str(self.executor.git.repository), result_schema, True,
             heartbeat=lambda: self.executor.workflow.heartbeat(task), lease=task,
-            stage="audit:" + digest({"objective": objective, "schema": result_schema}))
+            stage="audit:" + digest({"objective": objective, "schema": result_schema}),
+            workload=workload)
 
     @staticmethod
     def typed_schema(kind):

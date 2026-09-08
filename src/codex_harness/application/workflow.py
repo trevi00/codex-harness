@@ -205,7 +205,8 @@ class Workflow:
                 require(hook is not None, "Unknown hook")
                 if hook["status"] == "required":
                     next_message = self._next(message, "conductor", "lead:improvement", "plan",
-                                              {"objective": "Implement mandatory recurrence hook", "hook": hook})
+                                              {"objective": "Implement mandatory recurrence hook", "hook": hook,
+                                               "importance": "important"})
             else:
                 if "decision_id" in details:
                     decision = tx.get("decisions_pending", details["decision_id"])

@@ -12,7 +12,8 @@ MANIFEST = json.loads((ROOT / 'harness_hooks/hook-ab97ba09554daa5aec289867.json'
 SCHEMA = {'type': 'object', 'properties': {'accepted': {'type': 'boolean'}}, 'required': ['accepted']}
 
 
-def replay(monkeypatch, events, *, hooks=None, discovered=None, read_only=True):
+def replay(monkeypatch, events, *, hooks=None, discovered=None, read_only=True,
+           thread_id=None, model=None):
     server = AppServer(executable='fixture', hooks=hooks)
     requests = []
 
@@ -29,7 +30,8 @@ def replay(monkeypatch, events, *, hooks=None, discovered=None, read_only=True):
     monkeypatch.setattr(server, '_receive', lambda *a, **k: next(incoming))
     observed = []
     result = server.run('quoted bwrap: No permissions to create a new namespace', str(ROOT),
-                        SCHEMA, read_only=read_only, on_event=observed.append)
+                        SCHEMA, read_only=read_only, on_event=observed.append,
+                        thread_id=thread_id, model=model)
     return result, requests, observed, server
 
 
@@ -68,9 +70,43 @@ def test_actual_startup_failure_overrides_verdict_and_preserves_evidence(monkeyp
 def test_normal_review_completion(monkeypatch, change):
     event = failure()
     event['params']['item'].update(change)
-    result, *_ = replay(monkeypatch, [event, *finish()])
+    result, requests, *_ = replay(monkeypatch, [event, *finish()])
     assert result['answer'] == {'accepted': True}
     assert not result.get('inspection_blocked')
+    assert result['requested_model'] is None
+    assert 'model' not in next(params for method, params in requests if method == 'thread/start')
+    assert 'model' not in next(params for method, params in requests if method == 'turn/start')
+
+
+def test_model_is_sent_on_new_thread_and_turn_and_returned(monkeypatch):
+    result, requests, *_ = replay(monkeypatch, finish(), model='gpt-5.6-terra')
+    start = next(params for method, params in requests if method == 'thread/start')
+    turn = next(params for method, params in requests if method == 'turn/start')
+    assert start['model'] == turn['model'] == 'gpt-5.6-terra'
+    assert result['requested_model'] == 'gpt-5.6-terra'
+
+
+def test_model_is_sent_when_resuming_thread_and_turn(monkeypatch):
+    result, requests, *_ = replay(monkeypatch, finish(), thread_id='existing', model='gpt-5.6-terra')
+    resume = next(params for method, params in requests if method == 'thread/resume')
+    turn = next(params for method, params in requests if method == 'turn/start')
+    assert resume['threadId'] == 'existing'
+    assert resume['model'] == turn['model'] == 'gpt-5.6-terra'
+    assert result['requested_model'] == 'gpt-5.6-terra'
+
+
+def test_blocked_receipt_includes_requested_model(monkeypatch):
+    result, *_ = replay(monkeypatch, [failure(), *finish()], model='gpt-5.6-terra')
+    assert result['inspection_blocked']
+    assert result['requested_model'] == 'gpt-5.6-terra'
+
+
+@pytest.mark.parametrize('model', ['', '   ', 7, object()])
+def test_model_must_be_a_nonempty_string(monkeypatch, model):
+    server = AppServer(executable='fixture')
+    monkeypatch.setattr(server, 'request', lambda *args: pytest.fail('request must not be sent'))
+    with pytest.raises(ContractError, match='model must be a nonempty string'):
+        server.run('review', str(ROOT), SCHEMA, model=model)
 
 
 def test_other_thread_and_old_turn_are_excluded(monkeypatch):

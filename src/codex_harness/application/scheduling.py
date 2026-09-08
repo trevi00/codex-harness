@@ -98,7 +98,7 @@ def schedule_audits(service) -> int:
             if tx.get('schedule', key):
                 continue
             details = {'audit_id': approval['audit_id'], 'audit_approval': approval['binding'],
-                       'proposal': approval['proposal']}
+                       'proposal': approval['proposal'], 'importance': 'important'}
             try:
                 require_adoption(tx, details)
             except ContractError:

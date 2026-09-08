@@ -130,9 +130,14 @@ class AppServer:
         raise ContractError(f"Codex {method} timed out")
 
     def run(self, prompt: str, cwd: str, schema: dict, timeout: int = 240,
-            thread_id: str | None = None, on_event=None, read_only: bool = False, on_tick=None) -> dict:
+            thread_id: str | None = None, on_event=None, read_only: bool = False, on_tick=None,
+            model: str | None = None) -> dict:
+        require(model is None or (isinstance(model, str) and model.strip()),
+                "model must be a nonempty string")
         options = {"cwd": str(Path(cwd).resolve()), "approvalPolicy": "never",
                    "sandbox": "danger-full-access"}
+        if model is not None:
+            options["model"] = model
         if read_only:
             options["developerInstructions"] = "This is an independent review. Inspect and test, but do not edit tracked source, commit, push, merge, or deploy."
         if self.hooks and not self.hook_state:
@@ -154,8 +159,11 @@ class AppServer:
         else:
             response = self.request("thread/start", options)
         thread_id = response["thread"]["id"]
-        turn = self.request("turn/start", {"threadId": thread_id,
-                            "input": [{"type": "text", "text": prompt}], "outputSchema": schema})
+        turn_options = {"threadId": thread_id,
+                        "input": [{"type": "text", "text": prompt}], "outputSchema": schema}
+        if model is not None:
+            turn_options["model"] = model
+        turn = self.request("turn/start", turn_options)
         turn_id = turn["turn"]["id"]
         deadline = time.monotonic() + timeout
         events, answer_text, usage = [], "", None
@@ -169,7 +177,7 @@ class AppServer:
                     "thread_id": thread_id, "usage": usage, "rotate": False,
                     "interrupted": False, "inspection_blocked": True,
                     "inspection_failures": list(inspection_failures.values()),
-                    "termination_error": error}
+                    "termination_error": error, "requested_model": model}
 
         while time.monotonic() < deadline:
             if on_tick:
@@ -230,7 +238,8 @@ class AppServer:
                 else:
                     answer = None
                 return {"answer": answer, "events": events, "thread_id": thread_id,
-                        "usage": usage, "rotate": rotate, "interrupted": status == "interrupted"}
+                        "usage": usage, "rotate": rotate, "interrupted": status == "interrupted",
+                        "requested_model": model}
             if rotate and not active_tools and not interrupted and not inspection_failures:
                 self.request("turn/interrupt", {"threadId": thread_id, "turnId": turn_id})
                 interrupted = True
