@@ -1,0 +1,138 @@
+{
+  "spec": {
+    "kind": "native_hook",
+    "event": "SessionStart",
+    "matcher": "^(startup|resume|clear|compact)$",
+    "script_path": "harness_hooks/codex_usage_limit_guard.py",
+    "script_sha256": "7b4f09b09dd64453d5a0468cd84928bdff5bee99e8a1a03ca59354577886f8f4"
+  },
+  "cases": {
+    "reproduction": [
+      {
+        "input": {
+          "agent": "worker:github",
+          "attempt": 1,
+          "error": "Codex turn failed: {'message': \"You've hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Sep 14th, 2026 1:28 PM.\", 'codexErrorInfo': 'usageLimitExceeded', 'additionalDetails': None, 'misalignment': None}",
+          "task_id": "03de1041-2caf-4ffb-bf5f-e7b18cb5a9c0"
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "agent": "worker:github",
+          "attempt": 3,
+          "error": "Codex turn failed: {'message': \"You've hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Sep 14th, 2026 1:28 PM.\", 'codexErrorInfo': 'usageLimitExceeded', 'additionalDetails': None, 'misalignment': None}",
+          "task_id": "2d2aa014-ba83-4001-b523-8b0e87ef80ac"
+        },
+        "output": null,
+        "exit_code": 0
+      }
+    ],
+    "normal_case": [
+      {
+        "input": {
+          "hook_event_name": "SessionStart",
+          "source": "startup",
+          "session_id": "native-fixture",
+          "cwd": "/workspace"
+        },
+        "output": {
+          "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": "INV-RECURRENCE-001: usageLimitExceeded is a Codex provider usage-limit failure. Preserve the exact provider error, task ID, attempt, revision and immutable evidence references. Report quota-blocked executions as failures, never successful audits, reviews or canaries. Distinguish usageLimitExceeded from schema, authentication and transient errors; confirm cause and scope from evidence. Retries and redelivery alone are not independent recurrence. Affected account, quota category and underlying accounting may be unknown; do not infer a reset timezone. This SessionStart hook cannot observe future provider errors, restore quota, or suppress executor retries. The adapter/application marks the affected execution failed and nonretryable; recovery requires a fresh authorized assignment after external quota recovery. INV-RELEASE-001 requires independent reviews and actual successful canaries."
+          }
+        },
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "SessionStart",
+          "source": "resume",
+          "session_id": "native-fixture",
+          "cwd": "/workspace"
+        },
+        "output": {
+          "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": "INV-RECURRENCE-001: usageLimitExceeded is a Codex provider usage-limit failure. Preserve the exact provider error, task ID, attempt, revision and immutable evidence references. Report quota-blocked executions as failures, never successful audits, reviews or canaries. Distinguish usageLimitExceeded from schema, authentication and transient errors; confirm cause and scope from evidence. Retries and redelivery alone are not independent recurrence. Affected account, quota category and underlying accounting may be unknown; do not infer a reset timezone. This SessionStart hook cannot observe future provider errors, restore quota, or suppress executor retries. The adapter/application marks the affected execution failed and nonretryable; recovery requires a fresh authorized assignment after external quota recovery. INV-RELEASE-001 requires independent reviews and actual successful canaries."
+          }
+        },
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "SessionStart",
+          "source": "clear",
+          "session_id": "native-fixture",
+          "cwd": "/workspace"
+        },
+        "output": {
+          "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": "INV-RECURRENCE-001: usageLimitExceeded is a Codex provider usage-limit failure. Preserve the exact provider error, task ID, attempt, revision and immutable evidence references. Report quota-blocked executions as failures, never successful audits, reviews or canaries. Distinguish usageLimitExceeded from schema, authentication and transient errors; confirm cause and scope from evidence. Retries and redelivery alone are not independent recurrence. Affected account, quota category and underlying accounting may be unknown; do not infer a reset timezone. This SessionStart hook cannot observe future provider errors, restore quota, or suppress executor retries. The adapter/application marks the affected execution failed and nonretryable; recovery requires a fresh authorized assignment after external quota recovery. INV-RELEASE-001 requires independent reviews and actual successful canaries."
+          }
+        },
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "SessionStart",
+          "source": "compact",
+          "session_id": "native-fixture",
+          "cwd": "/workspace"
+        },
+        "output": {
+          "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": "INV-RECURRENCE-001: usageLimitExceeded is a Codex provider usage-limit failure. Preserve the exact provider error, task ID, attempt, revision and immutable evidence references. Report quota-blocked executions as failures, never successful audits, reviews or canaries. Distinguish usageLimitExceeded from schema, authentication and transient errors; confirm cause and scope from evidence. Retries and redelivery alone are not independent recurrence. Affected account, quota category and underlying accounting may be unknown; do not infer a reset timezone. This SessionStart hook cannot observe future provider errors, restore quota, or suppress executor retries. The adapter/application marks the affected execution failed and nonretryable; recovery requires a fresh authorized assignment after external quota recovery. INV-RELEASE-001 requires independent reviews and actual successful canaries."
+          }
+        },
+        "exit_code": 0
+      },
+      {
+        "input": null,
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": [],
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {},
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "SessionStart",
+          "source": "other",
+          "session_id": "x",
+          "cwd": "/workspace"
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "Stop",
+          "source": "startup",
+          "session_id": "x",
+          "cwd": "/workspace"
+        },
+        "output": null,
+        "exit_code": 0
+      },
+      {
+        "input": {
+          "hook_event_name": "SessionStart",
+          "source": "startup"
+        },
+        "output": null,
+        "exit_code": 0
+      }
+    ]
+  }
+}

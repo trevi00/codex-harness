@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass
 
 from codex_harness.domain.model import require
 
-ROUTING_POLICY = "model-routing.v1"
+ROUTING_POLICY = "model-routing.v2-unqualified-astra"
 DESIGN_MODEL = "gpt-6-astra"
 SIMPLE_IMPLEMENTATION_MODEL = "gpt-5.6-terra"
 IMPORTANT_IMPLEMENTATION_MODEL = "gpt-5.6-sol"
@@ -22,7 +22,7 @@ class ModelSelection:
 
 
 def select_model(workload: str, importance: str | None = None) -> ModelSelection:
-    """Select from trusted stage metadata; unknown implementation work stays on Sol."""
+    """Keep unqualified tasks on Astra until versioned transfer gates exist."""
     require(isinstance(workload, str)
             and workload in {"design", "implementation", "final_validation"},
             "Unknown model-routing workload")
@@ -35,6 +35,5 @@ def select_model(workload: str, importance: str | None = None) -> ModelSelection
     require(isinstance(classification, str)
             and classification in {"simple", "important", "unknown"},
             "Unknown implementation importance")
-    model = (SIMPLE_IMPLEMENTATION_MODEL if classification == "simple"
-             else IMPORTANT_IMPLEMENTATION_MODEL)
-    return ModelSelection(ROUTING_POLICY, workload, classification, model)
+    # INV-MODEL-001: difficulty and narrow pilot receipts are not transfer authority.
+    return ModelSelection(ROUTING_POLICY, workload, classification, DESIGN_MODEL)

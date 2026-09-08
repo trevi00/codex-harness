@@ -4,21 +4,25 @@ The later [progressive handoff procedure](progressive-model-handoff.md) supersed
 static difficulty-based assignment as the intended operating policy. This selector
 alone is not qualification evidence; runtime promotion/fallback gates remain pending.
 
+Deployment policy `model-routing.v2-unqualified-astra` keeps all unqualified execution
+on Astra. Importance remains recorded, but cannot authorize downward transfer. The
+qualification registry is still pending; the artifact pilot is not production eligibility.
+
 The harness selects models from trusted workflow stage metadata before starting Codex. It does not
 accept a model choice from model output.
 
 | Workload | Importance | Requested model |
 |---|---|---|
 | Design, planning and research analysis | Not applicable | `gpt-6-astra` |
-| Implementation | `simple` | `gpt-5.6-terra` |
-| Implementation | `important` | `gpt-5.6-sol` |
-| Implementation | Missing legacy classification (`unknown`) | `gpt-5.6-sol` |
+| Implementation | `simple` | `gpt-6-astra` (unqualified) |
+| Implementation | `important` | `gpt-6-astra` (unqualified) |
+| Implementation | Missing legacy classification (`unknown`) | `gpt-6-astra` (unqualified) |
 | Independent or final validation | Not applicable | `gpt-6-astra` |
 
 `harness improve` records an explicitly supplied `--importance simple|important` in the initial conductor assignment;
 the downstream implementation reads that preserved origin. Automated source-adoption and recurrence
 hook work is classified as important. Old assignments without importance are recorded as unknown and
-use Sol; omitting the CLI option has the same conservative behavior. Rework assignments preserve the
+use Astra; omitting the CLI option has the same conservative behavior. Rework assignments preserve the
 original trusted classification. Unsupported classifications fail instead of falling through to the cheaper model.
 Lead review forwards only the importance projection needed by conductor rework, avoiding
 copies of the prior implementation payload in review feedback.

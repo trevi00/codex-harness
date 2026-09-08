@@ -16,10 +16,10 @@ from codex_harness.domain.model_routing import select_model
 @pytest.mark.parametrize(('workload', 'importance', 'model'), [
     ('design', None, 'gpt-6-astra'),
     ('final_validation', None, 'gpt-6-astra'),
-    ('implementation', 'simple', 'gpt-5.6-terra'),
-    ('implementation', 'important', 'gpt-5.6-sol'),
-    ('implementation', None, 'gpt-5.6-sol'),
-    ('implementation', 'unknown', 'gpt-5.6-sol'),
+    ('implementation', 'simple', 'gpt-6-astra'),
+    ('implementation', 'important', 'gpt-6-astra'),
+    ('implementation', None, 'gpt-6-astra'),
+    ('implementation', 'unknown', 'gpt-6-astra'),
 ])
 def test_conservative_domain_routing(workload, importance, model):
     selection = select_model(workload, importance)
@@ -60,11 +60,11 @@ def test_executor_sends_selection_and_seals_it_in_execution_receipt(tmp_path, mo
     result = executor._run('worker:implementation', 'task', 'Implement', {}, str(tmp_path),
                            IMPLEMENTATION, workload='implementation', importance='simple')
 
-    assert requested == ['gpt-5.6-terra']
+    assert requested == ['gpt-6-astra']
     receipt = json.loads(artifacts.read(result['execution_ref']))
     assert receipt['model_selection'] == {
-        'policy': 'model-routing.v1', 'workload': 'implementation',
-        'importance': 'simple', 'requested_model': 'gpt-5.6-terra'}
+        'policy': 'model-routing.v2-unqualified-astra', 'workload': 'implementation',
+        'importance': 'simple', 'requested_model': 'gpt-6-astra'}
 
 
 @pytest.mark.parametrize('importance, expected', [
