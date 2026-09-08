@@ -51,7 +51,24 @@ class ArtifactMaintenance:
         with self.store.transaction() as tx:
             roots = self._roots(tx)
         snapshot_seconds = time.monotonic() - started
-        generation = self._generation()
+        # INV-RESOURCE-001: sample only between complete publications. A writer
+        # changes generation before writing its body; an unlocked sample can
+        # mistake an in-flight publication for an unchanged filesystem snapshot.
+        # Probe outside the DB transaction so heartbeats remain independent.
+        try:
+            with FileLock(str(root.parent / "artifacts.lock"), timeout=0):
+                generation = self._generation()
+        except Timeout:
+            # Defer the scan itself; no artifact count is known at this point.
+            result = {"id": "latest", "at": utcnow(), "applied": apply, "files": 0,
+                      "bytes": 0, "retained_references": len(roots), "grace_days": days,
+                      "deferred": 1, "deferred_scope": "scan",
+                      "reason": "publication_in_progress", "errors": [],
+                      "snapshot_seconds": snapshot_seconds, "max_batch_seconds": 0}
+            if apply:
+                with self.store.transaction() as tx:
+                    tx.put("maintenance", "latest", result)
+            return result
         marked = self._mark(root, roots)
         candidates = []
         # INV-RESOURCE-001: even uncommitted parents retain their children.

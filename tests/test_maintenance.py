@@ -408,3 +408,55 @@ def test_postgres_transaction_rejects_collected_record_fields_before_insert():
     for location in ('bucket', 'id', 'body_key', 'body_value'):
         with pytest.raises(ContractError, match='Artifact reference was collected'):
             tx.put(*reference_record(location, ref))
+
+
+def test_generation_snapshot_waits_for_complete_publication_without_db_lock(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    changed, release, sampled, roots_read = Event(), Event(), Event(), Event()
+
+    class PausedArtifacts(FileArtifacts):
+        pause = False
+
+        def _changed(self):
+            super()._changed()
+            if self.pause:
+                changed.set()
+                assert release.wait(5)
+
+    class ObservedMaintenance(ArtifactMaintenance):
+        def _roots(self, tx):
+            roots = super()._roots(tx)
+            roots_read.set()
+            return roots
+
+        def _generation(self):
+            sampled.set()
+            return super()._generation()
+
+    artifacts, store = PausedArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('publication dependency', 'test')['ref']
+    age(artifacts, child)
+    artifacts.pause = True
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        publisher = pool.submit(artifacts.put, child, 'parent')
+        assert changed.wait(2)
+        collector = pool.submit(ObservedMaintenance(store, artifacts).collect, True)
+        try:
+            assert roots_read.wait(2)
+            # A real publisher owns the file lock. Snapshot sampling must wait
+            # without retaining DB serialization needed for claims/heartbeats.
+            assert not sampled.wait(0.25)
+            acquired = store.lock.acquire(blocking=False)
+            if acquired:
+                store.lock.release()
+            assert acquired
+        finally:
+            release.set()
+        parent = publisher.result(timeout=5)['ref']
+        assert collector.result(timeout=5)['files'] == 0
+    with store.transaction() as tx:
+        tx.put('outbox', 'published-parent', {'ref': parent})
+    assert artifacts.read(parent) == child
+    assert artifacts.read(child) == 'publication dependency'
