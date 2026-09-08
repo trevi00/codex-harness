@@ -900,7 +900,8 @@ def test_schema_preflight_failure_cannot_create_audit_success(audit, monkeypatch
 
     cause = CAUSE
 
-    def defective_turn(task, objective, evidence, schema):
+    def defective_turn(task, objective, evidence, schema, workload):
+        assert workload == ('final_validation' if operation == 'review' else 'design')
         del schema['properties']['version']['type']
         return server.request('turn/start', {'outputSchema': schema})
 
@@ -979,7 +980,8 @@ def test_execution_scopes_output_and_checkpoints_partial_progress(audit, monkeyp
               'open_questions': ['remaining work'], 'cursor': 'partial'}
     seen = []
 
-    def run_model(task, objective, evidence, result_schema):
+    def run_model(task, objective, evidence, result_schema, workload):
+        assert workload == 'design'
         seen.append(result_schema)
         if 'commands' in result_schema['properties']:
             return {'commands': []}

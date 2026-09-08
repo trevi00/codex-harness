@@ -33,11 +33,12 @@ class AuditExecution:
         self.audits = ResearchAudits(executor.service.store, None, executor.artifacts,
                                     executor.workflow, runner)
 
-    def run_model(self, task, objective, evidence, result_schema):
+    def run_model(self, task, objective, evidence, result_schema, workload):
         return self.executor._run(task.get('agent', task.get('actor')), task['id'], objective,
             evidence, str(self.executor.git.repository), result_schema, True,
             heartbeat=lambda: self.executor.workflow.heartbeat(task), lease=task,
-            stage="audit:" + digest({"objective": objective, "schema": result_schema}))
+            stage="audit:" + digest({"objective": objective, "schema": result_schema}),
+            workload=workload)
 
     @staticmethod
     def typed_schema(kind):
@@ -71,7 +72,7 @@ class AuditExecution:
             mapping = self.run_model(task, 'Identify a canonical primary GitHub repository for this '
                 'discovery from cited evidence. Return an empty repository and explain why if unavailable. '
                 'This mapping is provisional and must be independently reviewed before adoption.',
-                discovery, schema(repository=TEXT, reason=TEXT))
+                discovery, schema(repository=TEXT, reason=TEXT), "design")
             if not mapping['repository']:
                 return {'status': 'unmapped', 'reason': mapping['reason']}
             detail = self.executor.research.github_detail(mapping['repository'])
@@ -89,7 +90,7 @@ class AuditExecution:
             taxonomy = self.run_model(task, 'Inventory every subsystem, including configuration, tests, '
                 'scripts and dependencies. This is scope discovery, not semantic completion.',
                 {'source': asdict(source), 'inventory': [asdict(e) for e in entries]},
-                schema(subsystems=STRINGS))
+                schema(subsystems=STRINGS), "design")
             self.audits.verifier = verifier
             audit = self.audits.import_audit(source, entries, taxonomy['subsystems'])
             self.audits.partition(audit['id'])
@@ -112,7 +113,7 @@ class AuditExecution:
             answer = self.run_model(task, 'Propose an adaptation using the complete retained source audit. '
                 'Map behavior, failures, license, dependencies, graph impact and harness contracts. '
                 'Use your own actor identity as author; defer or reject if unjustified.', evidence,
-                self.typed_schema('AdaptationProposal'))
+                self.typed_schema('AdaptationProposal'), "design")
             document = {k: answer[k] for k in self.typed_schema('AdaptationProposal')['properties']}
             proposal = parse_record({'version': 1, 'kind': 'AdaptationProposal', 'record': document})
             require(proposal.author == task['agent'], 'Proposal author mismatch')
@@ -131,7 +132,7 @@ class AuditExecution:
             'and next_char; partial_last_line means that line is not fully read. '
             'Commands run in a networkless, read-only source tree with inert symlinks and no installs. '
             'Do not claim commands ran. Return at most four commands.', evidence,
-            schema(commands={'type': 'array', 'maxItems': 4, 'items': STRINGS}))
+            schema(commands={'type': 'array', 'maxItems': 4, 'items': STRINGS}), "design")
         require(len(plan['commands']) <= 4, 'Inspection command budget exceeded')
         receipts = [self.audits.execute(task, audit['id'], command) for command in plan['commands']]
         evidence['receipts'] = receipts
@@ -149,7 +150,7 @@ class AuditExecution:
             'source-read are never test execution. Put unexecuted tests in tests_not_run, not tests, '
             'including each test verbatim '
             'with reason and follow_up. On context limits return partial progress.',
-            evidence, result_schema)
+            evidence, result_schema, "design")
         def decode(kind, records):
             return [parse_record({'version': 1, 'kind': kind, 'record': r}) for r in records]
         paths = decode('PathDisposition', answer['paths'])
@@ -180,7 +181,7 @@ class AuditExecution:
                 'Reject incomplete scope, unresolved contradictions, license/dependency concerns or unsafe '
                 'architecture, SRE and graph impact. Source inventory alone is not semantic evidence.',
                 {**data, 'audit': audit, 'evidence': evidence, 'inspection': receipt},
-                self.typed_schema('IndependentReview'))
+                self.typed_schema('IndependentReview'), "final_validation")
             if result.get('inspection_blocked'):
                 with self.audits.store.transaction() as tx:
                     current = self.executor.workflow._owned(tx, task)

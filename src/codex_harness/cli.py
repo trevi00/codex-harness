@@ -145,6 +145,7 @@ def parser() -> argparse.ArgumentParser:
     improve = commands.add_parser("improve")
     improve.add_argument("objective")
     improve.add_argument("--acceptance", action="append", required=True)
+    improve.add_argument("--importance", choices=["simple", "important"])
     execute = commands.add_parser("execute-one")
     execute.add_argument("--agent", required=True)
     cancel = commands.add_parser("cancel")
@@ -285,8 +286,10 @@ def main() -> None:
             emit({"message": message, "stream_id": RedisBus(redis_url()).publish(message)})
         elif args.command == "improve":
             executor = build_executor(service)
-            message = envelope("task.assign", "conductor", "lead:improvement", "plan",
-                               {"objective": args.objective, "acceptance_criteria": args.acceptance},
+            details = {"objective": args.objective, "acceptance_criteria": args.acceptance}
+            if args.importance is not None:
+                details["importance"] = args.importance
+            message = envelope("task.assign", "conductor", "lead:improvement", "plan", details,
                                "improvement:" + str(uuid4()))
             message["where"]["revision"] = executor.git._git("rev-parse", "HEAD")
             message["how"]["acceptance_criteria"] = args.acceptance

@@ -66,7 +66,8 @@ class Harness:
                                         message["correlation_id"], message["message_id"])
                 if lead.role == "conductor":
                     notification = envelope("task.assign", lead.id, "lead:improvement", "plan",
-                                            {"objective": "Implement mandatory recurrence hook", "hook": hook},
+                                            {"objective": "Implement mandatory recurrence hook", "hook": hook,
+                                             "importance": "important"},
                                             message["correlation_id"], message["message_id"])
                 self.org.authorize(notification)
                 tx.put("outbox", notification["message_id"], {"message": notification, "sent": False})

@@ -23,6 +23,7 @@ from codex_harness.domain.model import (
     require,
     utcnow,
 )
+from codex_harness.domain.model_routing import select_model
 from codex_harness.domain.policy import POLICY
 from codex_harness.domain.research import require_dispatch
 
@@ -61,7 +62,9 @@ class Executor:
             self.audit_execution = AuditExecution(self, audit_runner)
 
     def _run(self, agent: str, key: str, objective: str, evidence: dict, cwd: str,
-             schema: dict, read_only: bool = False, heartbeat=None, lease=None, stage=None) -> dict:
+             schema: dict, read_only: bool = False, heartbeat=None, lease=None, stage=None,
+             workload: str = "final_validation", importance: str | None = None) -> dict:
+        selection = select_model(workload, importance)
         raw = self.artifacts.put(canonical(evidence), "task:" + key)
         basis_revision = self.git._git("rev-parse", "HEAD", cwd=cwd)
         with self.service.store.transaction() as tx:
@@ -208,7 +211,8 @@ class Executor:
             try:
                 with AppServer(hooks=NativeHooks(self.service, self.git, self.artifacts).configuration()) as runtime:
                     result = runtime.run(prompt, cwd, schema, POLICY.task_seconds if agent.startswith("worker:") else POLICY.decision_seconds,
-                                         on_event=observe, read_only=read_only, on_tick=lambda: observe(None))
+                                         on_event=observe, read_only=read_only, on_tick=lambda: observe(None),
+                                         model=selection.requested_model)
             except Exception as exc:
                 if result is None or not result.get("inspection_blocked"):
                     raise
@@ -218,6 +222,7 @@ class Executor:
             if context_bound:
                 result.update(elapsed_seconds=time.monotonic() - started,
                               context_ref=context_ref["ref"], research_binding=binding)
+            result["model_selection"] = selection.receipt()
             if history_recording:
                 result['skill_history_recording'] = history_recording
             evidence_ref = self.artifacts.put(canonical(result), "execution:" + key)
@@ -270,7 +275,7 @@ class Executor:
                     shortlist = self._run(agent, task["id"],
                         "Shortlist exactly one repository URL from the collected entries for detailed evaluation",
                         sources, str(self.git.repository), SHORTLIST, True, heartbeat, task,
-                        stage="shortlist")
+                        stage="shortlist", workload="design")
                     selected = shortlist.get("source_url")
                     require(selected in {s["url"] for s in sources["items"]},
                             "Unfetched shortlist citation")
@@ -295,7 +300,7 @@ class Executor:
                         "Record a discovery-only candidate requiring exhaustive source audit before adoption. "
                         "Declare the exact source_url and source_revision from research_context.",
                         evidence, str(self.git.repository), GITHUB_RESEARCH, True, heartbeat, task,
-                        stage="final")
+                        stage="final", workload="design")
                     require(result.get("source_url") == selected, "Mismatched final research citation")
                     require(result.get("source_revision") == detail["revision"],
                             "Mismatched final source revision")
@@ -305,7 +310,8 @@ class Executor:
                     result["research_attempt"] = task["attempt"]
                 else:
                     result = self._run(agent, task["id"], "Record one discovery-only candidate; primary-source mapping and audit remain required", sources,
-                                       str(self.git.repository), RESEARCH, True, heartbeat, task)
+                                       str(self.git.repository), RESEARCH, True, heartbeat, task,
+                                       workload="design")
                     require(result["source_url"] in {s["url"] for s in sources["items"]}, "Unfetched research citation")
                 result["source_artifact"] = sources["artifact"]
                 result["coverage_status"] = "discovery_only"
@@ -315,7 +321,8 @@ class Executor:
                                    "Describe the future implementer's authorized changes. Current-turn "
                                    "review/planning restrictions do not prohibit the downstream implementer "
                                    "from editing its assigned workspace; do not copy them into the objective.", details,
-                                   str(self.git.repository), PLAN, True, heartbeat, task)
+                                   str(self.git.repository), PLAN, True, heartbeat, task,
+                                   workload="design")
                 result["origin"] = details
                 if details.get("plan", {}).get("origin", {}).get("hook"):
                     result["origin"]["hook"] = details["plan"]["origin"]["hook"]
@@ -336,7 +343,9 @@ class Executor:
                         "Include negative cases and actual incident reproductions; never fabricate a fix."}
                 result = self._run(agent, task["id"], "Implement the assigned plan, run meaningful tests, "
                                    "and leave changes ready for independent review", details,
-                                   workspace["path"], IMPLEMENTATION, False, heartbeat, task)
+                                   workspace["path"], IMPLEMENTATION, False, heartbeat, task,
+                                   workload="implementation",
+                                   importance=details.get("plan", {}).get("origin", {}).get("importance"))
                 heartbeat()
                 result["candidate"] = self.git.capture(workspace)
                 if hook:
@@ -422,8 +431,9 @@ class Executor:
                                "evidence and rollback. Accept only when justified. For diagnosis, confirm a root "
                                "cause only from evidence, never from generic error similarity; reuse a known cause "
                                "ID only when the cause and scope are the same.", data, cwd,
-                               DIAGNOSIS if phase == "diagnose" else VERDICT, True,
-                               heartbeat=lambda: self.workflow.heartbeat(lease), lease=lease)
+                                DIAGNOSIS if phase == "diagnose" else VERDICT, True,
+                                heartbeat=lambda: self.workflow.heartbeat(lease), lease=lease,
+                                workload="design" if phase == "diagnose" else "final_validation")
             if phase.startswith("review_"):
                 require(not self.git._git("status", "--porcelain", cwd=cwd), "Reviewer modified its checkout")
                 require(self.git._git("rev-parse", "HEAD", cwd=cwd) == data["candidate"]["revision"],
@@ -473,7 +483,11 @@ class Executor:
                 self.releases.review(release["id"], agent, data["candidate"]["revision"],
                                      result["accepted"], result["execution_ref"])
                 self._review_hook(data["candidate"], agent, result)
-                result.update(candidate=data["candidate"], release_id=release["id"])
+                importance = (data.get("origin", {}).get("plan", {}).get("origin", {})
+                              .get("importance"))
+                result.update(candidate=data["candidate"], release_id=release["id"],
+                              origin={"plan": {"origin": ({"importance": importance}
+                                                           if importance is not None else {})}})
                 if result["accepted"]:
                     next_message = envelope("review.result", agent, "conductor", "review",
                                             {"decision_id": decision["id"], "result": result},
@@ -499,15 +513,24 @@ class Executor:
                         loop.update(status="reworking", reworks=loop["reworks"] + 1)
                         loop["rejected_trees"].append(tree)
                         recipient = "worker:implementation" if phase == "review_lead" else "lead:improvement"
+                        importance = (data.get("origin", {}).get("plan", {}).get("origin", {})
+                                      .get("importance"))
+                        rework_plan = {
+                            "objective": "Reimplement the rejected improvement and address every review finding",
+                            "acceptance_criteria": [result["reason"]],
+                            "previous_candidate": data["candidate"], "review_feedback": result,
+                        }
+                        if phase == "review_lead":
+                            rework_plan["origin"] = ({"importance": importance}
+                                                     if importance is not None else {})
                         next_message = self.workflow._next(message, agent, recipient,
                             "implement" if phase == "review_lead" else "plan",
-                            {"plan": {"objective": "Reimplement the rejected improvement and address every review finding",
-                                      "acceptance_criteria": [result["reason"]],
-                                      "previous_candidate": data["candidate"], "review_feedback": result},
-                             "rework": loop["reworks"]})
+                            {"plan": rework_plan, "rework": loop["reworks"],
+                             **({"importance": importance} if phase == "review_conductor"
+                                and importance is not None else {})})
                         if data["candidate"].get("hook_id"):
                             hook = tx.get("hooks", data["candidate"]["hook_id"])
-                            next_message["what"]["details"]["plan"]["origin"] = {"hook": hook}
+                            next_message["what"]["details"]["plan"].setdefault("origin", {})["hook"] = hook
                     tx.put("improvement_loops", loop["id"], loop)
             with self.service.store.transaction() as tx:
                 current = tx.get("decisions_pending", decision["id"])
