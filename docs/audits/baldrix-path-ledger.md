@@ -10,6 +10,14 @@ unreviewed **records**; four newly attested full source reads. Mentions and
 automatic records are not semantic completion. Zero path-level deployment
 attestations does not mean previously deployed components are absent.
 
+Follow-up snapshot (2026-09-08): 15 explicit full-read attestations, including six
+budget-chain dependencies and five SDD comparison sources; 300 automatic unreviewed
+records. The complete inventory remains 1,648 paths. This count is newly reconciled
+path evidence, not a claim that only 15 files were ever read historically.
+Snapshot: `sha256:216b39210e6737c240a4a8cb3e0a742c1ac36df391c8ff5a5b15c6289ea389a2`.
+See baldrix-budget-chain.md for ten executed characterization probes and
+baldrix-sdd-gap.md for the distinction between migrated recommendations and SDD execution.
+
 Run with this branch on PYTHONPATH and the normal harness database configuration:
 
 ```text
