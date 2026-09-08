@@ -19,11 +19,8 @@ def test_artifact_bounds_search_and_tampering(tmp_path):
 
 
 def test_rlm_reads_external_ranges_and_stops_before_overspending(tmp_path):
-    models = []
-
     class Runtime:
-        def run(self, *args, **kwargs):
-            models.append(kwargs['model'])
+        def run(self, *args):
             return {"answer": {"finding": "fixture finding", "sufficient": True}}
 
     artifacts = FileArtifacts(str(tmp_path))
@@ -32,8 +29,6 @@ def test_rlm_reads_external_ranges_and_stops_before_overspending(tmp_path):
     result = rlm.analyze(ref, "Find the relevant facts")
     assert rlm.calls == 4 and result["range"] == [0, 9000]
     assert len(result["children"]) == 3
-    assert models == ['gpt-6-astra'] * 4
-    assert result['model_selection']['requested_model'] == 'gpt-6-astra'
     too_small = RecursiveContext(artifacts, Runtime(), str(tmp_path), max_calls=3, chunk_size=3000)
     with pytest.raises(ContractError, match="budget"):
         too_small.analyze(ref, "Find facts")

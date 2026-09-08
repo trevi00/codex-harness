@@ -328,13 +328,18 @@ def main() -> None:
         elif args.command == "project-graph":
             emit(PostgresKnowledge(database_url()).project_runtime(service.store, service.org))
         elif args.command == "rlm":
+            from functools import partial
+            from types import SimpleNamespace
+
             from codex_harness.adapters.app_server import AppServer
             from codex_harness.adapters.hooks import NativeHooks
             from codex_harness.application.rlm import RecursiveContext
+            from codex_harness.domain.model_routing import select_model
 
             executor = build_executor(service)
             with AppServer(hooks=NativeHooks(service, executor.git, executor.artifacts).configuration()) as runtime:
-                rlm = RecursiveContext(executor.artifacts, runtime, str(executor.git.repository),
+                selected = SimpleNamespace(run=partial(runtime.run, model=select_model('design').requested_model))
+                rlm = RecursiveContext(executor.artifacts, selected, str(executor.git.repository),
                                        max_calls=args.max_calls)
                 emit(rlm.analyze(args.reference, args.question))
         elif args.command == "context":
