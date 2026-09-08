@@ -8,6 +8,16 @@ from threading import RLock
 import psycopg
 from psycopg.types.json import Jsonb
 
+from codex_harness.adapters.record_references import record_references
+from codex_harness.domain.model import require
+
+
+def check_collected(tx, bucket, key, body):
+    # INV-RESOURCE-001: serialize bare-reference publication with GC tombstones.
+    for reference in record_references(bucket, key, body):
+        require(tx.get('artifact_tombstones', reference) is None,
+                "Artifact reference was collected")
+
 
 class MemoryTransaction:
     def __init__(self, data: dict):
@@ -17,6 +27,7 @@ class MemoryTransaction:
         return deepcopy(self.data.get((bucket, key)))
 
     def put(self, bucket: str, key: str, body: dict) -> None:
+        check_collected(self, bucket, key, body)
         self.data[bucket, key] = deepcopy(body)
 
     def scan(self, bucket: str) -> list[dict]:
@@ -50,6 +61,7 @@ class PostgresTransaction:
         return row[0] if row else None
 
     def put(self, bucket: str, key: str, body: dict) -> None:
+        check_collected(self, bucket, key, body)
         self.conn.execute("""INSERT INTO documents(bucket,id,body) VALUES (%s,%s,%s)
             ON CONFLICT(bucket,id) DO UPDATE SET body=excluded.body""", (bucket, key, Jsonb(body)))
 

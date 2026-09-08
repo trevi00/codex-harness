@@ -1,0 +1,28 @@
+{
+  "task_id": "9fef2878-81e1-4110-b0c6-1b43835dfe44",
+  "base": "0548efaf1bc8833c750c80b242de03b5a73d7799",
+  "assignment_ref": "sha256:c83761c32e6d0d9c736b97965788f9a88a7565c991b28dffa09dbcfca62ec72d",
+  "files": {
+    "docs/artifact-record-fence-review.md": "efabb20ccd2bdd3622cf02a496dd5651f792282f4ecd4067db760c50edc204bc",
+    "src/codex_harness/adapters/artifacts.py": "1a021dd66d2719c48bfb0a5fc4c3ffed02030134c919d02a00a21abc88430934",
+    "src/codex_harness/adapters/maintenance.py": "4d5831771a2e2344b533f8c1e274650189e0d64e55f2890d5485f71ba44a4645",
+    "src/codex_harness/adapters/record_references.py": "c04b77615c376d8c777ac4742da9f303a3cc4df8087eac9062e4b7ca0292f751",
+    "src/codex_harness/adapters/store.py": "d4152ade1efaeacfc8cba2994cc61a637a965f2f453f85504e4fe600341ab0ec",
+    "src/codex_harness/application/rlm.py": "8708d04435a3c62ebf07dd6e432567874549551885f15240c2e421be1c185927",
+    "src/codex_harness/ports.py": "462ff2840fd45c78d04c38d6b5b6ed7ac9dc91803415bdefa830535d8b749ca9",
+    "tests/artifact-record-fence-pytest.txt": "930ae07b2fc6c4b1432e1c01f44fed23c9dd4c01abc436c961bcf53ee7f9f303",
+    "tests/artifact-record-fence-regressions.txt": "b00caef62d7a8ba21f45a816ef008332b43b31f793f0a346159d3c57fd2be575",
+    "tests/artifact-record-fence-ruff.txt": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "tests/test_maintenance.py": "eb381ac41fd1e06af1cbee1fff8f496468ca00ec92d3dd0f9dd07a741471fa6d"
+  },
+  "checks": {
+    "ruff": 0,
+    "pytest": 0,
+    "maintenance_runxfail": 0,
+    "diff_check": 0
+  },
+  "limitations": [
+    "No live PostgreSQL verification",
+    "No independent review or production canary"
+  ]
+}
