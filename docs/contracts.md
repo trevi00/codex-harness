@@ -2,6 +2,7 @@
 
 | ID | Contract |
 |---|---|
+| INV-MIGRATION-001 | Every pinned path remains in the migration ledger. Document mentions, automatic dispositions and scoped reads do not grant adoption, implementation or deployment attestation. Preserve each reconciliation snapshot. |
 | INV-MESSAGE-001 | All messages are six-W JSON. IDs cannot identify two payloads. DB commit precedes ACK; delivery is at-least-once. Reports match durable completed executions. |
 | INV-RECURRENCE-001 | Two independent occurrences with the same confirmed cause/scope require a hook. Redelivery is not recurrence. Active-hook recurrence requires a version update while preserving the previous verified version. |
 | INV-CONTEXT-001 | Required role, goal, acceptance, policy and provenance are never silently truncated. UTF-8 bytes are a conservative composition budget, distinct from measured tokens. External evidence is bounded data. |
