@@ -2,6 +2,11 @@
 
 Source expansion and harness-specific candidate metrics: [metric-source-catalog.md](metric-source-catalog.md).
 
+Cross-cutting review criteria: [usability, clarity, reliability, extensibility, cohesion,
+coupling and maintainability](cross-cutting-quality.md). Apply the same scoped evidence
+requirements to UI, backend, harness and context management; use SOLID and design patterns
+where they clarify responsibilities and preserve contracts, not as automatic quality scores.
+
 Status: stage-one measurement candidate implemented below; not deployed metric enforcement. The current VERDICT uses
 free-text SRE and arc42 assessments. Source audit work strengthens provenance but does not complete
 the measurement and decision framework described here.
