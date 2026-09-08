@@ -28,3 +28,26 @@ Evidence: `sha256:4e464df39c84f80ba5728ae5101ffd7de0c0fc47585c573cffed5f31f404ee
 and `sha256:32056905b4a85f29a0aa85a3f619a9e56a755d39c5ea7b3bc85918ecb6d759e3`.
 Autonomy is active with a backlog and unresolved inspection/review failures. Sustainable
 throughput, bounded waiting and automatic recovery remain unproven.
+
+Follow-up at 10:18 KST: 65 queued tasks comprised 63 GitHub audit partitions,
+one GitHub research task and one acquisition. All 57 pending decisions belonged to
+the research lead's diagnosis phase, not conductor approval. Evidence:
+`sha256:1fffd1523e851a2d2c3a4181f884243f83d6317b38c60fc80897e9c279b89fa7`.
+Inspection of the running research-lead container confirmed a global execution cap
+of two and one execution per actor. Task claims sort by creation time, but decision
+claims consume the PostgreSQL scan's ID order. Consequently, more conductor replicas
+would not directly drain this queue; older decisions lack FIFO ordering. Each failed
+task attempt can also enqueue a separate parent diagnosis. Shared-cause coalescing
+and fairness across tasks and decisions remain needed; throughput gains are unmeasured.
+
+One recent inspection-blocked receipt was independently inspected:
+`sha256:f9eb6bddd940f3f1e3884c046611a1144aa91720c9cc17c1eb6da2767ea32045`.
+Its command searched repository files and `/runtime/artifacts`, emitted 1,048,281
+characters and ended with exit code 130. Its output included historical JSON quoting
+`bwrap: No permissions to create a new namespace`. The detector combines any nonzero
+exit with a substring anywhere in output, so this receipt does not establish a new
+namespace-creation failure. The command interruption cause is not established either.
+Do not reinterpret all historical blocked records as false positives: each needs its
+own command evidence. Detection must distinguish current diagnostics from quoted
+evidence while still withholding acceptance when required inspection is incomplete.
+Bounded artifact lookup is also preferable to recursively searching the artifact store.
