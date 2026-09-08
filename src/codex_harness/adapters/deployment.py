@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 from codex_harness.adapters.commands import run_process
@@ -10,6 +12,28 @@ from codex_harness.adapters.hooks import NativeHooks
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import canonical, digest, require, utcnow
+
+
+@contextmanager
+def incumbent_test_workspace(incumbent: str, candidate: str):
+    """Keep incumbent tests/history while file-based fixtures inspect candidate source."""
+    original, selected = Path(incumbent).resolve(), Path(candidate).resolve()
+    require((original / '.git').is_dir(), 'Evaluator requires a native Git checkout')
+    with tempfile.TemporaryDirectory(prefix='harness-incumbent-evaluator-') as directory:
+        root = Path(directory) / 'evaluation'
+
+        def ignore(path, names):
+            excluded = {'__pycache__', '.pytest_cache', '.venv'}
+            if Path(path).resolve() == original:
+                excluded.add('src')
+            return set(names) & excluded
+
+        # INV-RELEASE-001: never rewrite either reviewed checkout or test bytes.
+        # __file__-relative fixtures and imported code must describe one candidate.
+        shutil.copytree(original, root, ignore=ignore)
+        shutil.copytree(selected / 'src', root / 'src',
+                        ignore=shutil.ignore_patterns('__pycache__'))
+        yield root
 
 
 class ReleaseRunner:
@@ -67,11 +91,13 @@ class ReleaseRunner:
         test_env = {**os.environ, "HARNESS_INTEGRATION": "1",
                     "HARNESS_DATABASE_URL": self.service.store.dsn,
                     "HARNESS_REDIS_URL": os.environ.get("HARNESS_REDIS_URL", "redis://127.0.0.1:56379/0")}
-        # INV-RELEASE-001: incumbent tests may import sibling test helpers under
-        # importlib mode. Expose only that test directory, not incumbent src.
-        incumbent_env = {**test_env, "PYTHONPATH": str(Path(incumbent) / "tests")}
-        tests = self._check([str(python), "-m", "pytest", str(Path(incumbent) / "tests"),
-                             "-c", str(Path(incumbent) / "pyproject.toml"), "--import-mode=importlib", "-q"], path, env=incumbent_env)
+        with incumbent_test_workspace(incumbent, path) as evaluator:
+            incumbent_env = {**test_env, "PYTHONPATH": os.pathsep.join(
+                [str(evaluator / 'tests'), str(evaluator / 'src')])}
+            tests = self._check([str(python), "-m", "pytest", str(evaluator / 'tests'),
+                                 "-c", str(evaluator / 'pyproject.toml'),
+                                 "--import-mode=importlib", "-q"],
+                                str(evaluator), env=incumbent_env)
         candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path, env=test_env)
         tests = {"passed": tests["passed"] and candidate_tests["passed"],
                  "evidence": self.artifacts.put(canonical({"incumbent": tests, "candidate": candidate_tests}),
