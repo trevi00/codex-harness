@@ -17,6 +17,7 @@ from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import (
     ContextItem,
+    ContractError,
     ExecutionFailure,
     canonical,
     compile_context,
@@ -592,7 +593,21 @@ class Executor:
                     tx.put("outbox", next_message["message_id"], {"message": next_message, "sent": False})
             return current
         except Exception as exc:
-            return self.workflow.fail_execution({**decision, "_bucket": "decisions_pending"}, exc)
+            try:
+                return self.workflow.fail_execution({**decision, "_bucket": "decisions_pending"}, exc)
+            except ContractError:
+                # INV-SESSION-001: failure handling cannot overwrite a committed
+                # assessment or a replacement lease after a lost acknowledgement.
+                with self.service.store.transaction() as tx:
+                    current = tx.get("decisions_pending", decision["id"])
+                if current and current["status"] == "succeeded":
+                    return current
+                if current and (current["status"] != "running"
+                                or current["generation"] != decision["generation"]
+                                or current["lease_owner"] != decision["lease_owner"]
+                                or datetime.fromisoformat(current["lease_until"]) <= datetime.now(timezone.utc)):
+                    return {"id": decision["id"], "status": "retry", "error": str(exc)}
+                raise
 
     def _review_hook(self, candidate, agent, result):
         if candidate.get("hook_id"):
