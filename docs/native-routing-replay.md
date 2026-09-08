@@ -90,3 +90,19 @@ restores the exact body bytes. Default round 0 still returns the historical bloc
 result; explicit round 1 reproduces the baseline and is itself idempotent. Both runs
 remain stored. The new round removes only the incomplete-replay blocker; native
 task-success and release approval remain mandatory, and no activation is authorized.
+
+Round recovery verification at `fd1d3c1e3e0037407e7004b0aa0f208d9dc148a8`:
+Ruff passed; Windows 504 passed / 7 skipped
+(`sha256:19dcf47134754d8175817b1a9b858c4182da75644e65b3358d87825b347cf8d8`);
+Linux 511 passed (`sha256:254385d48dcb0ad3a2cf641e585ccde6826ef2713447cccffa894a776d26706d`).
+Actual CLI canary with all 98 packaged files matched
+(`sha256:eac654cf0c533448a471bd26af3d8cb8ee21b44da37e5756c0624f96c1dcd666`)
+and actual Git/collection/PostgreSQL synthetic canary
+(`sha256:b8323a257cd8edb19054f7f5472dda6c357cf6b971d0af0aadcd1cf8effb0383`) passed.
+Claude supplied-source review ACCEPT:
+`sha256:c485d13f1a7ca3c0a034f6d831480663efbb8a6f8c6f6656059c710f81f72a2c`.
+Follow-ups include explicit failure for a dangling collection index, an invocation-level
+reuse marker, native-evaluator concurrency coverage and persistently broken/nonmonotonic
+round tests. The existing collection transaction creates index and run atomically;
+external record corruption/deletion is not covered by that invariant. Algorithm
+fingerprinting, transitive provenance and bounded manifest reads remain open.
