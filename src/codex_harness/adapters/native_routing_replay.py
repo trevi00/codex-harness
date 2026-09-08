@@ -64,6 +64,9 @@ class NativeRoutingReplay:
                     cache[ref] = self._manifest(ref, values)
                 except (ContractError, OSError, ValueError, KeyError, TypeError, RecursionError) as exc:
                     cache[ref] = {'manifest_ref': ref, 'status': 'unavailable', 'reason': type(exc).__name__}
+                    if isinstance(exc, ContractError):
+                        # Contract messages are fixed by our validators; do not expose raw OS/backend errors.
+                        cache[ref]['detail'] = str(exc)
             observations.append({'event_index': index, 'manifest_ref': ref, 'status': cache[ref]['status']})
         replayed = sum(row['status'] == 'replayed' for row in observations)
         return {'status': 'complete' if replayed == len(events) and events else 'partial' if replayed else 'unavailable',

@@ -77,6 +77,45 @@ def test_unreproducible_or_missing_evidence_is_not_success(tmp_path, change):
     report = NativeRoutingReplay(artifacts).evaluate([{'manifest_ref': ref}, {'top': []}], [3, 4])
     assert report['replayed_events'] == 0 and report['total_events'] == 2
     assert all(row['status'] == 'unavailable' for row in report['observations'])
+    details = {'hash': 'Native baseline does not reproduce', 'model': 'Unsupported admission model',
+               'eligibility': 'Incomplete routing eligibility', 'duplicate': 'Duplicate routing identity'}
+    if change == 'body':
+        assert report['manifests'][ref]['reason'] == 'FileNotFoundError'
+        assert 'detail' not in report['manifests'][ref]
+    else:
+        assert report['manifests'][ref]['detail'] == details[change]
+
+
+def test_explicit_new_round_recovers_missing_evidence_without_rewriting_old_run(policy_repo, tmp_path, capsys):
+    root, _ = policy_repo
+    artifacts, manifest, ref, _ = routed(tmp_path)
+    row = next(row for row in manifest['skills'] if row['tier'] == 'full')
+    body_path = artifacts.root / (row['content_ref'][7:] + '.txt')
+    original = body_path.read_bytes()
+    body_path.unlink()
+    store = MemoryStore()
+    with store.transaction() as tx:
+        tx.put('skill_history', digest('github:owner/repo'),
+               {'events': [{**event, 'manifest_ref': ref} for event in events()]})
+    args = ['--github-repo', 'owner/repo', '--harness-repo', str(root), '--artifacts', str(artifacts.root)]
+    assert main(args, store=store) == 0
+    old = json.loads(capsys.readouterr().out)
+    assert 'native_replay_incomplete' in old['proposals'][0]['activation_blockers']
+    body_path.write_bytes(original)
+    assert main(args, store=store) == 0
+    assert json.loads(capsys.readouterr().out) == old
+    assert main([*args, '--evaluation-round', '1'], store=store) == 0
+    new = json.loads(capsys.readouterr().out)
+    assert new['id'] != old['id'] and new['evaluation_round'] == 1
+    assert 'native_replay_incomplete' not in new['proposals'][0]['activation_blockers']
+    assert 'native_task_success_and_release_review_required' in new['proposals'][0]['activation_blockers']
+    assert not new['activation_ready']
+    assert main([*args, '--evaluation-round', '1'], store=store) == 0
+    assert json.loads(capsys.readouterr().out) == new
+    with store.transaction() as tx:
+        assert tx.get('threshold_proposal_runs', old['id']) == old
+        assert len(tx.scan('threshold_proposal_runs')) == 2
+    assert main([*args, '--evaluation-round', '-1'], store=store) == 2
 
 
 def test_real_collection_cli_archives_native_comparison_with_reference_proposals(policy_repo, tmp_path, capsys):

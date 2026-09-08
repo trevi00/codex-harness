@@ -26,6 +26,8 @@ def main(argv=None, *, store=None):
     parser.add_argument('--revision', default='HEAD')
     parser.add_argument('--legacy-source')
     parser.add_argument('--min-sample', type=int, default=10)
+    parser.add_argument('--evaluation-round', type=int, default=0,
+                        help='Explicit new comparison round; identical rounds reuse retained results')
     parser.add_argument('--artifacts', default='.runtime/artifacts')
     args = parser.parse_args(argv)
     try:
@@ -38,7 +40,8 @@ def main(argv=None, *, store=None):
         artifacts = FileArtifacts(args.artifacts)
         service = ThresholdProposals(store if store is not None else PostgresStore(database_url()),
             artifacts, lambda: policy, NativeRoutingReplay(artifacts))
-        run = service.collect(digest(project), legacy_source=args.legacy_source, min_sample=args.min_sample)
+        run = service.collect(digest(project), legacy_source=args.legacy_source, min_sample=args.min_sample,
+                              evaluation_round=args.evaluation_round)
         print(json.dumps(run, ensure_ascii=True, allow_nan=False))
         return 0
     except ContractError:
