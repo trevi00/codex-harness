@@ -1,6 +1,8 @@
 import os
 import time
 
+import pytest
+
 from codex_harness.adapters.artifacts import FileArtifacts
 from codex_harness.adapters.maintenance import ArtifactMaintenance
 from codex_harness.adapters.store import MemoryStore
@@ -410,7 +412,8 @@ def test_postgres_transaction_rejects_collected_record_fields_before_insert():
             tx.put(*reference_record(location, ref))
 
 
-def test_generation_snapshot_waits_for_complete_publication_without_db_lock(tmp_path):
+@pytest.mark.parametrize('apply', [False, True])
+def test_generation_snapshot_waits_for_complete_publication_without_db_lock(tmp_path, apply):
     from concurrent.futures import ThreadPoolExecutor
     from threading import Event
 
@@ -442,7 +445,7 @@ def test_generation_snapshot_waits_for_complete_publication_without_db_lock(tmp_
     with ThreadPoolExecutor(max_workers=2) as pool:
         publisher = pool.submit(artifacts.put, child, 'parent')
         assert changed.wait(2)
-        collector = pool.submit(ObservedMaintenance(store, artifacts).collect, True)
+        collector = pool.submit(ObservedMaintenance(store, artifacts).collect, apply)
         try:
             assert roots_read.wait(2)
             # A real publisher owns the file lock. Snapshot sampling must wait
@@ -452,6 +455,16 @@ def test_generation_snapshot_waits_for_complete_publication_without_db_lock(tmp_
             if acquired:
                 store.lock.release()
             assert acquired
+            result = collector.result(timeout=2)
+            assert not release.is_set() and not publisher.done()
+            assert result['reason'] == 'publication_in_progress'
+            assert result['deferred_scope'] == 'scan'
+            assert result['deferred'] == 1 and result['files'] == 0
+            assert result['applied'] is apply
+            assert artifacts.read(child) == 'publication dependency'
+            with store.transaction() as tx:
+                tx.put('heartbeat', 'during-publication', {'alive': True})
+                assert tx.get('maintenance', 'latest') == (result if apply else None)
         finally:
             release.set()
         parent = publisher.result(timeout=5)['ref']
