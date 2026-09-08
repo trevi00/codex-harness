@@ -647,3 +647,14 @@ cache; these references are not claims of upload into the runtime artifact store
   }
 }
 ```
+
+
+## Evaluator integration follow-up (e33e0d91)
+
+Maintenance revision `7cc2bd326c41d0790d5742217e16078f716a7de6` is retained in
+Git ancestry without changing its implementation. The combined evaluator candidate,
+worker receipt location, fresh workflow handoff and operator activation/recovery
+procedure are documented in [release-evaluator-layout.md](release-evaluator-layout.md).
+Earlier receipts above remain bound to their original revisions. Final combined
+qualification does not inherit earlier approvals, operator reports or canaries.
+Publishing, controller activation and promotion remain separately authorized.
