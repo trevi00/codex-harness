@@ -1,0 +1,53 @@
+{
+  "schema": "sdd-device-program.v1",
+  "recorded_on": "2026-09-08",
+  "intent_status": "user_agreed_direction",
+  "runtime_activation": false,
+  "definition_document": "docs/sdd-device-program.md",
+  "baseline_revision": "0548efaf1bc8833c750c80b242de03b5a73d7799",
+  "runtime_status_authority": "PostgreSQL execution, review and deployment records",
+  "teams": ["spec", "frontend", "backend", "qa_qc", "devops", "research", "improvement"],
+  "frontend_iteration": [
+    "spec_discussion", "design_analysis", "implementation", "self_verification",
+    "alpha_deployment", "qa_evidence_approval", "progressive_live_deployment", "cs_and_operations"
+  ],
+  "requirements": [
+    {"id":"SDD-001","owner":"spec","scope":"Versioned spec, AC, human-confirmed core journeys and scope","delivery":"required","acceptance":"Every executable scenario links explicit expected outcomes and a reviewed spec revision; unknown intent remains unresolved."},
+    {"id":"SDD-002","owner":"qa_qc","scope":"Spec-to-scenario and E2E draft generation","delivery":"required","acceptance":"Generated drafts retain source AC links, normal/error/cancel/recovery paths and human review; generation never creates execution evidence."},
+    {"id":"SDD-003","owner":"improvement","scope":"Authoritative stage progression and dependency invalidation","delivery":"required","acceptance":"Actual evaluator receipts and revision-bound approvals gate progression; upstream spec/code/environment changes invalidate affected approvals."},
+    {"id":"SDD-004","owner":"frontend","scope":"Eight-stage iterative frontend workflow","delivery":"required","acceptance":"Failure returns to the responsible stage; bounded implementation repair preserves approved expected outcomes and historical failures."},
+    {"id":"ORG-001","owner":"improvement","scope":"Five development teams plus research and improvement","delivery":"required","acceptance":"Each active role has routing, authority, execution, review and recovery paths; implementation and final verification are independent."},
+    {"id":"DEV-001","owner":"devops","scope":"One Device port for MCP, agent, REPL and E2E","delivery":"required","acceptance":"All clients use the same action semantics, capability checks, exclusive lease and artifact capture; stale owner actions are rejected."},
+    {"id":"DEV-002","owner":"frontend","scope":"Device Live/Interact and human takeover","delivery":"required","acceptance":"Human takeover pauses agent writes; action ownership, intervention and resume are recorded."},
+    {"id":"DEV-003","owner":"qa_qc","scope":"Measured device execution to E2E code and replay","delivery":"required","acceptance":"A complete real-device scenario generates a reviewed executable test which passes a fresh full run after verified reset; resumed/debug runs do not count as fresh acceptance."},
+    {"id":"DEV-004","owner":"spec","scope":"Log-to-scenario skill","delivery":"required","acceptance":"Action, UI and backend traces produce source-linked drafts; missing actions or human intent are never invented."},
+    {"id":"ENV-001","owner":"devops","scope":"Reproducible real environment without mocking","delivery":"required","acceptance":"Builds, device/OS/driver, configuration and data/reset procedure are recorded; real dependencies or official test services execute; missing infrastructure is unverified."},
+    {"id":"QA-001","owner":"qa_qc","scope":"Financial-flow and human acceptance gates","delivery":"required","acceptance":"Amounts, currency, fees, rounding, duplicates, ambiguous outcomes, cancellation/refund, permissions and actual transaction state are tested; uncertain actions are reconciled before retry."},
+    {"id":"VIEW-001","owner":"frontend","scope":"Visual spec/scenario/evidence/approval workspace","delivery":"required","acceptance":"People can inspect journey graphs, expected-versus-observed results, changes and source evidence; approve only a specific revision and evidence set."},
+    {"id":"UI-001","owner":"frontend","scope":"shadcn/ui, Lucide and semantic CSS variable tokens","delivery":"required","acceptance":"Product and stories share components; color/type/spacing/radius/shadow/layer/motion and theme tokens are versioned; package versions are pinned at implementation."},
+    {"id":"UI-002","owner":"frontend","scope":"Storybook state and interaction coverage","delivery":"required","acceptance":"Required states, boundaries, responsive/accessibility behavior and business flows map to AC; component demos never certify real-service acceptance."},
+    {"id":"OBS-001","owner":"devops","scope":"Harness-wide structured causal logs","delivery":"required","acceptance":"Lifecycle boundaries link trace/task/session/generation/revision/evidence; sensitive data is removed and mandatory audit events are not sampled away."},
+    {"id":"OBS-002","owner":"devops","scope":"Missing-event and evidence detection","delivery":"required","acceptance":"Independent monitoring detects missing ACK, heartbeat, receipts, sequence gaps, queue deadlines and logging-system failures without treating active tools as idle."},
+    {"id":"OBS-003","owner":"devops","scope":"Reliable notification inbox and escalation","delivery":"required","acceptance":"Pending/delivered/acknowledged/resolved are distinct; dedup preserves recurrence evidence; failed delivery retries durably; normal cases do not alert."},
+    {"id":"RES-001","owner":"improvement","scope":"Exhaustive reference migration","delivery":"ongoing_not_complete","acceptance":"Pinned inventories, scoped source/caller analysis, executed tests, explicit gaps and independent adoption decisions cover Baldrix, harness/guardian, Hermes, Ouroboros and other tracked references."},
+    {"id":"CORE-001","owner":"improvement","scope":"Existing architecture, SSOT, GraphRAG and six-W contracts","delivery":"existing_baseline_preserved","acceptance":"New modules preserve hexagonal boundaries, Git definitions/PostgreSQL runtime authority and derived graph provenance; code comments cite non-obvious contracts."},
+    {"id":"CORE-002","owner":"improvement","scope":"70% handoff, idle lifecycle and resource scheduling","delivery":"existing_baseline_requires_new_team_integration","acceptance":"Handoff persists evidence and fences old writers; idle shutdown respects active tools/device leases and bus wakeup obeys resource budgets."},
+    {"id":"CORE-003","owner":"improvement","scope":"Second independent recurrence becomes mandatory hook improvement","delivery":"existing_baseline_preserved","acceptance":"Reproduction and normal-case tests, independent review and actual CLI canary precede activation; no bypassing gates."},
+    {"id":"MODEL-001","owner":"improvement","scope":"Astra to guarded Sol to guarded Terra transfer","delivery":"qualification_expansion_required","acceptance":"Task-family/version-bound equivalent behavior is demonstrated; unqualified work stays Astra; failure escalates to the qualified predecessor."},
+    {"id":"REL-001","owner":"devops","scope":"Reviewed progressive delivery and rollback","delivery":"existing_baseline_requires_new_pipeline_integration","acceptance":"Exact candidate and incumbent validation plus actual Codex CLI startup/file-task canary precede release; post-release failures trigger measured recovery."}
+  ],
+  "implementation_batches": [
+    {"id":"B01","requires":[],"items":["SDD-001","SDD-002","VIEW-001","UI-001","UI-002","OBS-001"],"exit":"Reviewable spec/AC/scenario chain and shared component stories; observational evidence remains distinct from approval."},
+    {"id":"B02","requires":["B01"],"items":["ENV-001","DEV-001","DEV-002","OBS-002","OBS-003"],"exit":"One approved target app on one real device with reset, single-owner control and durable evidence/notifications."},
+    {"id":"B03","requires":["B02"],"items":["DEV-003","DEV-004","QA-001","SDD-003"],"exit":"One human-approved core journey runs end-to-end, generates E2E code and passes fresh replay without mocks or changed expectations."},
+    {"id":"B04","requires":["B03"],"items":["ORG-001","SDD-004","CORE-001","CORE-002","CORE-003","MODEL-001","REL-001"],"exit":"Activate team routes with reviewed gates, observed resource limits and actual release canary; run the eight-stage iteration."},
+    {"id":"B05","requires":["B04"],"items":["RES-001"],"exit":"Expand proven scenarios and device coverage; continue source migration and incident-driven improvements without repository-wide completion overclaims."}
+  ],
+  "open_execution_inputs": [
+    "First target application, repository and human owner of its acceptance criteria",
+    "Required platforms and actual device/provider access; Device Farm SDK product is not yet selected",
+    "Official test accounts, real dependency endpoints and reset procedure",
+    "External notification channel recipients if needed; first channel is the local/LAN VIEW"
+  ],
+  "completion_rule": "Definition recorded is not implementation, verification, human acceptance or deployment. Each requires its own evidence."
+}
