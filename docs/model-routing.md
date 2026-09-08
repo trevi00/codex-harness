@@ -1,5 +1,9 @@
 # Model routing
 
+The later [progressive handoff procedure](progressive-model-handoff.md) supersedes
+static difficulty-based assignment as the intended operating policy. This selector
+alone is not qualification evidence; runtime promotion/fallback gates remain pending.
+
 The harness selects models from trusted workflow stage metadata before starting Codex. It does not
 accept a model choice from model output.
 
