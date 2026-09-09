@@ -160,6 +160,12 @@ class Executor:
             # this boundary even when a large diff is externalized from context.
             required['review_contract'] = {
                 'scope': 'Independent source and evidence review before host qualification',
+                'evidence_publication': 'Cite sha256 artifact handles only when they already exist in the '
+                                        'shared artifact store. Do not create FileArtifacts in a temporary '
+                                        'directory and cite its private handles. The executor publishes the '
+                                        'complete execution receipt automatically. Identify local checks by '
+                                        'command IDs or plain hexadecimal output digests until published.',
+
                 'qualification_owner': 'Host ReleaseRunner',
                 'review_testing': 'Independently run focused defect and negative-control tests. '
                                   'The host owns full incumbent/candidate suites after source approval; '
@@ -561,6 +567,10 @@ class Executor:
                     current.update(status="blocked", result=result, completed_at=utcnow())
                     tx.put("decisions_pending", decision["id"], current)
                 return current
+            if phase.startswith('review_') and result.get('accepted') is True:
+                from codex_harness.adapters.review_evidence import validate_review_evidence
+
+                validate_review_evidence(self.artifacts, result)
             migration_kwargs = {}
             if migration_record:
                 require(result.get('command_inspection_succeeded') is True,
