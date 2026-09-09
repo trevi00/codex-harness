@@ -298,3 +298,39 @@ def test_postgres_reverse_progress_concurrency_replay_and_history(pgstore, tmp_p
         assert {r['generation'] for r in history} == {1, 2, 3}
         assert tx.get('reverse_progress', 'project')['source']['commit'] == 'c' * 40
         assert next(r for r in history if r['generation'] == 2)['releases']['1-B']['status'] == 'complete'
+
+
+def test_pg_copy_projection_cannot_erase_live_child_or_tombstone(pgstore, tmp_path, monkeypatch):
+    import json
+
+    from codex_harness.adapters.artifacts import FileArtifacts
+    from codex_harness.adapters.historical_provenance import CombinedProvenance
+    from codex_harness.adapters.maintenance import ArtifactMaintenance
+    from codex_harness.adapters.occurrence_provenance import OccurrenceProvenance
+
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    child = artifacts.put('real integration child', 'test')['ref']
+    parent = artifacts.put(json.dumps({'evidence_ref': child}), 'test')['ref']
+    orphan = artifacts.put('unreferenced integration control', 'test')['ref']
+    for path in artifacts.root.glob('*.txt'):
+        os.utime(path, (1, 1))
+    with pgstore.transaction() as tx:
+        tx.put('roots', 'parent', {'ref': parent})
+
+    class WrongCopies:
+        revision = 'deliberately-incorrect-copy-projection'
+
+        def project(self, ref, original, projected):
+            return b'{}', set()
+
+    provenance = CombinedProvenance(
+        OccurrenceProvenance(b'{"version":1,"occurrences":[]}'), WrongCopies())
+    monkeypatch.setattr('codex_harness.adapters.maintenance.PROVENANCE', provenance)
+    # INV-RESOURCE-001: independent original-byte retention survives even a
+    # wrong copy annotation, and PostgreSQL publication honors GC tombstones.
+    assert ArtifactMaintenance(pgstore, artifacts).collect(apply=True)['files'] == 1
+    assert artifacts.read(child) == 'real integration child'
+    assert not (artifacts.root / (orphan[7:] + '.txt')).exists()
+    with pytest.raises(ValueError, match='Artifact reference was collected'):
+        with pgstore.transaction() as tx:
+            tx.put('roots', 'stale-publication', {'evidence_ref': orphan})

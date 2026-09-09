@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "base_revision": "11d79cc69a9c5a29a8a3ee834741033882c55849",
+  "resource_hex": "4d4a32dd04cebcfc7a757d5d265522b91f11982965a5c81ced5739920c3c9afb",
+  "historical_observations_hex": "83a0f31d05f3179653b2e3708ad1ebd51825549bcf7222ca5148008e8cf88128",
+  "scope": "Seven previously blocked parents only; no full production traversal",
+  "new_occurrences": 25,
+  "preserved_v1_occurrences": 22,
+  "parents": [
+    {
+      "parent": "sha256:34387bcb5a12d3f30db01a3672548efeaf3a1f6be802c9c195f33e0b5f073613",
+      "identifier": {
+        "namespace": "oci-image-operand",
+        "hex": "a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+      },
+      "original_occurrences": 7,
+      "preserved_v1_occurrences": 0,
+      "new_verified_occurrences": 7,
+      "status": "locally_bound_pending_independent_review",
+      "selectors": [
+        "/events/182/params/item/command",
+        "/events/182/params/item/commandActions/0/command",
+        "/events/307/params/delta",
+        "/events/308/params/item/aggregatedOutput",
+        "/events/424/params/item/command",
+        "/events/424/params/item/commandActions/0/command",
+        "/events/89/params/item/aggregatedOutput"
+      ],
+      "mandatory_origins": [
+        "sha256:34387bcb5a12d3f30db01a3672548efeaf3a1f6be802c9c195f33e0b5f073613",
+        "sha256:b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855"
+      ],
+      "remaining_selectors": []
+    },
+    {
+      "parent": "sha256:52303f1f22318fbb6ba7de0b47f4cf6e137242c12fc0b74023ae53b236c390f6",
+      "identifier": {
+        "namespace": "oci-image-operand",
+        "hex": "a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+      },
+      "original_occurrences": 1,
+      "preserved_v1_occurrences": 0,
+      "new_verified_occurrences": 1,
+      "status": "locally_bound_pending_independent_review",
+      "selectors": [
+        "/events/640/params/item/aggregatedOutput"
+      ],
+      "mandatory_origins": [
+        "sha256:34387bcb5a12d3f30db01a3672548efeaf3a1f6be802c9c195f33e0b5f073613",
+        "sha256:52303f1f22318fbb6ba7de0b47f4cf6e137242c12fc0b74023ae53b236c390f6",
+        "sha256:b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855"
+      ],
+      "remaining_selectors": []
+    },
+    {
+      "parent": "sha256:4fe2f35b9494727f2409cc00763083869d8106434e02140c44d912f8ea86d0fd",
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "original_occurrences": 1,
+      "preserved_v1_occurrences": 0,
+      "new_verified_occurrences": 1,
+      "status": "locally_bound_pending_independent_review",
+      "selectors": [
+        "/independent_diff/diff"
+      ],
+      "mandatory_origins": [
+        "sha256:4fe2f35b9494727f2409cc00763083869d8106434e02140c44d912f8ea86d0fd",
+        "sha256:eb56f9fd8f9bf13babf8c8e6360de6999fe2858412b7e4e15643b5c1b8ee949a"
+      ],
+      "remaining_selectors": []
+    },
+    {
+      "parent": "sha256:eb56f9fd8f9bf13babf8c8e6360de6999fe2858412b7e4e15643b5c1b8ee949a",
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "original_occurrences": 4,
+      "preserved_v1_occurrences": 0,
+      "new_verified_occurrences": 4,
+      "status": "locally_bound_pending_independent_review",
+      "selectors": [
+        "/events/795/params/delta",
+        "/events/796/params/item/aggregatedOutput",
+        "/events/884/params/delta",
+        "/events/886/params/item/aggregatedOutput"
+      ],
+      "mandatory_origins": [
+        "sha256:eb56f9fd8f9bf13babf8c8e6360de6999fe2858412b7e4e15643b5c1b8ee949a"
+      ],
+      "remaining_selectors": []
+    },
+    {
+      "parent": "sha256:7746a7d290352e522e73e481ced8ab51f3a474f99fbc85b7b5618e2405f48dfe",
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "original_occurrences": 2,
+      "preserved_v1_occurrences": 0,
+      "new_verified_occurrences": 2,
+      "status": "locally_bound_pending_independent_review",
+      "selectors": [
+        "/independent_diff/diff"
+      ],
+      "mandatory_origins": [
+        "sha256:7746a7d290352e522e73e481ced8ab51f3a474f99fbc85b7b5618e2405f48dfe",
+        "sha256:b47454d588be57344ca76fbcbdf0a06a4bfda4bf8b15bef7d0e3964a9f5733f9"
+      ],
+      "remaining_selectors": []
+    },
+    {
+      "parent": "sha256:be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b",
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "original_occurrences": 10,
+      "preserved_v1_occurrences": 8,
+      "new_verified_occurrences": 2,
+      "status": "locally_bound_pending_independent_review",
+      "selectors": [
+        "/events/1053/params/item/aggregatedOutput"
+      ],
+      "mandatory_origins": [
+        "sha256:b47454d588be57344ca76fbcbdf0a06a4bfda4bf8b15bef7d0e3964a9f5733f9",
+        "sha256:be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b"
+      ],
+      "remaining_selectors": []
+    },
+    {
+      "parent": "sha256:f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b",
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "original_occurrences": 16,
+      "preserved_v1_occurrences": 8,
+      "new_verified_occurrences": 8,
+      "status": "locally_bound_pending_independent_review",
+      "selectors": [
+        "/events/296/params/delta",
+        "/events/297/params/item/aggregatedOutput"
+      ],
+      "mandatory_origins": [
+        "sha256:f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b"
+      ],
+      "remaining_selectors": []
+    }
+  ],
+  "release_gates": [
+    "independent exact-code-and-data reviews",
+    "fresh incumbent and candidate integration qualification",
+    "actual exact-candidate CLI canaries",
+    "complete current production traversal",
+    "host supervisor, monitor collector and container writer convergence"
+  ],
+  "collection": "Must remain paused; production pause state not inspected or changed"
+}

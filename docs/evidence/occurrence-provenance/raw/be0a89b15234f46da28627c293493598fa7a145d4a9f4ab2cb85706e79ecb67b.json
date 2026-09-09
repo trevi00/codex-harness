@@ -1,0 +1,29 @@
+{
+  "emittedAtMs": 1788928950551,
+  "method": "item/completed",
+  "params": {
+    "completedAtMs": 1788928950525,
+    "item": {
+      "aggregatedOutput": "warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.\n         If the cache and target directories are on different filesystems, hardlinking may not be supported.\n         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.\nInstalled 36 packages in 37.38s\n{\"input\": \"log [unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\",\\\"image\\\":\\\"unknown\\\"}\", \"references\": [\"sha256:2222222222222222222222222222222222222222222222222222222222222222\"]}\n{\"input\": \"log [unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\",\\\"image\\\":\\\"unknown\\\"\", \"references\": []}\n{\"input\": \"log [unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\",\\\"image\\\":\\\"unknown\\\",\\\"rest\\\":\", \"references\": []}\ndecoder_sha256 b3ea85f3789c71723d554884363b2ca3d70f4fda24110de778e483e64e8a2f98\n",
+      "command": "/bin/bash -lc \"uv run python - <<'PY'\nimport hashlib, json\nfrom pathlib import Path\nfrom codex_harness.adapters.record_references import artifact_references\nref='sha256:'+'2'*64\nfor suffix in ['}', '', ',\\\"rest\\\":']:\n    text='log [unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"'+ref+'\\\",\\\"image\\\":\\\"unknown\\\"'+suffix\n    print(json.dumps({'input':text,'references':sorted(artifact_references({'stdout':text}))}))\nprint('decoder_sha256',hashlib.sha256(Path('src/codex_harness/adapters/record_references.py').read_bytes()).hexdigest())\nPY\"",
+      "commandActions": [
+        {
+          "command": "uv run python - <<'PY'\nimport hashlib, json\nfrom pathlib import Path\nfrom codex_harness.adapters.record_references import artifact_references\nref='sha256:'+'2'*64\nfor suffix in ['}', '', ',\"rest\":']:\n    text='log [unfinished {\"candidate\":{},\"image\":\"'+ref+'\",\"image\":\"unknown\"'+suffix\n    print(json.dumps({'input':text,'references':sorted(artifact_references({'stdout':text}))}))\nprint('decoder_sha256',hashlib.sha256(Path('src/codex_harness/adapters/record_references.py').read_bytes()).hexdigest())\nPY",
+          "type": "unknown"
+        }
+      ],
+      "cwd": "/runtime/workspaces/review-249bc574-8a03-4bad-99da-f3790eae3593",
+      "durationMs": 37820,
+      "exitCode": 0,
+      "id": "exec-093a4347-f621-4b8d-a581-f7ef36771e84",
+      "pluginId": null,
+      "processId": "2175",
+      "scriptPath": null,
+      "source": "unifiedExecStartup",
+      "status": "completed",
+      "type": "commandExecution"
+    },
+    "threadId": "01a08477-8d0b-7df2-b08a-91cf8c506f7f",
+    "turnId": "01a08477-98cd-7f52-a530-a5efd42f068b"
+  }
+}

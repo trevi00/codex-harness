@@ -1,0 +1,67 @@
+{
+  "status": "candidate_with_unresolved_occurrences",
+  "previous_candidate": "6da57c81856d058a36f67a14d464b74b443390ef",
+  "previous_candidate_changed_paths_preserved": 36,
+  "base_revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "result": "All checks passed!"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest"
+      ],
+      "exit_code": 0,
+      "result": "================= 739 passed, 35 skipped in 120.99s (0:02:00) =================="
+    }
+  ],
+  "inspection": {
+    "parents": 8,
+    "identifier_kinds": 4,
+    "bound_occurrences": 22,
+    "parents_with_unresolved_selectors": 7,
+    "production_traversal": false,
+    "historical_commands_executed": false
+  },
+  "independent_reviews": "not performed; exact code and data inspection required",
+  "production_pause": "not changed; current value not independently verified",
+  "integration_and_actual_canaries": "not qualified",
+  "failed_commands": [
+    {
+      "action": "git cherry-pick 6da57c81856d058a36f67a14d464b74b443390ef",
+      "exit_code": 128,
+      "error": "Committer identity unknown; fatal: unable to auto-detect email address",
+      "disposition": "changes preserved; cherry-pick sequencer quit; no identity configured"
+    },
+    {
+      "action": "design artifact JSON index",
+      "exit_code": 1,
+      "error": "Artifact is not valid JSON",
+      "disposition": "bounded text page succeeded"
+    }
+  ],
+  "source_hashes": {
+    "src/codex_harness/adapters/occurrence_provenance.py": "3c6b5ac4007e8d45ea22c744718563025f0b601b023363c1e91c96a3d22fe766",
+    "src/codex_harness/adapters/maintenance.py": "3ecf0766fe1bc2049b7d589cb061f4377935dc0834189b846c2be2488514deaa",
+    "src/codex_harness/resources/occurrence-provenance.v1.json": "2a0175745f673150d9a1425ec920ce09b08da809ef82011adf13d61e1b1154ee",
+    "tests/test_occurrence_provenance.py": "0b0d8d3a18c3eb73382c495c930a868a8152eeec5e36b63049749baa889dcb2d",
+    "tests/test_maintenance_postgres.py": "fa0a5b67754101cedaa1a9f98777b991aab058ebd9de33f1a0490590cf862688",
+    "docs/evidence/occurrence-provenance/raw/be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b.json": "a22ff3ae6cfc5c3906ae17fa7cf9dbde0fe967d7d0f4266e4bcd7b0593a94baa",
+    "docs/evidence/occurrence-provenance/raw/d4d820258190b7046e715d0d70c1a6df3a7cfc1b90c1af4ce5781c8a2dcd4b29.json": "ee5cdae6d34c48740c820703ebfc080876fb863c527ed3e3ee78142042c9166a",
+    "docs/evidence/occurrence-provenance/raw/f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b.json": "c079f1655d19383918f02be76d042575a077c651540f922d22cad54fa05be97f",
+    "docs/evidence/occurrence-provenance/observations.json": "83a0f31d05f3179653b2e3708ad1ebd51825549bcf7222ca5148008e8cf88128",
+    "docs/evidence/occurrence-provenance/inspect_sources.py": "4b9388c75b26cb3bf6394de4f1e6b97e06b3271864710e1e1798d15b33c3c721",
+    "docs/evidence/occurrence-provenance/pytest.log": "a5a83d8dceff7c606d6932c2d5672723de1080692dd2308cdcd79e3f8a8d6604",
+    "docs/evidence/occurrence-provenance/ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+  }
+}

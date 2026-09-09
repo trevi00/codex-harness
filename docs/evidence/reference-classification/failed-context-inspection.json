@@ -1,0 +1,8 @@
+{
+  "status": "failed",
+  "exit_code": 137,
+  "stderr": "Killed",
+  "operation": "For each archived missing reference: read first parent with Path.read_text(), find occurrence, print context",
+  "cause": "unknown",
+  "recovery": "Read-only mmap extraction with bounded slices succeeded; namespace-contexts.json"
+}

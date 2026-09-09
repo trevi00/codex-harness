@@ -1,0 +1,1142 @@
+[
+  {
+    "parent": "sha256:06c49b3e5c244029e876f194eb9e3277b02441a5f20afa057700c2c741662ea3",
+    "archived_missing": [
+      "sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5"
+    ],
+    "source": "execution:21a87189-1493-446d-ae42-eb1a1fc467fc",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5"
+    ],
+    "occurrences": {
+      "sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5": [
+        "li_version\\\": \\\"codex-cli 0.153.4\\\", \\\"ended_at\\\": 1788822751.7639694, \\\"hook_state\\\": {\\\"/<session-flags>/config.toml:session_start:0:0\\\": {\\\"enabled\\\": true, \\\"trusted_hash\\\": \\\"sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5\\\"}}, \\\"hooks\\\": {\\\"SessionStart\\\": [{\\\"hooks\\\": [{\\\"command\\\": \\\"/runtime/workspaces/f3ff7591-e500-446d-9e2b-473f52bd2a02/.venv/bin/python3 /runtime/workspaces/f3ff7591-e500-446d-"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:07bbf24f20e8d481224174cc8851ddbb76265f806a7c3de2d470ab7164be7ade",
+    "archived_missing": [
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752",
+      "sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7",
+      "sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414",
+      "sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f"
+    ],
+    "source": "canary",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752",
+      "sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414",
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+      "sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7"
+    ],
+    "occurrences": {
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e": [
+        "ookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#8 DONE 0.0s\\n\\n#9 [stage-1  1/11] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e\\n#9 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n#9 DONE 0.0s\\n\\n#7 [internal] load build"
+      ],
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5": [
+        "ad .dockerignore\\n#6 transferring context: 103B done\\n#6 DONE 0.0s\\n\\n#7 [internal] load build context\\n#7 DONE 0.0s\\n\\n#8 [codex 1/2] FROM docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5\\n#8 resolve docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#8 DONE 0.0s\\n\\n#9 [stage-1  1/11] FROM dock"
+      ],
+      "sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752": [
+        "fb9969b688db01244720d7 0.0s done\\n#21 exporting attestation manifest sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f 0.0s done\\n#21 exporting manifest list sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752 done\\n#21 naming to docker.io/library/codex-harness:candidate-bfef3a243e4ecb41 done\\n#21 unpacking to docker.io/library/codex-harness:candidate-bfef3a243e4ecb41 0.1s done\\n#21 DON"
+      ],
+      "sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7": [
+        "21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414 0.0s done\\n#21 exporting config sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7 0.0s done\\n#21 exporting attestation manifest sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f 0.0s done\\n#21 exporting manifest list sha256:a6ba2e7966face7"
+      ],
+      "sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414": [
+        "s\\n#20 3.195  + codex-self-harness==0.1.0 (from file:///app)\\n#20 DONE 3.2s\\n\\n#21 exporting to image\\n#21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414 0.0s done\\n#21 exporting config sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7 0.0s done\\n#21 exporting attestation manifest sha256:49971d09468845e10f5ba1"
+      ],
+      "sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f": [
+        "1972bc7f4189b78404ad5e499f414 0.0s done\\n#21 exporting config sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7 0.0s done\\n#21 exporting attestation manifest sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f 0.0s done\\n#21 exporting manifest list sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752 done\\n#21 naming to docker.io/library/codex-harness:candidate-bfef3a"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:12f07181d502a204d9614a70a3947faa85875cbc188c2b9e36cb98248148f037",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "runtime-event:71c11bcf-e05d-4255-a264-d80eb1d49721",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\\\\\",\\\\\\\"currentHash\\\\\\\":\\\\\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\\\\\",\\\\\\\"displayOrder\\\\\\\":0,\\\\\\\"enabled\\\\\\\":true,\\\\\\\"eventName\\\\\\\":\\\\\\\"sessionStart\\\\\\\",\\\\\\\"handlerType\\\\\\\":\\\\\\\"command\\\\\\\",\\\\\\\"isManaged\\\\\\\":false,\\\\\\\"key\\\\\\\":\\\\\\\"/<session-flags>"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:1309e41fc8bcf6188b4adba42864ed17ca11dfcfc2cd710553ec5c23a7c2902e",
+    "archived_missing": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0",
+      "sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777afb183fe8",
+      "sha256:055c812ebd596d7100d2cd9560e320d9ed2b2b93038ae85748009f84c126e781"
+    ],
+    "source": "automatic-migration-deployment-log",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:055c812ebd596d7100d2cd9560e320d9ed2b2b93038ae85748009f84c126e781",
+      "sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777afb183fe8",
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "occurrences": {
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0": [
+        "88bb97b2dcdbcbd88f63a32dbbec\", \"previous\": {\"release_id\": \"b6c6e51b38440c77fbd7901eede297c0f2f82cd186f0c471d984b915f16f14ed\"}, \"at\": \"2026-09-08T03:29:40.627332+00:00\"}, \"image\": \"sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0\", \"merge\": {\"merged\": true, \"revision\": \"38962239f49d88bb97b2dcdbcbd88f63a32dbbec\", \"merged_revision\": \"0548efaf1bc8833c750c80b242de03b5a73d7799\", \"transport\": \"github\"}}}\n{\"woken"
+      ],
+      "sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777afb183fe8": [
+        "{\"woken\": \"lead:improvement\", \"queued\": 0, \"durable_tasks\": false, \"image\": \"sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777afb183fe8\"}\n{\"woken\": \"worker:github\", \"queued\": 0, \"durable_tasks\": true, \"image\": \"sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777afb183fe8\"}\n{\"woken\": \"worker:geeknews\", \""
+      ],
+      "sha256:055c812ebd596d7100d2cd9560e320d9ed2b2b93038ae85748009f84c126e781": [
+        "1562660d1e4ea524e4d8b28e824c\", \"previous\": {\"release_id\": \"b773ea725320a272483b96244d127141640896c6fd817c1ac0363d1987f817a4\"}, \"at\": \"2026-09-07T23:30:10.227651+00:00\"}, \"image\": \"sha256:055c812ebd596d7100d2cd9560e320d9ed2b2b93038ae85748009f84c126e781\", \"merge\": {\"merged\": true, \"revision\": \"51a3ba02e8231562660d1e4ea524e4d8b28e824c\", \"merged_revision\": \"09f9ea69af52d915ac6b309d6a38ae94507ff68f\", \"transport\": \"github\"}}}\n{\"woken"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:17bc55d091178273a9eadc797f18ff279e5c564090e03c8c39b3204bf9b44c75",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:fbdb4e62b76e84ac6608366d3fa44043d909c6643d5247d442d6a796e29f9a92",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:215dfc0800439577fb7aed4df92087a02ff8e6b939d89016b2428c6058e4d2c5",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "runtime-event:2dd6cd04-0743-4cb9-9c0c-2e142457ff77",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "aces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\",\\\"currentHash\\\":\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-flags>/config.toml:session_start:0:0\\\",\\\"m"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:26f4e92f18f03d9eb01b30077a902c3effd02dfbf16284ac940bd7210d00e8d9",
+    "archived_missing": [
+      "sha256:313f487b3acfa6d61f1a9f40dcd0fe9b08ae351060de66f9fea3ae01726ce782"
+    ],
+    "source": "execution:9a43cc4e-9fa3-426a-b767-f1bb98556784",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:313f487b3acfa6d61f1a9f40dcd0fe9b08ae351060de66f9fea3ae01726ce782"
+    ],
+    "occurrences": {
+      "sha256:313f487b3acfa6d61f1a9f40dcd0fe9b08ae351060de66f9fea3ae01726ce782": [
+        "\",\\\"revision\\\":\\\"3917033ad85f4ac8bb84879903454c09a82f84a9\\\",\\\"task_id\\\":\\\"cc305445-adef-4532-b7fe-6c17d70728c8\\\",\\\"tree\\\":\\\"4d789fa1fb871f7b1ac3f6fce815c032f817d4bc\\\"},\\\"image\\\":\\\"sha256:313f487b3acfa6d61f1a9f40dcd0fe9b08ae351060de66f9fea3ae01726ce782\\\",\\\"mode\\\":\\\"Actual PostgreSQL request/client/host Docker command/receipt roundtrip; authorization fixture in isolated test schema, not production approval\\\",\\\"passed\\\":true,\\\"rec"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:27b219beed829421997f6673b1c53a7ded1f10ffec9b3a2d5cc88c402cb3be5e",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:a4e2dbf04f427b7f5b93fb86e86ea61f9a006821f66cadb32249d4a638e32eda",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:3162807e68520a3d5e988765bbbd2a597b036126a773cb2a1b7cf80519a3eb85",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "runtime-event:f519eb67-0118-4ad7-bfa7-cc412f727c1b",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "aces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\",\\\"currentHash\\\":\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-flags>/config.toml:session_start:0:0\\\",\\\"m"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:34387bcb5a12d3f30db01a3672548efeaf3a1f6be802c9c195f33e0b5f073613",
+    "archived_missing": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "source": "execution:788d4d61-0135-4aea-96fe-a803ab95a3bf",
+    "still_required": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "typed_exclusions": [],
+    "occurrences": {
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0": [
+        "nd,source={folder},target=/source,readonly',\\\\n            '--mount', f'type=bind,source={probe},target=/probe.py,readonly',\\\\n            '--entrypoint', 'python',\\\\n            'sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0', '/probe.py']\\\\n    result = subprocess.run(argv, capture_output=True, text=True, encoding='utf-8', timeout=90)\\\\n    receipt = artifacts.put(json.dumps({'source_revision': pin, "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:36355c0de3ca38809e7f2be3c601b716c28a5c0c00e0c70b81f68255957d4560",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:92016e81d09cb4ca82af041780f055c54ebcdd6e42a2a9d1ee1c791ddbaf9a96",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:44ec28a94acca06db9f2e80b00f847dc650cd0006fa88b620b1a24d610e9be62",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "execution:2dd6cd04-0743-4cb9-9c0c-2e142457ff77",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "aces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\",\\\"currentHash\\\":\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-flags>/config.toml:session_start:0:0\\\",\\\"m"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:456306047746a5640076c6823ef039d326a7d5cbc3f957722713bc52b6ba2916",
+    "archived_missing": [
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a",
+      "sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c",
+      "sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b",
+      "sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9"
+    ],
+    "source": "canary",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c",
+      "sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9",
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+      "sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a"
+    ],
+    "occurrences": {
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e": [
+        "ookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [stage-1  1/11] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e\\n#8 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n#8 DONE 0.0s\\n\\n#9 [internal] load build"
+      ],
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5": [
+        "13-slim-bookworm\\n#5 DONE 1.4s\\n\\n#6 [internal] load .dockerignore\\n#6 transferring context: 103B done\\n#6 DONE 0.0s\\n\\n#7 [codex 1/2] FROM docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5\\n#7 resolve docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [stage-1  1/11] FROM dock"
+      ],
+      "sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a": [
+        "83f567f84ad3d6ec78d7c3743c6e9 0.0s done\\n#21 exporting config sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b 0.0s done\\n#21 exporting attestation manifest sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a 0.0s done\\n#21 exporting manifest list sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-6"
+      ],
+      "sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c": [
+        "0d48e27c1a0abb73677d7b 0.0s done\\n#21 exporting attestation manifest sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a 0.0s done\\n#21 exporting manifest list sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-6fec51db27e23ac7 done\\n#21 unpacking to docker.io/library/codex-harness:candidate-6fec51db27e23ac7 0.1s done\\n#2"
+      ],
+      "sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b": [
+        "21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9 0.0s done\\n#21 exporting config sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b 0.0s done\\n#21 exporting attestation manifest sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a 0.0s done\\n#21 exporting manifest list sha256:85bc58fd84ac5db"
+      ],
+      "sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9": [
+        "s\\n#20 3.219  + codex-self-harness==0.1.0 (from file:///app)\\n#20 DONE 3.3s\\n\\n#21 exporting to image\\n#21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9 0.0s done\\n#21 exporting config sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b 0.0s done\\n#21 exporting attestation manifest sha256:f4a38f7bd6afe630fd3dd5"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:47bf762072ce3a99ee2052d61d4e22e3e2fcd63e3d90d0d108124d3dda321ebf",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:da4e79e290214e5ed7e8f56fab5982f73e3d30da9c71def96cff739dab7ff4ad",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:4fe2f35b9494727f2409cc00763083869d8106434e02140c44d912f8ea86d0fd",
+    "archived_missing": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "source": "task:8e42382b-fd30-4b1a-8f10-0f35dc1f6c60",
+    "still_required": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "typed_exclusions": [],
+    "occurrences": {
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111": [
+        "eferences('\\\\\\\\n'.join(lines)) == set()\\\\nE       AssertionError: assert {'sha256:1111...111111111111'} == set()\\\\nE         \\\\nE         Extra items in the left set:\\\\nE         'sha256:1111111111111111111111111111111111111111111111111111111111111111'\\\\nE         Use -v to get more diff\\\\n\\\\ntests/test_reference_kinds.py:114: AssertionError\\\\n=========================== short test summary info ============================\\\\nFA"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:52303f1f22318fbb6ba7de0b47f4cf6e137242c12fc0b74023ae53b236c390f6",
+    "archived_missing": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "source": "execution:a56a0afd-03ec-4c23-bdb7-511bdf812073",
+    "still_required": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "typed_exclusions": [],
+    "occurrences": {
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0": [
+        "e8369cdf20807da4923947737a09110b1c088f819\\\",\\n  \\\"runner_ref\\\": \\\"sha256:b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855\\\",\\n  \\\"observed_dependencies\\\": [\\n    \\\"sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0\\\"\\n  ],\\n  \\\"expected_dependencies\\\": [],\\n  \\\"result\\\": \\\"reproduced incorrect image dependency\\\"\\n}\\n{\\n  \\\"argv\\\": [\\n    \\\"uv\\\",\\n    \\\"run\\\",\\n    \\\"pytest\\\",\\n    \\\"tests/te"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "archived_missing": [
+      "sha256:749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205",
+      "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32",
+      "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55",
+      "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
+      "sha256:ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7",
+      "sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94",
+      "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101",
+      "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"
+    ],
+    "source": "execution:846f4834-19a4-4774-97eb-e72dd69167f7",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101",
+      "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
+      "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55",
+      "sha256:749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205",
+      "sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94",
+      "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
+      "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32",
+      "sha256:ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7"
+    ],
+    "occurrences": {
+      "sha256:749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205": [
+        "6:46.761Z\\\" }\\n33:    { url = \\\"https://files.pythonhosted.org/packages/ed/c9/d7977eaacb9df673210491da99e6a247e93df98c715fc43fd136ce1d3d33/arrow-1.4.0-py3-none-any.whl\\\", hash = \\\"sha256:749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205\\\", size = 68797, upload-time = \\\"2025-10-18T17:46:45.663Z\\\" },\\n40:sdist = { url = \\\"https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171"
+      ],
+      "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32": [
+        "17:46:45.663Z\\\" },\\n40:sdist = { url = \\\"https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171802bc1d26985/attrs-26.1.0.tar.gz\\\", hash = \\\"sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32\\\", size = 952055, upload-time = \\\"2026-03-19T14:22:25.026Z\\\" }\\n42:    { url = \\\"https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef"
+      ],
+      "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55": [
+        ":23.645Z\\\" },\\n49:sdist = { url = \\\"https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz\\\", hash = \\\"sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55\\\", size = 138112, upload-time = \\\"2026-07-22T03:35:12.644Z\\\" }\\n51:    { url = \\\"https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe3"
+      ],
+      "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775": [
+        "44Z\\\" }\\n51:    { url = \\\"https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl\\\", hash = \\\"sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775\\\", size = 136983, upload-time = \\\"2026-07-22T03:35:11.276Z\\\" },\\n\",\"command\":\"/bin/bash -lc \\\"ls -l .venv/bin/python .venv/bin/ruff; rg -n 'name = \\\\\\\"codex|url = ' uv.lock | head"
+      ],
+      "sha256:ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7": [
+        "T10:42:37.923Z\\\" },\\n31:sdist = { url = \\\"https://files.pythonhosted.org/packages/b9/33/032cdc44182491aa708d06a68b62434140d8c50820a087fac7af37703357/arrow-1.4.0.tar.gz\\\", hash = \\\"sha256:ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7\\\", size = 152931, upload-time = \\\"2025-10-18T17:46:46.761Z\\\" }\\n33:    { url = \\\"https://files.pythonhosted.org/packages/ed/c9/d7977eaacb9df673210491da99e6a247e93df98c715fc43fd136"
+      ],
+      "sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94": [
+        ":26 .venv/bin/ruff\\n18:sdist = { url = \\\"https://files.pythonhosted.org/packages/a9/d2/f4d173e22df740bc37b1db102b386ba719b66e95b0f0d751f556b387e6d2/anyio-4.15.1.tar.gz\\\", hash = \\\"sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94\\\", size = 276966, upload-time = \\\"2026-09-05T10:42:39.44Z\\\" }\\n20:    { url = \\\"https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f79"
+      ],
+      "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101": [
+        "2:39.44Z\\\" }\\n20:    { url = \\\"https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl\\\", hash = \\\"sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101\\\", size = 132079, upload-time = \\\"2026-09-05T10:42:37.923Z\\\" },\\n31:sdist = { url = \\\"https://files.pythonhosted.org/packages/b9/33/032cdc44182491aa708d06a68b62434140d8c50820a087f"
+      ],
+      "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309": [
+        ":25.026Z\\\" }\\n42:    { url = \\\"https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl\\\", hash = \\\"sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309\\\", size = 67548, upload-time = \\\"2026-03-19T14:22:23.645Z\\\" },\\n49:sdist = { url = \\\"https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:542b03dda5946ef077d8811bb28531634393a765e55664d861e4fcb1635088f4",
+    "archived_missing": [
+      "sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c"
+    ],
+    "source": "execution:8b827682-100e-4578-b0d0-0de352353e6b",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c"
+    ],
+    "occurrences": {
+      "sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c": [
+        "9b731b72837b433e3bb9edeb1b9f309bf0\\\\\\\",\\\\\\\"passed\\\\\\\":true}},\\\\\\\"evidence_ref\\\\\\\":\\\\\\\"sha256:b68aa22cb47acd468543fd03038fa0b74bc72065dd8f4a0da41ea38e1608ba18\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c\\\\\\\",\\\\\\\"loaded_source\\\\\\\":[{\\\\\\\"path\\\\\\\":\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\rudtn\\\\\\\\\\\\\\\\codex-harness\\\\\\\\\\\\\\\\.runtime\\\\\\\\\\\\\\\\workspaces\\\\\\\\\\\\\\\\11fd2083-f4b3-451e-b6d6-193ae325fe24\\\\\\\\\\\\\\"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:5659f3c527eed4e88dee22aee9c00690ccd624462103ce0f9d3bcab05e2d8c47",
+    "archived_missing": [
+      "sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5"
+    ],
+    "source": "execution:b76639a3-8059-4a59-a1ec-b12db50c80d3",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5"
+    ],
+    "occurrences": {
+      "sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5": [
+        "li_version\\\": \\\"codex-cli 0.153.4\\\", \\\"ended_at\\\": 1788822751.7639694, \\\"hook_state\\\": {\\\"/<session-flags>/config.toml:session_start:0:0\\\": {\\\"enabled\\\": true, \\\"trusted_hash\\\": \\\"sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5\\\"}}, \\\"hooks\\\": {\\\"SessionStart\\\": [{\\\"hooks\\\": [{\\\"command\\\": \\\"/runtime/workspaces/f3ff7591-e500-446d-9e2b-473f52bd2a02/.venv/bin/python3 /runtime/workspaces/f3ff7591-e500-446d-"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:687a229dde8209eb4a07926a1ef649d0b42711628a13f58331809b12deef9e7f",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd",
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:72a0216e9f03b19f709ca5caa257fabda544bc3bce3280752ee3add610c99924",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd",
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"currentHash\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"displayOrder\\\\\\\\\\\\\\\":0,\\\\\\\\\\\\\\\"enabled\\\\\\\\\\\\\\\":true,\\\\\\\\\\\\\\\"eventName\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"sessionStart\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"handlerType\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"command\\\\\\\\\\\\\\\",\\\\\\\\"
+      ],
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:7746a7d290352e522e73e481ced8ab51f3a474f99fbc85b7b5618e2405f48dfe",
+    "archived_missing": [
+      "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    ],
+    "source": "task:249bc574-8a03-4bad-99da-f3790eae3593",
+    "still_required": [
+      "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    ],
+    "typed_exclusions": [],
+    "occurrences": {
+      "sha256:2222222222222222222222222222222222222222222222222222222222222222": [
+        "\\n@@ -0,0 +1,11 @@\\n+{\\n+  \\\"revision\\\": \\\"19c4d73c879bef32909307186e8196a682cdbcbd\\\",\\n+  \\\"input\\\": {\\n+    \\\"stdout\\\": \\\"log [unfinished {\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"}\\\"\\n+  },\\n+  \\\"expected\\\": [\\n+    \\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\"\\n+  ],\\n+  \\\"actual\\\": [],\\n+  \\\""
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:7a017c79c29f4d6e8b6967ed674d5ce8aa24fe62fd85ad16ce35ff09e065d28f",
+    "archived_missing": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0",
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+      "sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f",
+      "sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1"
+    ],
+    "source": "canary",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1",
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0",
+      "sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6",
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e"
+    ],
+    "occurrences": {
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0": [
+        "1c14431eb7fc52b234d3322f3c1 done\\n#21 exporting attestation manifest sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f 0.0s done\\n#21 exporting manifest list sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0 done\\n#21 naming to docker.io/library/codex-harness:migration-release done\\n#21 unpacking to docker.io/library/codex-harness:migration-release 0.1s done\\n#21 DONE 0.3s\\n\\nView bui"
+      ],
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e": [
+        "orm-slim\\n#5 DONE 1.0s\\n\\n#6 [internal] load .dockerignore\\n#6 transferring context: 103B done\\n#6 DONE 0.0s\\n\\n#7 [stage-1  1/11] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e\\n#7 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [codex 1/2] FROM dock"
+      ],
+      "sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f": [
+        "d5411f781c49f59e75214fca1ce51b4f4e6a1a6 done\\n#21 exporting config sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1 done\\n#21 exporting attestation manifest sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f 0.0s done\\n#21 exporting manifest list sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0 done\\n#21 naming to docker.io/library/codex-harness:migration-releas"
+      ],
+      "sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6": [
+        "talled 1 package in 4ms\\n#20 0.645  + codex-self-harness==0.1.0 (from file:///app)\\n#20 DONE 0.7s\\n\\n#21 exporting to image\\n#21 exporting layers 0.1s done\\n#21 exporting manifest sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6 done\\n#21 exporting config sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1 done\\n#21 exporting attestation manifest sha256:59be73f8a5dfcfe725dcb7fb87927cab"
+      ],
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5": [
+        "n:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [codex 1/2] FROM docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5\\n#8 resolve docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#8 DONE 0.0s\\n\\n#9 [internal] load build con"
+      ],
+      "sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1": [
+        "\\n#21 exporting to image\\n#21 exporting layers 0.1s done\\n#21 exporting manifest sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6 done\\n#21 exporting config sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1 done\\n#21 exporting attestation manifest sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f 0.0s done\\n#21 exporting manifest list sha256:a23534401b82ff607582"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:7e2a277c84e8dba7864f05dcfc82dae16269df40abbbb41eaaab7c572e2a6123",
+    "archived_missing": [
+      "sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057"
+    ],
+    "source": "execution:c0d52dd7-8c10-4b4d-b984-c60e4a36442e",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057"
+    ],
+    "occurrences": {
+      "sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057": [
+        "\\\\\\\"timeout\\\\\\\\\\\\\\\"=30}]}],\\\\\\\\\\\\\\\"state\\\\\\\\\\\\\\\"={\\\\\\\\\\\\\\\"/<session-flags>/config.toml:session_start:0:0\\\\\\\\\\\\\\\"={\\\\\\\\\\\\\\\"enabled\\\\\\\\\\\\\\\"=true,\\\\\\\\\\\\\\\"trusted_hash\\\\\\\\\\\\\\\"=\\\\\\\\\\\\\\\"sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057\\\\\\\\\\\\\\\"}}}\\\\\\\",\\\\\\\"--enable\\\\\\\",\\\\\\\"hooks\\\\\\\"]],\\\\\\\"elapsed_seconds\\\\\\\":11.27697416600131,\\\\\\\"kind\\\\\\\":\\\\\\\"actual-installed-app-server-canary-v2\\\\\\\",\\\\\\\"lifecycle_completed\\\\\\\":tr"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:7e3bd8db1c0096bb586572f37788d613b0620c4147e63931a4ab0831412c3bef",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:bc4a0e1da61468e16ee4dca8c7dd876e23001430bfea93c05967face9a9c7989",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:80153d1d193378b5aa60bf6be813b80b8c294ef8c3b34e5c6c4a19a6a28877f9",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:9fb9e15ef1ca2b43565ddf2fa752cb14ed9cb295823afadcdee9e3909d876f4a",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:8546eee32ae01bc984046ef6d3979d93c3e70634bbad45260c51f7654a5af63c",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:e1ba82fbde9fca9d8a4313884683701574dd7eefe8dc7aa2520d782776c7563f",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:86de55b0cb743656a5e24f24d12e2b4c555bdaa24127b2d935dd3fd05ef0de60",
+    "archived_missing": [
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac"
+    ],
+    "source": "task:5345d9f0-1439-41e1-8d08-4230bba8672b",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac"
+    ],
+    "occurrences": {
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac": [
+        "spaces/7ef45a25-e2f7-4dc5-aa08-71d3b5f8bd5b/.venv/bin/python3 /runtime/workspaces/7ef45a25-e2f7-4dc5-aa08-71d3b5f8bd5b/harness_hooks/codex_usage_limit_guard.py\\\",\\\"currentHash\\\":\\\"sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-flags>/config.toml:session_start:0:0\\\",\\\"m"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:8a482cf8f01a20e7e0bd371d57c1376f6b5f24aca4ccf53d7216d3dce3bc0d23",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:9cf9207b0a00da4f58e563f5a0c8a8a513670bee7f28b065eeca9313999ad9dc",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:8b8c1741a852200f68ea043516ef1c554d969c8b70efff63594bf74a2291c52f",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:7a9de3b46b595c18a189201495fc0f60bd22e6d306cd54154bdd1045ed044d01",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:901b04d2954d0cccc6cc2e585668471c4fcde95986c68a789f94054fabd6abda",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:b7d4d7b22cdb31c7e26f724b36fcd3ab4735b8d0076f634983a875c7718e04cf",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:9ce119abfdfa680c654b42f1aaacd987b6a35700c73b3bf86082b41df87e6271",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:adce81498dddfbe436219ebf3e2259de9110af9c6b28c50cccec6908393f2778",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:9d0abe5bcc9cfb1226897ceac26f094b152af71b8c0e42e31c712268d750f3da",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:a35674982e52afe2c472e448dee3b590982df80aeee65e2d68ecc35e232b73d2",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:9dc6c5b8c9972821c92431d3c9829dc0474401bab74eff94fdabfc409e4db011",
+    "archived_missing": [
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac"
+    ],
+    "source": "execution:17709152-e0d1-45ec-a46b-7cefc999e00a",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac"
+    ],
+    "occurrences": {
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac": [
+        "spaces/7ef45a25-e2f7-4dc5-aa08-71d3b5f8bd5b/.venv/bin/python3 /runtime/workspaces/7ef45a25-e2f7-4dc5-aa08-71d3b5f8bd5b/harness_hooks/codex_usage_limit_guard.py\\\",\\\"currentHash\\\":\\\"sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-flags>/config.toml:session_start:0:0\\\",\\\"m"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:a0d69a204524d1f14cc70fd7d69882f5bb28f7eebec6dc62d6a6ac4073d292ec",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:7df47e75b11d832c464e9cb35f5d4135ed9ef5fc10f33039cabed37e8dc213e7",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:a2f58ce0da1ea9ffcc65eb7a4646b881a3c889c221c51638c5d3dde365927359",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:890fabe20970136d66c83d08a4e2d1d2ad5887bb727047ec5f39e90d39169861",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:a341de044e9cc5fdee56b04131d4cb2af7a5c445304f5a6db731c61d9d99ad17",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "execution:f519eb67-0118-4ad7-bfa7-cc412f727c1b",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "hod\":\"item/commandExecution/outputDelta\",\"params\":{\"delta\":\"/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\\\\\",\\\\\\\"currentHash\\\\\\\":\\\\\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\\\\\",\\\\\\\"displayOrder\\\\\\\":0,\\\\\\\"enabled\\\\\\\":true,\\\\\\\"eventName\\\\\\\":\\\\\\\"sessionStart\\\\\\\",\\\\\\\"handlerType\\\\\\\":\\\\\\\"command\\\\\\\",\\\\\\\"isManaged\\\\\\\":false,\\\\\\\"key\\\\\\\":\\\\\\\"/<session-flags>"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:a7baa7a422b04404296aa945dc72c94c3cbdcdb22b0b04c260b3f0ff0b96f262",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:e2cb416bc51465a03185e3c7294c4b55ff3185fcaf97a4546a0220107bd3dae1",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:acade90d8c12067abdcf9209609f89f64e2bdfb72182736391cad5101bad71e4",
+    "archived_missing": [
+      "sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057"
+    ],
+    "source": "task:c0d52dd7-8c10-4b4d-b984-c60e4a36442e",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057"
+    ],
+    "occurrences": {
+      "sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057": [
+        "ss_hooks/codex_usage_limit_guard.py\\\\\\\",\\\\\\\"timeout\\\\\\\"=30}]}],\\\\\\\"state\\\\\\\"={\\\\\\\"/<session-flags>/config.toml:session_start:0:0\\\\\\\"={\\\\\\\"enabled\\\\\\\"=true,\\\\\\\"trusted_hash\\\\\\\"=\\\\\\\"sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057\\\\\\\"}}}\\\",\\\"--enable\\\",\\\"hooks\\\"]],\\\"elapsed_seconds\\\":11.27697416600131,\\\"kind\\\":\\\"actual-installed-app-server-canary-v2\\\",\\\"lifecycle_completed\\\":true,\\\"prompt\\\":\\\"Canary only. D"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:adb4e2bace474667c7ddc0efde718fb03029e65ca7f7c7647bb6e18155b47225",
+    "archived_missing": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "source": "task:b972cf76-da18-43cd-b25f-fca736340f25",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "occurrences": {
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0": [
+        "UNT=1\\\\\\\", \\\\\\\"-e\\\\\\\", \\\\\\\"GIT_CONFIG_KEY_0=safe.directory\\\\\\\", \\\\\\\"-e\\\\\\\", \\\\\\\"GIT_CONFIG_VALUE_0=*\\\\\\\", \\\\\\\"-w\\\\\\\", \\\\\\\"/candidate\\\\\\\", \\\\\\\"--entrypoint\\\\\\\", \\\\\\\"python\\\\\\\", \\\\\\\"sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0\\\\\\\", \\\\\\\"-m\\\\\\\", \\\\\\\"pytest\\\\\\\", \\\\\\\"tests/test_maintenance_postgres.py\\\\\\\", \\\\\\\"-q\\\\\\\", \\\\\\\"-s\\\\\\\", \\\\\\\"-p\\\\\\\", \\\\\\\"no:cacheprovider\\\\\\\"], \\\\\\\"exit_code\\\\\\\": 0, \\\\\\\"stdout\\\\\\\": \\"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:b5ac7a51e7f3c97bc55ba8e8840780337909571e7575698d336d32acb84532de",
+    "archived_missing": [
+      "sha256:6826ad56b10718393fde310ba3a158f254deb7ea179a812ac64c78c65521ee61"
+    ],
+    "source": "execution:dd1c24c0-86ef-4a14-819c-9769ed51be3a",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:6826ad56b10718393fde310ba3a158f254deb7ea179a812ac64c78c65521ee61"
+    ],
+    "occurrences": {
+      "sha256:6826ad56b10718393fde310ba3a158f254deb7ea179a812ac64c78c65521ee61": [
+        "paces/17709152-e0d1-45ec-a46b-7cefc999e00a/.venv/bin/python /runtime/workspaces/17709152-e0d1-45ec-a46b-7cefc999e00a/harness_hooks/codex_usage_limit_guard.py\\\", \\\"currentHash\\\": \\\"sha256:6826ad56b10718393fde310ba3a158f254deb7ea179a812ac64c78c65521ee61\\\", \\\"displayOrder\\\": 0, \\\"enabled\\\": true, \\\"eventName\\\": \\\"sessionStart\\\", \\\"handlerType\\\": \\\"command\\\", \\\"isManaged\\\": false, \\\"key\\\": \\\"/<session-flags>/config.toml:session_sta"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:bc1a83c62fe204cc83f6424a55908b8fd9e5cf68276020a813b2a8d26b96a0b2",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "runtime-event:f519eb67-0118-4ad7-bfa7-cc412f727c1b",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\\\\\",\\\\\\\"currentHash\\\\\\\":\\\\\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\\\\\",\\\\\\\"displayOrder\\\\\\\":0,\\\\\\\"enabled\\\\\\\":true,\\\\\\\"eventName\\\\\\\":\\\\\\\"sessionStart\\\\\\\",\\\\\\\"handlerType\\\\\\\":\\\\\\\"command\\\\\\\",\\\\\\\"isManaged\\\\\\\":false,\\\\\\\"key\\\\\\\":\\\\\\\"/<session-flags>"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b",
+    "archived_missing": [
+      "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "sha256:527a340c302d89fae069b524a8d553b48468107c5deb6e6917a15a206dacff99"
+    ],
+    "source": "execution:249bc574-8a03-4bad-99da-f3790eae3593",
+    "still_required": [
+      "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "sha256:527a340c302d89fae069b524a8d553b48468107c5deb6e6917a15a206dacff99"
+    ],
+    "typed_exclusions": [],
+    "occurrences": {
+      "sha256:2222222222222222222222222222222222222222222222222222222222222222": [
+        "-a5efd42f068b\"}},{\"emittedAtMs\":1788928950517,\"method\":\"item/commandExecution/outputDelta\",\"params\":{\"delta\":\"{\\\"input\\\": \\\"log [unfinished {\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"}\\\", \\\"references\\\": [\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\"]}\\n{\\\"input\\\": \\\"log [unfinished {\\\\\\\"candidate\\"
+      ],
+      "sha256:527a340c302d89fae069b524a8d553b48468107c5deb6e6917a15a206dacff99": [
+        ": 0.021957491990178823, \\\"retained_references\\\": 1, \\\"snapshot_seconds\\\": 4.872999852523208e-05}, \\\"input\\\": {\\\"stdout\\\": \\\"log [unfinished {\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:527a340c302d89fae069b524a8d553b48468107c5deb6e6917a15a206dacff99\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"\\\"}, \\\"parent_exists\\\": true, \\\"stale_publication_accepted\\\": true}\\n\",\"itemId\":\"exec-32fe3585-ee2a-4578-9d2f-c7203e7bcb0e\",\"threadId\":\"01a08477-8"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:c498c553dbb8008d229de8c8f5cbe62797a6a375ceeedcad534691d72a443221",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "execution:ea05b80ffb4abfdddf36dcb6d090772dbb777ab1737461223243f218301ffd5d",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"currentHash\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"displayOrder\\\\\\\\\\\\\\\":0,\\\\\\\\\\\\\\\"enabled\\\\\\\\\\\\\\\":true,\\\\\\\\\\\\\\\"eventName\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"sessionStart\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"handlerType\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"command\\\\\\\\\\\\\\\",\\\\\\\\"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:c82e91e075283a591fc85b0bae4709d5291dd333d7ed5552680e82027879f8a3",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "execution:71c11bcf-e05d-4255-a264-d80eb1d49721",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\\\\\",\\\\\\\"currentHash\\\\\\\":\\\\\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\\\\\",\\\\\\\"displayOrder\\\\\\\":0,\\\\\\\"enabled\\\\\\\":true,\\\\\\\"eventName\\\\\\\":\\\\\\\"sessionStart\\\\\\\",\\\\\\\"handlerType\\\\\\\":\\\\\\\"command\\\\\\\",\\\\\\\"isManaged\\\\\\\":false,\\\\\\\"key\\\\\\\":\\\\\\\"/<session-flags>"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:cf8c55d60dabffaa7e13fa29a8f07abb17efceb582bf2ee1a1ccf6420560919c",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:fadcb50657bb8f720a807c377b0fa593180048a45f038317a680d0ea04875598",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:d0e34a61e0a39f19d4906f4d251010d2b7ca43b08c6bd98825d529e08af8aeff",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "task:f519eb67-0118-4ad7-bfa7-cc412f727c1b",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "aces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\",\\\"currentHash\\\":\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-flags>/config.toml:session_start:0:0\\\",\\\"m"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:d34b24769bae82bbaab832a265f011b31d2c1a2e7fc1ac147bbdbed1454a609a",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:9518a475f9ff78115acd52f50784b1382e5a6c489e8719b4de68f014e76b8683",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:d4d820258190b7046e715d0d70c1a6df3a7cfc1b90c1af4ce5781c8a2dcd4b29",
+    "archived_missing": [
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83",
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "source": "execution:a283e89f-2980-4760-bd62-aa319f274986",
+    "still_required": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "typed_exclusions": [
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83"
+    ],
+    "occurrences": {
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83": [
+        "f5e787129b758b20644d7658f81941ec9f\\\\\\\",\\\\\\\"passed\\\\\\\":true}},\\\\\\\"evidence_ref\\\\\\\":\\\\\\\"sha256:d748f8528991126a0a8c35db2a1d5c297483660eb218e3664c0455eea223e03f\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83\\\\\\\",\\\\\\\"loaded_source\\\\\\\":[{\\\\\\\"path\\\\\\\":\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\rudtn\\\\\\\\\\\\\\\\codex-harness\\\\\\\\\\\\\\\\.runtime\\\\\\\\\\\\\\\\workspaces\\\\\\\\\\\\\\\\bd4673b2-69d0-4609-8795-2d96f135f019\\\\\\\\\\\\\\"
+      ],
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111": [
+        "7aa8f1305a33\"}},{\"emittedAtMs\":1788927021353,\"method\":\"item/commandExecution/outputDelta\",\"params\":{\"delta\":\"duplicate_image {\\\"stdout\\\": \\\"{\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:1111111111111111111111111111111111111111111111111111111111111111\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"}\\\"} []\\ninvalid_context {\\\"image\\\": \\\"sha256:1111111111111111111111111111111111111111111111111111111111111111\\\", \\\"checks\\\": null} []\\nunknown_in"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:d5869e6a853d04227c81249d0291c8651d6a543e3aa7b79c5463f330eb7363ad",
+    "archived_missing": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "source": "task:71c11bcf-e05d-4255-a264-d80eb1d49721",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd"
+    ],
+    "occurrences": {
+      "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd": [
+        "aces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/.venv/bin/python3 /runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\",\\\"currentHash\\\":\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-flags>/config.toml:session_start:0:0\\\",\\\"m"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:ddfb1818a440ff29f7e5fe200ce300768d8b51515acbd6c96ad03904a2dcedd7",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:fd68bfd658093739054dce2e86ed9515be92ab7ae8931db2fd865bf9474be9ad",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:e2a9df299f9fd551a8ee0b93f982b30b9c0809bca42848757c3d9b44736ea735",
+    "archived_missing": [
+      "sha256:39ec6c1ef8e7db455c4d0517f52cc7e003cb71828db8dd4104eef63d502ac318"
+    ],
+    "source": "execution:4f91f530-1025-4c54-988a-78b190a33c77",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:39ec6c1ef8e7db455c4d0517f52cc7e003cb71828db8dd4104eef63d502ac318"
+    ],
+    "occurrences": {
+      "sha256:39ec6c1ef8e7db455c4d0517f52cc7e003cb71828db8dd4104eef63d502ac318": [
+        "\",\\\"revision\\\":\\\"4fa9d8333cdec1a7eef8a3d90a235167062e4e57\\\",\\\"task_id\\\":\\\"889b5191-173a-4c0b-a51d-f8b992da43aa\\\",\\\"tree\\\":\\\"4e22dc358a4d1fb917bb431034dc30513dcef19e\\\"},\\\"image\\\":\\\"sha256:39ec6c1ef8e7db455c4d0517f52cc7e003cb71828db8dd4104eef63d502ac318\\\",\\\"mode\\\":\\\"Actual PostgreSQL request/client/host Docker command/receipt roundtrip; authorization fixture in isolated test schema, not production approval\\\",\\\"passed\\\":true,\\\"rec"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:e750c39211efa240ef5e0a2bbdc50c7d277e73c17726cf218f628cb8928f6bd9",
+    "archived_missing": [
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac"
+    ],
+    "source": "execution:5345d9f0-1439-41e1-8d08-4230bba8672b",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac"
+    ],
+    "occurrences": {
+      "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac": [
+        "ef45a25-e2f7-4dc5-aa08-71d3b5f8bd5b/.venv/bin/python3 /runtime/workspaces/7ef45a25-e2f7-4dc5-aa08-71d3b5f8bd5b/harness_hooks/codex_usage_limit_guard.py\\\\\\\",\\\\\\\"currentHash\\\\\\\":\\\\\\\"sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac\\\\\\\",\\\\\\\"displayOrder\\\\\\\":0,\\\\\\\"enabled\\\\\\\":true,\\\\\\\"eventName\\\\\\\":\\\\\\\"sessionStart\\\\\\\",\\\\\\\"handlerType\\\\\\\":\\\\\\\"command\\\\\\\",\\\\\\\"isManaged\\\\\\\":false,\\\\\\\"key\\\\\\\":\\\\\\\"/<session-flags>"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:eb56f9fd8f9bf13babf8c8e6360de6999fe2858412b7e4e15643b5c1b8ee949a",
+    "archived_missing": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "source": "execution:c496e620-d2bf-48ab-bf47-5d02a3413c6a",
+    "still_required": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    ],
+    "typed_exclusions": [],
+    "occurrences": {
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111": [
+        "fact_references('\\\\n'.join(lines)) == set()\\nE       AssertionError: assert {'sha256:1111...111111111111'} == set()\\nE         \\nE         Extra items in the left set:\\nE         'sha256:1111111111111111111111111111111111111111111111111111111111111111'\\nE         Use -v to get more diff\\n\\ntests/test_reference_kinds.py:114: AssertionError\\n=========================== short test summary info ============================\\nFAILED "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:f13f5ed79f9981fc13be1911227f3facdd2f3e46fde34c0a62f2c4edcaf5a25b",
+    "archived_missing": [
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83",
+      "sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812",
+      "sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64",
+      "sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88"
+    ],
+    "source": "canary",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812",
+      "sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64",
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88",
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e"
+    ],
+    "occurrences": {
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e": [
+        "ookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [stage-1  1/11] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e\\n#8 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n#8 DONE 0.0s\\n\\n#9 [internal] load build"
+      ],
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5": [
+        "22-bookworm-slim\\n#2 DONE 1.5s\\n\\n#6 [internal] load .dockerignore\\n#6 transferring context: 103B done\\n#6 DONE 0.0s\\n\\n#7 [codex 1/2] FROM docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5\\n#7 resolve docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [stage-1  1/11] FROM dock"
+      ],
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83": [
+        "776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-5dc00f184a6bfff4 done\\n#21 unpacking to docker.io/library/codex-harness:candidate-5dc00f184a6bfff4 0.1s done\\n#2"
+      ],
+      "sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812": [
+        "21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423"
+      ],
+      "sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64": [
+        "bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-5"
+      ],
+      "sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88": [
+        "s\\n#20 1.839  + codex-self-harness==0.1.0 (from file:///app)\\n#20 DONE 1.9s\\n\\n#21 exporting to image\\n#21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:f2eb02a5b22430355dd488ecaa0f2659a5ce2e83f2100fbe53c52a6630bedcc1",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:fdc00262-31c0-44cc-85ae-5f7df9145294",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b",
+    "archived_missing": [
+      "sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a"
+    ],
+    "source": "execution:8e42382b-fd30-4b1a-8f10-0f35dc1f6c60",
+    "still_required": [
+      "sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a",
+      "sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "typed_exclusions": [],
+    "occurrences": {
+      "sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652": [
+        "tained_references\\\": 1, \\\"grace_days\\\": 7, \\\"deferred\\\": 0, \\\"errors\\\": [], \\\"snapshot_seconds\\\": 5.7487981393933296e-05, \\\"max_batch_seconds\\\": 0.01951582101173699}, \\\"child\\\": \\\"sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652\\\", \\\"parent\\\": \\\"sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a\\\", \\\"child_exists\\\": false, \\\"parent_exists\\\": true}\\n\",\"itemId\":\"exec-8226115b-69bc-4522-"
+      ],
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": [
+        "5947-72f1-9a89-561f2082c9d0\"}},{\"emittedAtMs\":1788927916786,\"method\":\"item/commandExecution/outputDelta\",\"params\":{\"delta\":\"{\\\"payload\\\": \\\"{\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"}\\\", \\\"references\\\": [\\\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\"]}\\n{\\\"payload\\\": \\\"log [unfinished {\\\\\\\"candidat"
+      ],
+      "sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a": [
+        "conds\\\": 5.7487981393933296e-05, \\\"max_batch_seconds\\\": 0.01951582101173699}, \\\"child\\\": \\\"sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652\\\", \\\"parent\\\": \\\"sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a\\\", \\\"child_exists\\\": false, \\\"parent_exists\\\": true}\\n\",\"itemId\":\"exec-8226115b-69bc-4522-92cf-6f5ee16d6975\",\"threadId\":\"01a08468-4563-7ab0-99ab-d6cc61ce910c\",\"turnId\":\"01a08468-5"
+      ]
+    },
+    "status": "inspected"
+  },
+  {
+    "parent": "sha256:f9eb6bddd940f3f1e3884c046611a1144aa91720c9cc17c1eb6da2767ea32045",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:afd2b5275d74368917881f6ab1713539e82bdf19e125e57cb74341802c5381a3",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  }
+]

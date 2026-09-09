@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/app/.venv/bin/python",
+    "docs/evidence/reference-classification/inspect_archive.py"
+  ],
+  "environment": {
+    "PYTHONPATH": "src"
+  },
+  "status": "terminated",
+  "reason": "Restart with final classifier bytes and per-scan existing index/cache; original scan had no completed output",
+  "signal": "SIGTERM"
+}

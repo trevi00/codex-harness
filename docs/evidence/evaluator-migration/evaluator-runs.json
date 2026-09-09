@@ -1,0 +1,38 @@
+[
+  {
+    "scope": "local diagnostic; proposed migration unapproved",
+    "evaluator_revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+    "argv": [
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.venv/bin/python3",
+      "-m",
+      "pytest",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/migration-legacy/tests",
+      "-c",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/migration-legacy/pyproject.toml",
+      "--import-mode=importlib",
+      "-ra"
+    ],
+    "exit_code": 1,
+    "log_sha256": "c21e4c7dc719daaeb185769d7b1def7c33bf09b4d272e71a23662f3c488739c6",
+    "label": "legacy",
+    "integration": "disabled"
+  },
+  {
+    "scope": "local diagnostic; proposed migration unapproved",
+    "evaluator_revision": "c9eb4c7c5d82a94f772c50dd7bfb510c493bfb76",
+    "argv": [
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.venv/bin/python3",
+      "-m",
+      "pytest",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/migration-proposed/tests",
+      "-c",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/migration-proposed/pyproject.toml",
+      "--import-mode=importlib",
+      "-ra"
+    ],
+    "exit_code": 0,
+    "log_sha256": "9742b0ae8f67ebd4b89179a0831d5e2feb1860d91b14b8e409cc75e55463ea5b",
+    "label": "proposed",
+    "integration": "disabled"
+  }
+]

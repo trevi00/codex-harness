@@ -1,0 +1,19 @@
+[
+  {
+    "parent": "sha256:f2eb02a5b22430355dd488ecaa0f2659a5ce2e83f2100fbe53c52a6630bedcc1",
+    "archived_missing": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "source": "execution:fdc00262-31c0-44cc-85ae-5f7df9145294",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82"
+    ],
+    "occurrences": {
+      "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82": [
+        "n.\\\"}},\\\"summary\\\":\\\"Same source commit def214a1, with corrected exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comparison and actual canary output. Retain "
+      ]
+    },
+    "status": "inspected"
+  }
+]

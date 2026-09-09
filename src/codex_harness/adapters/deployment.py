@@ -10,10 +10,12 @@ from pathlib import Path
 from filelock import FileLock
 
 from codex_harness.adapters.commands import run_process
+from codex_harness.adapters.evaluator_migration import validate_controller, validate_manifest
 from codex_harness.adapters.hooks import NativeHooks
 from codex_harness.adapters.release_test_services import isolated_release_services
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
+from codex_harness.domain.evaluator_migration import validate_approvals
 from codex_harness.domain.model import canonical, digest, require, utcnow
 
 
@@ -72,6 +74,10 @@ class ReleaseRunner:
             active = tx.get("deployment", "active")
             image_record = tx.get("images", release_id)
         require(release is not None, "Release not found")
+        validate_approvals(release, self.service.org)
+        if 'migration' in release['policy']:
+            validate_controller(release['policy'])
+            validate_manifest(self.git.repository, release['policy'], release['candidate'])
         if release["status"] == "active":
             require(active and active["release_id"] == release_id, "Release is not the active deployment")
             return {"status": "active", "already_applied": True, "pointer": active}
@@ -82,11 +88,14 @@ class ReleaseRunner:
         candidate = release["candidate"]
         current_main = self.git._git("rev-parse", "HEAD")
         if current_main != candidate["base"]:
+            require('migration' not in release['policy'],
+                    'Migration source base is stale; fresh proposal and reviews required')
             request = Workflow(self.service.store, self.service.org).request_rebase(candidate["task_id"], current_main)
             return {"status": "rebasing", "task_id": request["message_id"]}
         inspected = self.git.inspect(candidate["revision"], candidate["base"])
         require(inspected["tree"] == candidate["tree"], "Candidate tree mismatch")
-        incumbent = self.git.review_workspace(candidate["base"], "evaluator-" + release_id[:16])
+        evaluator_revision = release['policy'].get('evaluator_revision', candidate['base'])
+        incumbent = self.git.review_workspace(evaluator_revision, "evaluator-" + release_id[:16])
         path = self.git.review_workspace(candidate["revision"], "canary-" + release_id[:16])
         # Fresh candidate venv; test definitions are taken from the incumbent commit.
         install = self._check(["uv", "sync", "--frozen"], path)
@@ -101,7 +110,12 @@ class ReleaseRunner:
                                     str(evaluator), timeout=900, env=incumbent_env)
             candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path, timeout=900, env=test_env)
         tests = {"passed": tests["passed"] and candidate_tests["passed"],
-                 "evidence": self.artifacts.put(canonical({"incumbent": tests, "candidate": candidate_tests}),
+                 "evidence": self.artifacts.put(canonical({"incumbent": tests, "candidate": candidate_tests,
+                                                    "evaluator_revision": evaluator_revision,
+                                                    "source_base": candidate['base'],
+                                                    "candidate_revision": candidate['revision'],
+                                                    "candidate_tree": candidate['tree'],
+                                                    "policy_hash": release['policy_hash']}),
                                                 "test-suites:" + release_id)["ref"]}
         if not install["passed"]:
             tests = install
@@ -132,6 +146,7 @@ class ReleaseRunner:
         return self._promote(verified, active, image)
 
     def _promote(self, release, active, image):
+        validate_approvals(release, self.service.org)
         release_id, candidate, checks = release["id"], release["candidate"], release["checks"]
         if self.git.remote:
             self.git.publish(candidate, "Harness improvement " + candidate["revision"][:12],

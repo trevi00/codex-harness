@@ -1,0 +1,17 @@
+{
+  "scope": "Read-only collection control; no production dry run or canary",
+  "executables": {
+    "docker": null,
+    "codex": "/usr/local/bin/codex",
+    "postgres": null,
+    "initdb": null,
+    "pg_ctl": null
+  },
+  "collection_control": {
+    "at": "2026-09-09T01:59:54.740703+00:00",
+    "reason": "Production preflight found non-artifact digests interpreted as artifact references; preserve evidence until typed-reference repair passes production dry run",
+    "status": "paused",
+    "revision": "6fec51db27e23ac73ea7984a93bee2cd1572ec28",
+    "evidence_ref": "sha256:13d1baae90d671d0d771a74f2a4053111f64237004e383523a9241a837ca6478"
+  }
+}

@@ -10,6 +10,7 @@ class RuntimePolicy:
     max_reworks: int = 2
     task_seconds: int = 900
     decision_seconds: int = 300
+    tool_wait_grace_seconds: int = 300
     task_lease_seconds: int = 600
     research_interval_hours: int = 6
     recurrence_threshold: int = 2

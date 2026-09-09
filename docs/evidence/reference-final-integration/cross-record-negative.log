@@ -1,0 +1,125 @@
+revision: 11d79cc69a9c5a29a8a3ee834741033882c55849 decoder_sha256: aa44f9a4d4d8d81b8d772ce532afbdb0816cb8909a9645fa6f9851a605bb36cb
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_malformed_image_fragment_cannot_borrow_another_receipt_identity[raw-False] _
+
+order = False, wrapper = 'raw'
+
+    @pytest.mark.parametrize('order', [False, True])
+    @pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+    def test_malformed_image_fragment_cannot_borrow_another_receipt_identity(order, wrapper):
+        malformed = '{,}"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+        typed = json.dumps({'candidate': {}, 'image': IMAGE})
+        body = '\n'.join([typed, malformed] if order else [malformed, typed])
+        if wrapper == 'json':
+            body = json.dumps({'stdout': body})
+        elif wrapper == 'escaped':
+            body = json.dumps(body)[1:-1]
+>       assert IMAGE in artifact_references({'stdout': body})
+E       assert 'sha256:1111111111111111111111111111111111111111111111111111111111111111' in set()
+E        +  where set() = artifact_references({'stdout': '{,}"candidate":{},"image":"sha256:1111111111111111111111111111111111111111111111111111111111111111","image":"unknown"}\n{"candidate": {}, "image": "sha256:1111111111111111111111111111111111111111111111111111111111111111"}'})
+
+tests/test_reference_kinds.py:485: AssertionError
+_ test_malformed_image_fragment_cannot_borrow_another_receipt_identity[raw-True] _
+
+order = True, wrapper = 'raw'
+
+    @pytest.mark.parametrize('order', [False, True])
+    @pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+    def test_malformed_image_fragment_cannot_borrow_another_receipt_identity(order, wrapper):
+        malformed = '{,}"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+        typed = json.dumps({'candidate': {}, 'image': IMAGE})
+        body = '\n'.join([typed, malformed] if order else [malformed, typed])
+        if wrapper == 'json':
+            body = json.dumps({'stdout': body})
+        elif wrapper == 'escaped':
+            body = json.dumps(body)[1:-1]
+>       assert IMAGE in artifact_references({'stdout': body})
+E       assert 'sha256:1111111111111111111111111111111111111111111111111111111111111111' in set()
+E        +  where set() = artifact_references({'stdout': '{"candidate": {}, "image": "sha256:1111111111111111111111111111111111111111111111111111111111111111"}\n{,}"candidate":{},"image":"sha256:1111111111111111111111111111111111111111111111111111111111111111","image":"unknown"}'})
+
+tests/test_reference_kinds.py:485: AssertionError
+_ test_malformed_image_fragment_cannot_borrow_another_receipt_identity[json-False] _
+
+order = False, wrapper = 'json'
+
+    @pytest.mark.parametrize('order', [False, True])
+    @pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+    def test_malformed_image_fragment_cannot_borrow_another_receipt_identity(order, wrapper):
+        malformed = '{,}"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+        typed = json.dumps({'candidate': {}, 'image': IMAGE})
+        body = '\n'.join([typed, malformed] if order else [malformed, typed])
+        if wrapper == 'json':
+            body = json.dumps({'stdout': body})
+        elif wrapper == 'escaped':
+            body = json.dumps(body)[1:-1]
+>       assert IMAGE in artifact_references({'stdout': body})
+E       assert 'sha256:1111111111111111111111111111111111111111111111111111111111111111' in set()
+E        +  where set() = artifact_references({'stdout': '{"stdout": "{,}\\"candidate\\":{},\\"image\\":\\"sha256:11111111111111111111111111111111111111111111111111...\n{\\"candidate\\": {}, \\"image\\": \\"sha256:1111111111111111111111111111111111111111111111111111111111111111\\"}"}'})
+
+tests/test_reference_kinds.py:485: AssertionError
+_ test_malformed_image_fragment_cannot_borrow_another_receipt_identity[json-True] _
+
+order = True, wrapper = 'json'
+
+    @pytest.mark.parametrize('order', [False, True])
+    @pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+    def test_malformed_image_fragment_cannot_borrow_another_receipt_identity(order, wrapper):
+        malformed = '{,}"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+        typed = json.dumps({'candidate': {}, 'image': IMAGE})
+        body = '\n'.join([typed, malformed] if order else [malformed, typed])
+        if wrapper == 'json':
+            body = json.dumps({'stdout': body})
+        elif wrapper == 'escaped':
+            body = json.dumps(body)[1:-1]
+>       assert IMAGE in artifact_references({'stdout': body})
+E       assert 'sha256:1111111111111111111111111111111111111111111111111111111111111111' in set()
+E        +  where set() = artifact_references({'stdout': '{"stdout": "{\\"candidate\\": {}, \\"image\\": \\"sha256:1111111111111111111111111111111111111111111111111...\"image\\":\\"sha256:1111111111111111111111111111111111111111111111111111111111111111\\",\\"image\\":\\"unknown\\"}"}'})
+
+tests/test_reference_kinds.py:485: AssertionError
+_ test_malformed_image_fragment_cannot_borrow_another_receipt_identity[escaped-False] _
+
+order = False, wrapper = 'escaped'
+
+    @pytest.mark.parametrize('order', [False, True])
+    @pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+    def test_malformed_image_fragment_cannot_borrow_another_receipt_identity(order, wrapper):
+        malformed = '{,}"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+        typed = json.dumps({'candidate': {}, 'image': IMAGE})
+        body = '\n'.join([typed, malformed] if order else [malformed, typed])
+        if wrapper == 'json':
+            body = json.dumps({'stdout': body})
+        elif wrapper == 'escaped':
+            body = json.dumps(body)[1:-1]
+>       assert IMAGE in artifact_references({'stdout': body})
+E       assert 'sha256:1111111111111111111111111111111111111111111111111111111111111111' in set()
+E        +  where set() = artifact_references({'stdout': '{,}\\"candidate\\":{},\\"image\\":\\"sha256:11111111111111111111111111111111111111111111111111111111111111...}\\n{\\"candidate\\": {}, \\"image\\": \\"sha256:1111111111111111111111111111111111111111111111111111111111111111\\"}'})
+
+tests/test_reference_kinds.py:485: AssertionError
+_ test_malformed_image_fragment_cannot_borrow_another_receipt_identity[escaped-True] _
+
+order = True, wrapper = 'escaped'
+
+    @pytest.mark.parametrize('order', [False, True])
+    @pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+    def test_malformed_image_fragment_cannot_borrow_another_receipt_identity(order, wrapper):
+        malformed = '{,}"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+        typed = json.dumps({'candidate': {}, 'image': IMAGE})
+        body = '\n'.join([typed, malformed] if order else [malformed, typed])
+        if wrapper == 'json':
+            body = json.dumps({'stdout': body})
+        elif wrapper == 'escaped':
+            body = json.dumps(body)[1:-1]
+>       assert IMAGE in artifact_references({'stdout': body})
+E       assert 'sha256:1111111111111111111111111111111111111111111111111111111111111111' in set()
+E        +  where set() = artifact_references({'stdout': '{\\"candidate\\": {}, \\"image\\": \\"sha256:1111111111111111111111111111111111111111111111111111111111111...,\\"image\\":\\"sha256:1111111111111111111111111111111111111111111111111111111111111111\\",\\"image\\":\\"unknown\\"}'})
+
+tests/test_reference_kinds.py:485: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reference_kinds.py::test_malformed_image_fragment_cannot_borrow_another_receipt_identity[raw-False]
+FAILED tests/test_reference_kinds.py::test_malformed_image_fragment_cannot_borrow_another_receipt_identity[raw-True]
+FAILED tests/test_reference_kinds.py::test_malformed_image_fragment_cannot_borrow_another_receipt_identity[json-False]
+FAILED tests/test_reference_kinds.py::test_malformed_image_fragment_cannot_borrow_another_receipt_identity[json-True]
+FAILED tests/test_reference_kinds.py::test_malformed_image_fragment_cannot_borrow_another_receipt_identity[escaped-False]
+FAILED tests/test_reference_kinds.py::test_malformed_image_fragment_cannot_borrow_another_receipt_identity[escaped-True]
+6 failed, 139 deselected in 2.09s

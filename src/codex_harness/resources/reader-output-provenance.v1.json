@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "parent": "sha256:71b2d5dd56570d115861d8ae3595aec121dcbcdb307ba809b8c52f35ef2daa39",
+      "original": "sha256:fddc708148d56fdb1249add00b7a200b488ef2392c96ba89ebebfba654ba2979",
+      "command_hex": "607b7a7add09de27af0aded75e007fb738b5882a8c754f37c65fdb4591eb6af0",
+      "output_hex": "fc41cfd5b61688fb4c12eb38410d3e63e26c4b85f683c8aec20c327a20db2b9d",
+      "pointer": "",
+      "cursor": 0,
+      "limit": 8000
+    }
+  ]
+}

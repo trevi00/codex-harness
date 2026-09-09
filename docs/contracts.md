@@ -120,3 +120,35 @@ Native comparison uses the live admission/budget function and immutable full rou
 inputs. Recorded full-body hashes, count and truncation must reproduce before any
 counterfactual is reported. Missing evidence is unavailable, never success. Selection
 and character pressure do not authorize activation or establish task success.
+
+### Explicit retention evaluator migration (INV-RELEASE-001)
+
+The optional version-1 `policy.migration` binds the original source base, exact
+proposed evaluator revision, canonical manifest digest, and controller revision.
+The controller is the final combined candidate reviewed by both actors. No
+candidate metadata or ordinary qualification-only acceptance authorizes migration.
+The immutable release identity covers candidate and policy before review. Each
+fresh lead/conductor approval explicitly binds policy hash, candidate digest,
+manifest digest and controller revision; absent, stale or mixed bindings fail
+closed at review, verification and promotion. Missing mandatory tests/start/file
+checks cannot verify. Rejected releases and old failure evidence remain immutable.
+Successful command inspection must be established from executor events retained
+in the execution artifact, never a model-provided assertion.
+
+The checked-in `evaluator-migration.v1.json` fixes commit, parent, tree, file Git
+blob and SHA-256 identities. The adapter independently reconstructs the five
+expected-expression changes in three tests from Git bytes. AST equality after
+those substitutions and exact source reconstruction reject other edits, including
+comments and formatting. No default evaluator override is permitted without the
+migration. An approved migration selects the entire evaluator suite while
+candidate ancestry and merge retain the original source base. A stale original
+base rejects migration qualification and requires fresh proposal/reviews; it
+cannot enter automatic rebase with the old migration approvals.
+
+Migration reviews enter `awaiting_bootstrap`, outside automatic release dispatch.
+The operator bootstrap checks a clean exact controller and durable reviews before
+qualification, with remote publication disabled and auto-merge false. Qualification
+uses the normal full-suite and actual container Codex canaries. Local fixture
+approvals and diagnostic runs never qualify a release. Collection remains paused
+until complete current-host traversal and writer convergence; this transition
+makes no production-graph or upstream-completeness assertion.

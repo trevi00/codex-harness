@@ -166,10 +166,13 @@ class AppServer:
         turn = self.request("turn/start", turn_options)
         turn_id = turn["turn"]["id"]
         deadline = time.monotonic() + timeout
+        budget_tick, tool_wait_credit = time.monotonic(), 0.0
+        waiting_for_tool = False
         events, answer_text, usage = [], "", None
         inspection_failures = {}
         rotate, interrupted = False, False
         active_tools = set()
+        budget_tools = set()
 
         def blocked_result(error=None):
             # INV-RELEASE-001: transport loss cannot erase observed inspection failure.
@@ -177,11 +180,24 @@ class AppServer:
                     "thread_id": thread_id, "usage": usage, "rotate": False,
                     "interrupted": False, "inspection_blocked": True,
                     "inspection_failures": list(inspection_failures.values()),
-                    "termination_error": error, "requested_model": model}
+                    "termination_error": error, "requested_model": model,
+                    "tool_wait_credit_seconds": tool_wait_credit}
 
-        while time.monotonic() < deadline:
+        while True:
+            now = time.monotonic()
+            if waiting_for_tool:
+                # INV-SESSION-001: one bounded allowance for observed tool wait,
+                # shared across all tools; duplicate starts cannot reset it.
+                credit = min(max(0.0, now - budget_tick),
+                             max(0.0, POLICY.tool_wait_grace_seconds - tool_wait_credit))
+                deadline += credit
+                tool_wait_credit += credit
+            budget_tick = now
+            if now >= deadline:
+                break
             if on_tick:
                 on_tick()
+            waiting_for_tool = bool(budget_tools)
             try:
                 event = (self.notifications.popleft() if self.notifications
                          else self._receive(min(5, deadline - time.monotonic()), poll=True))
@@ -207,8 +223,11 @@ class AppServer:
             item = params.get("item", {})
             if method == "item/started" and item.get("type") in {"commandExecution", "fileChange", "mcpToolCall"}:
                 active_tools.add(item["id"])
+                if params.get("threadId") == thread_id and params.get("turnId") == turn_id:
+                    budget_tools.add(item["id"])
             if method == "item/completed":
                 active_tools.discard(item.get("id"))
+                budget_tools.discard(item.get("id"))
                 if read_only and namespace_failure(event):
                     # INV-RECURRENCE-001: redelivery of one command is not a new incident.
                     inspection_failures.setdefault(item["id"], event)
@@ -239,7 +258,7 @@ class AppServer:
                     answer = None
                 return {"answer": answer, "events": events, "thread_id": thread_id,
                         "usage": usage, "rotate": rotate, "interrupted": status == "interrupted",
-                        "requested_model": model}
+                        "requested_model": model, "tool_wait_credit_seconds": tool_wait_credit}
             if rotate and not active_tools and not interrupted and not inspection_failures:
                 self.request("turn/interrupt", {"threadId": thread_id, "turnId": turn_id})
                 interrupted = True

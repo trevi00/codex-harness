@@ -1,0 +1,52 @@
+[
+  {
+    "argv": [
+      "/usr/local/bin/python",
+      "-I",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/scripts/qualify_migration.py",
+      "--controller",
+      "not-the-reviewed-controller",
+      "--candidate",
+      "87b1b36244e4371f53318b8d813ea8d42a2372a8",
+      "--policy-hash",
+      "unapproved",
+      "--release-id",
+      "unapproved",
+      "--repository",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d",
+      "--runtime",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/bootstrap-negative-control",
+      "--auth",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/missing-auth.json"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/scripts/qualify_migration.py\", line 45, in <module>\n    main()\n    ~~~~^^\n  File \"/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/scripts/qualify_migration.py\", line 21, in main\n    raise RuntimeError('Use Python -I from the exact reviewed controller checkout')\nRuntimeError: Use Python -I from the exact reviewed controller checkout\n",
+    "scope": "Bootstrap rejection control; no runtime record mutation or qualification"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/python",
+      "-I",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/scripts/qualify_migration.py",
+      "--controller",
+      "87b1b36244e4371f53318b8d813ea8d42a2372a8",
+      "--candidate",
+      "87b1b36244e4371f53318b8d813ea8d42a2372a8",
+      "--policy-hash",
+      "unapproved",
+      "--release-id",
+      "unapproved",
+      "--repository",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d",
+      "--runtime",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/bootstrap-negative-control",
+      "--auth",
+      "/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/missing-auth.json"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/scripts/qualify_migration.py\", line 45, in <module>\n    main()\n    ~~~~^^\n  File \"/runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/scripts/qualify_migration.py\", line 23, in main\n    raise RuntimeError('Controller checkout must be clean')\nRuntimeError: Controller checkout must be clean\n",
+    "scope": "Bootstrap rejection control; no runtime record mutation or qualification"
+  }
+]

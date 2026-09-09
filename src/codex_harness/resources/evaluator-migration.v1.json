@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "source_base": "445fbc8859e896b90e974ed69447ce58e3446251",
+  "evaluator_revision": "4055d2d0b2a21908abc803f243c97953d928d994",
+  "preserved_candidate": "87b1b36244e4371f53318b8d813ea8d42a2372a8",
+  "review_fixtures": [
+    {
+      "file": "tests/test_workflow.py",
+      "source_sha256": "dade898d7945ae948e761ebbfe89db264f773ee112a73986f76eafb3d1764ca2",
+      "evaluator_sha256": "9db4558d64a3292613a38c90eb0a16d4476cea36a630e0dab2a14efec8b40716",
+      "change": "Add successful command inspection to existing accepted-review fixture; assertions unchanged"
+    },
+    {
+      "file": "tests/test_git_workspace.py",
+      "source_sha256": "d57c5aac057fa49383a0cedceaf915dde9553226d588442ca85c562774d96f04",
+      "evaluator_sha256": "1d980ab48d05a894e5f7175b2b89eebc073403e12d07eb48f8ef20cfc68aa9c4",
+      "change": "Add successful command inspection to existing accepted-review fixture; assertions unchanged"
+    },
+    {
+      "file": "tests/test_model_routing.py",
+      "source_sha256": "d6ab64a0c0a39107b77752450aadde97daa2a2dfae1959a4d62fdc88094ee1f8",
+      "evaluator_sha256": "a5acac5ca2524be5b39b7166e14df96562dcfb63edc16515e3615a66d829de78",
+      "change": "Add successful command inspection to existing accepted-review fixture; assertions unchanged"
+    }
+  ],
+  "source_tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e",
+  "evaluator_tree": "ede40f80a715f48d92b0b9fc9ebead1faf46f77c",
+  "file": "tests/test_reference_kinds.py",
+  "source_blob": "29d12defe7f4e37e059a1cdf0c409d73baaddf75",
+  "evaluator_blob": "5622fbdc910befd6eaa25a111131ea14df0fd030",
+  "source_sha256": "0871e232c837c3710d4bb82b7e280e85cf3629f054d57bb8e60ccf06063131f0",
+  "evaluator_sha256": "e093dd577bcc07f7a350f009e1007a8e15fe100039ef9a8ba33a3b85900477b2",
+  "delta": [
+    {
+      "test": "test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens",
+      "line": 56,
+      "old": "{EVIDENCE}",
+      "new": "{IMAGE, EVIDENCE}"
+    },
+    {
+      "test": "test_partial_docker_word_needs_complete_local_identity_and_output_context",
+      "line": 183,
+      "old": "{EVIDENCE}",
+      "new": "{IMAGE, EVIDENCE}"
+    },
+    {
+      "test": "test_partial_docker_word_needs_complete_local_identity_and_output_context",
+      "line": 190,
+      "old": "set()",
+      "new": "{IMAGE}"
+    },
+    {
+      "test": "test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact",
+      "line": 260,
+      "old": "set()",
+      "new": "{IMAGE}"
+    },
+    {
+      "test": "test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact",
+      "line": 266,
+      "old": "{EVIDENCE}",
+      "new": "{IMAGE, EVIDENCE}"
+    }
+  ],
+  "rationale": "INV-RESOURCE-001: ambiguous clipped tokens remain artifact edges; unrelated records cannot establish token provenance."
+}
