@@ -158,3 +158,37 @@ def test_invalid_task_population_never_yields_a_ratio(change):
 def test_capacity_invalid_status_is_not_an_idle_snapshot():
     data = evidence({'id': 'bad', 'status': 'made_up'})
     assert evaluate(DEFINITIONS[2], data, NOW).value is None
+
+
+@pytest.mark.parametrize('changes', [
+    {}, {'attempt': True}, {'attempt_outcomes': None}, {'attempt_outcomes': [None]},
+    {'attempt_outcomes': [{'attempt': 1}]}, {'status': 'unknown'},
+    {'created_at': 'bad'}, {'completed_at': (NOW + timedelta(seconds=1)).isoformat()},
+    {'status': 'running', 'lease_until': (NOW + timedelta(seconds=10)).isoformat()},
+])
+def test_compact_measurement_population_preserves_evaluation(changes):
+    from codex_harness.domain.measurements import measurement_population
+    row = {**task(), **changes, 'message': {'large': 'x' * 10000}, 'result': {'log': 'y' * 10000}}
+    original = evidence(row)
+    compact = {**original, 'tasks': measurement_population(original['tasks']),
+               'decisions': measurement_population(original['decisions'], decisions=True)}
+    assert all(evaluate(d, original, NOW) == evaluate(d, compact, NOW) for d in DEFINITIONS)
+    assert 'message' not in compact['tasks'][0] and 'result' not in compact['tasks'][0]
+    assert 'message' in row and 'result' in row
+
+
+def test_compact_observations_keep_fresh_time_and_replay_lease_expiry(tmp_path):
+    store, artifacts = MemoryStore(), FileArtifacts(str(tmp_path / 'artifacts'))
+    with store.transaction() as tx:
+        tx.put('decisions_pending', 'one', {'id': 'one', 'status': 'running',
+               'lease_until': (NOW + timedelta(seconds=1)).isoformat(),
+               'message': {'large': 'x' * 100000}})
+    use_case = Measurements(store, artifacts)
+    first, later = use_case.collect('a' * 40, NOW), use_case.collect('a' * 40, NOW + timedelta(seconds=2))
+    assert first[2]['value'] == 1 and later[2]['value'] == 0
+    assert first[2]['evidence_refs'] != later[2]['evidence_refs']
+    for results, at in [(first, NOW), (later, NOW + timedelta(seconds=2))]:
+        ref = results[2]['evidence_refs'][0]
+        snapshot = artifacts.document(ref)
+        assert evaluate(DEFINITIONS[2], snapshot, at).value == results[2]['value']
+        assert len(artifacts._body(ref)) < 5000

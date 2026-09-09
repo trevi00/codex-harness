@@ -1,0 +1,83 @@
+[
+  {
+    "argv": [
+      "git",
+      "show",
+      "34da547aa6d8fc162ac9890cc5cd40d6a3d138b3:src/codex_harness/adapters/record_references.py"
+    ],
+    "revision": "34da547aa6d8fc162ac9890cc5cd40d6a3d138b3",
+    "source_sha256": "5782eb8aba4c18c244d652b4394e317f635c4665520080201edc1d21dbe29b01",
+    "input": {
+      "stdout": "{\"candidate\":{},\"image\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"image\":\"unknown\",\"truncated\":"
+    },
+    "kwargs": {},
+    "rejected_dependencies": [],
+    "candidate_dependencies": [
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "scope": "Decoder-only negative control; not a review or independent recurrence"
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "5dc00f184a6bfff450d4fd090aa1bff13e1e036f:src/codex_harness/adapters/record_references.py"
+    ],
+    "revision": "5dc00f184a6bfff450d4fd090aa1bff13e1e036f",
+    "source_sha256": "58ba0da7e158ba1317a82fba045b673136042a47c4f55632c23e9554f82316e9",
+    "input": {
+      "stdout": "{\"candidate\":{},\"image\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"image\":\"unknown\"}"
+    },
+    "kwargs": {},
+    "rejected_dependencies": [],
+    "candidate_dependencies": [
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "scope": "Decoder-only negative control; not a review or independent recurrence"
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "5dc00f184a6bfff450d4fd090aa1bff13e1e036f:src/codex_harness/adapters/record_references.py"
+    ],
+    "revision": "5dc00f184a6bfff450d4fd090aa1bff13e1e036f",
+    "source_sha256": "58ba0da7e158ba1317a82fba045b673136042a47c4f55632c23e9554f82316e9",
+    "input": {
+      "argv": [
+        "docker",
+        "image",
+        "inspect",
+        "--unknown",
+        "target",
+        "--format",
+        "{{.Id}}"
+      ],
+      "stdout": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "kwargs": {},
+    "rejected_dependencies": [],
+    "candidate_dependencies": [
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "scope": "Decoder-only negative control; not a review or independent recurrence"
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "19c4d73c879bef32909307186e8196a682cdbcbd:src/codex_harness/adapters/record_references.py"
+    ],
+    "revision": "19c4d73c879bef32909307186e8196a682cdbcbd",
+    "source_sha256": "84caed7037a7fbe48efee84e8369cdf20807da4923947737a09110b1c088f819",
+    "input": "import hashlib\nimport io\nimport json\nimport subprocess\nimport tarfile\nimport tempfile\nfrom pathlib import Path\n\nfrom codex_harness.adapters.artifacts import FileArtifacts\n\nroot = Path.cwd()\nartifacts = FileArtifacts(root / '.runtime/artifacts')\nsource = root / '.runtime/audit-sources/6e55570bfd7748f2c85fead85d699309899d909fe977db5b1d854aef55afe71a'\npin = 'b9586c59c062457a45018e41c2e753934b5ca6c9'\nprobe = Path(__file__).with_name('baldrix_budget_probe.py')\npaths = ['scripts/lib/budget.py', 'scripts/lib/atomic_json.py', 'scripts/lib/paths.py',\n         'scripts/lib/telemetry_log.py', 'scripts/lib/event_taxonomy.py', 'scripts/lib/event_store.py',\n         'scripts/handlers/post_tool/agent_outcome_audit.py']\narchive = subprocess.check_output(['git', '-c', 'core.autocrlf=false', '--git-dir', str(source), 'archive', pin])\nwith tempfile.TemporaryDirectory(prefix='baldrix-budget-probe-') as folder:\n    with tarfile.open(fileobj=io.BytesIO(archive)) as tar:\n        tar.extractall(folder, filter='data')\n    bindings = []\n    for path in paths:\n        body = subprocess.check_output(['git', '--git-dir', str(source), 'show', pin + ':' + path])\n        assert (Path(folder) / path).read_bytes() == body\n        bindings.append({'path': path, 'source_ref': artifacts.put(body.decode('utf-8'), 'baldrix-source:' + path)['ref']})\n    argv = ['docker', 'run', '--rm', '--network', 'none', '--read-only', '--cap-drop', 'ALL',\n            '--security-opt', 'no-new-privileges', '--pids-limit', '64', '--memory', '512m', '--cpus', '1',\n            '--tmpfs', '/tmp:rw,size=64m', '-e', 'PYTHONDONTWRITEBYTECODE=1',\n            '-e', 'PYTHONPATH=/source/scripts', '-e', 'CLAUDE_HOME=/tmp/claude',\n            '-e', 'CLAUDE_STATE_DIR=/tmp/state', '-e', 'CLAUDE_TELEMETRY_DIR=/tmp/telemetry',\n            '--mount', f'type=bind,source={folder},target=/source,readonly',\n            '--mount', f'type=bind,source={probe},target=/probe.py,readonly',\n            '--entrypoint', 'python',\n            'sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0', '/probe.py']\n    result = subprocess.run(argv, capture_output=True, text=True, encoding='utf-8', timeout=90)\n    receipt = artifacts.put(json.dumps({'source_revision': pin, 'bindings': bindings,\n        'runner_ref': artifacts.put(Path(__file__).read_text('utf-8'), 'baldrix-budget-probe-runner')['ref'],\n        'archive_sha256': hashlib.sha256(archive).hexdigest(),\n        'probe_ref': artifacts.put(probe.read_text('utf-8'), 'baldrix-budget-probe')['ref'],\n        'argv': argv, 'exit_code': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr,\n        'scope': 'Ten characterization probes, including direct hook subprocess stdin; passing includes defect reproduction, not fixes or native CLI hook qualification.'}),\n        'baldrix-budget-probe-execution')\n    (root / '.runtime/baldrix-budget-probe.json').write_text(json.dumps(receipt))\n    print(json.dumps(receipt))\n    print(result.stdout)\n    print(result.stderr)\n",
+    "kwargs": {
+      "source": "baldrix-budget-probe-runner"
+    },
+    "rejected_dependencies": [
+      "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    ],
+    "candidate_dependencies": [],
+    "scope": "Decoder-only negative control; not a review or independent recurrence"
+  }
+]

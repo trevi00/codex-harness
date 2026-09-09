@@ -1,0 +1,11 @@
+{
+  "kind": "negative-control",
+  "revision": "19c4d73c879bef32909307186e8196a682cdbcbd",
+  "decoder_sha256": "84caed7037a7fbe48efee84e8369cdf20807da4923947737a09110b1c088f819",
+  "runner_ref": "sha256:b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855",
+  "observed_dependencies": [
+    "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+  ],
+  "expected_dependencies": [],
+  "result": "reproduced incorrect image dependency"
+}

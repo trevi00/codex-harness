@@ -45,6 +45,112 @@ def age(artifacts, *refs):
         os.utime(path, (old, old))
 
 
+@pytest.mark.parametrize('encoding', ['plain', 'ascii', 'spec', 'suffix'])
+def test_existing_evidence_survives_even_if_semantic_classification_fails(tmp_path, monkeypatch, encoding):
+    import json
+
+    from codex_harness.adapters import maintenance
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('valuable evidence', 'test')['ref']
+    value = {'plain': child, 'ascii': child.replace('sha256:', r'\u0073ha256:'),
+             'spec': 'spec-' + child, 'suffix': child + 'a'}[encoding]
+    parent = artifacts.put(json.dumps({'candidate': {}, 'image': value}), 'test')['ref']
+    orphan = artifacts.put('unreferenced', 'test')['ref']
+    age(artifacts, child, parent, orphan)
+    with store.transaction() as tx:
+        tx.put('root', 'metadata-shaped', {'candidate': {}, 'image': parent})
+    # Fault injection checks the independent safety boundary, not a classifier copy.
+    monkeypatch.setattr(maintenance, 'artifact_references', lambda *a, **kw: set())
+    monkeypatch.setattr(maintenance, 'record_references', lambda *a, **kw: set())
+    result = ArtifactMaintenance(store, artifacts).collect(apply=True)
+    assert result['files'] == 1
+    assert artifacts.read(child) == 'valuable evidence'
+    assert artifacts.read(parent)
+    assert not (artifacts.root / (orphan[7:] + '.txt')).exists()
+
+
+@pytest.mark.parametrize('apply', [False, True])
+def test_file_index_includes_publication_before_generation_sample(tmp_path, monkeypatch, apply):
+    import json
+
+    from codex_harness.adapters import maintenance
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    collector = ArtifactMaintenance(store, artifacts)
+    generation = collector._generation
+    published = []
+
+    def sample():
+        if not published:
+            # Simulate a completed publication immediately before the initial
+            # generation sample. _put runs under the collector's file lock.
+            child = artifacts._put('late evidence', 'test')['ref']
+            parent = artifacts._put(json.dumps({'candidate': {}, 'image': child}), 'test')['ref']
+            age(artifacts, child)
+            published.extend([child, parent])
+        return generation()
+
+    monkeypatch.setattr(collector, '_generation', sample)
+    monkeypatch.setattr(maintenance, 'artifact_references', lambda *a, **kw: set())
+    monkeypatch.setattr(maintenance, 'record_references', lambda *a, **kw: set())
+    result = collector.collect(apply=apply)
+    assert result['files'] == 0
+    assert artifacts.read(published[0]) == 'late evidence'
+
+
+def test_tombstone_fences_ignore_metadata_exclusions_and_ascii_escapes(tmp_path):
+    import json
+
+    from codex_harness.domain.model import ContractError
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('collected orphan', 'test')['ref']
+    age(artifacts, child)
+    assert ArtifactMaintenance(store, artifacts).collect(apply=True)['files'] == 1
+    for reference in (child, child.replace('sha256:', r'\u0073ha256:')):
+        body = {'candidate': {}, 'image': reference}
+        with pytest.raises(ContractError, match='collected'):
+            artifacts.put(json.dumps(body), 'test')
+        with pytest.raises(ContractError, match='collected'):
+            with store.transaction() as tx:
+                tx.put('root', 'late-metadata', body)
+
+
+def test_metric_decoder_cache_never_caches_the_live_file_index(tmp_path):
+    import json
+
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    child = artifacts.put('valuable evidence', 'test')['ref']
+    parent = artifacts.put(json.dumps({'candidate': {}, 'image': child}), 'conductor-measurements.v1')['ref']
+    path = artifacts.root / (parent[7:] + '.txt')
+    cache = {}
+    assert ArtifactMaintenance._dependencies(path, path.read_bytes(), cache, set()) == set()
+    assert ArtifactMaintenance._dependencies(path, path.read_bytes(), cache, {child}) == {child}
+
+
+def test_late_metadata_shaped_root_defers_deletion_even_if_classifier_misses_it(tmp_path, monkeypatch):
+    from codex_harness.adapters import maintenance
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('newly referenced evidence', 'test')['ref']
+    age(artifacts, child)
+    collector = ArtifactMaintenance(store, artifacts)
+    mark = collector._mark
+
+    def publish(root, roots):
+        marked = mark(root, roots)
+        with store.transaction() as tx:
+            tx.put('root', 'late', {'candidate': {}, 'image': child})
+        return marked
+
+    monkeypatch.setattr(maintenance, 'record_references', lambda *a, **kw: set())
+    monkeypatch.setattr(collector, '_mark', publish)
+    result = collector.collect(apply=True)
+    assert result['files'] == 0 and result['deferred'] > 0
+    assert artifacts.read(child) == 'newly referenced evidence'
+
+
 def test_new_transitive_root_after_mark_defers_all_deletion(tmp_path, monkeypatch):
     artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
     child = artifacts.put('old child', 'test')['ref']
@@ -178,7 +284,13 @@ def test_multiple_collectors_count_each_body_once(tmp_path):
     with ThreadPoolExecutor() as pool:
         results = list(pool.map(lambda _: ArtifactMaintenance(store, artifacts).collect(apply=True),
                                 range(2)))
-    assert sum(r['files'] for r in results) == 20
+    # Nonblocking publication locks may defer an orphan in both concurrent
+    # scans. Count every actual removal once, then drain the retained remainder.
+    remaining = len(list(artifacts.root.glob('*.txt')))
+    assert sum(r['files'] for r in results) + remaining == 20
+    drained = ArtifactMaintenance(store, artifacts).collect(apply=True)
+    assert drained['files'] == remaining and drained['deferred'] == 0
+    assert sum(r['files'] for r in results) + drained['files'] == 20
     assert not list(artifacts.root.glob('*.txt'))
 
 
@@ -473,3 +585,61 @@ def test_generation_snapshot_waits_for_complete_publication_without_db_lock(tmp_
         tx.put('outbox', 'published-parent', {'ref': parent})
     assert artifacts.read(parent) == child
     assert artifacts.read(child) == 'publication dependency'
+
+
+@pytest.mark.parametrize('kind', ['duplicate', 'unknown_inspect'])
+def test_ambiguous_receipts_retain_children_and_reject_stale_publication(tmp_path, kind):
+    import json
+
+    from codex_harness.domain.model import ContractError
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('ambiguous receipt child', 'test')['ref']
+    if kind == 'duplicate':
+        body = {'stdout': '{"candidate":{},"image":"' + child + '","image":"unknown"}'}
+    else:
+        body = {'argv': ['docker', 'image', 'inspect', '--unknown', 'target',
+                         '--format', '{{.Id}}'], 'stdout': child}
+    parent_body = json.dumps(body)
+    parent = artifacts.put(parent_body, 'test')['ref']
+    orphan = artifacts.put('unreferenced control', 'test')['ref']
+    age(artifacts, child, parent, orphan)
+    with store.transaction() as tx:
+        tx.put('roots', 'parent', {'ref': parent})
+    result = ArtifactMaintenance(store, artifacts).collect(apply=True)
+    assert result['files'] == 1 and result['errors'] == []
+    assert artifacts.read(child) == 'ambiguous receipt child'
+    assert artifacts.read(parent) == parent_body
+    assert not (artifacts.root / (orphan[7:] + '.txt')).exists()
+    # INV-RESOURCE-001: publication and collection use the same conservative edges.
+    with store.transaction() as tx:
+        tx.put('artifact_tombstones', child, {'ref': child})
+    with pytest.raises(ContractError, match='Artifact reference was collected'):
+        with store.transaction() as tx:
+            tx.put('receipts', 'stale', body)
+    with store.transaction() as tx:
+        assert tx.get('receipts', 'stale') is None
+
+
+def test_original_runner_traversal_uses_validated_metadata(tmp_path):
+    import json
+    from pathlib import Path
+
+    from codex_harness.domain.model import ContractError
+
+    artifacts, store = FileArtifacts(tmp_path / 'artifacts'), MemoryStore()
+    body = (Path(__file__).parent / 'fixtures/reference_runner/original.txt').read_text()
+    runner = artifacts.put(body, 'baldrix-budget-probe-runner')['ref']
+    orphan = artifacts.put('unreferenced', 'fixture')['ref']
+    age(artifacts, runner, orphan)
+    with store.transaction() as tx:
+        tx.put('evidence', 'runner', {'ref': runner})
+    collector = ArtifactMaintenance(store, artifacts)
+    result = collector.collect()
+    assert result['files'] == 1 and not result['errors']
+    metadata_path = artifacts.root / (runner[7:] + '.json')
+    metadata = json.loads(metadata_path.read_text())
+    metadata_path.write_text(json.dumps({**metadata, 'bytes': 0}))
+    with pytest.raises(ContractError, match='Artifact metadata mismatch'):
+        collector.collect()
+    assert artifacts.read(orphan) == 'unreferenced'

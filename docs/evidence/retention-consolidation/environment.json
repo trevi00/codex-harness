@@ -1,0 +1,10 @@
+{
+  "HARNESS_INTEGRATION": null,
+  "database_url_configured": true,
+  "executables": {
+    "docker": null,
+    "postgres": null,
+    "initdb": null,
+    "pg_ctl": null
+  }
+}

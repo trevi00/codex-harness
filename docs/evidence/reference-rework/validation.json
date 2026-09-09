@@ -1,0 +1,51 @@
+{
+  "base_revision": "e68d5e157465b4b03193ee3feeb3a776473b8d40",
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "log": "ruff.json",
+      "sha256": "fca108a46fe08a021278923f7a2d8cf8e719332e837591371c1a45f2a92dca6d",
+      "stdout_stderr_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest"
+      ],
+      "exit_code": 0,
+      "log": "pytest.json",
+      "sha256": "a58139184530e87b7ab509f0aa0fa1328f7e15d4b9733c6ac5e84a34404afc33",
+      "stdout_stderr_sha256": "2a04e567b9728ce08a711cc2a9be0cb9148936028dd924baebb1a1172b764eda"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "diff-check.json",
+      "sha256": "cdd6f8450d526a617d05dea435eb8c4f157bc5c5905009d9023e4defa6cac0fc",
+      "stdout_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "tested_files": {
+    "src/codex_harness/adapters/maintenance.py": "3c70a07c7cdaa133e60bd07d38e76ea36509f432c28d40bfcf42479c5c0e7ff4",
+    "src/codex_harness/adapters/record_references.py": "84caed7037a7fbe48efee84e8369cdf20807da4923947737a09110b1c088f819",
+    "src/codex_harness/application/measurements.py": "7c1cb23a981888b74215bf262b610fbf9b2519badc9af651b6e5b07bca1d3eea",
+    "src/codex_harness/domain/measurements.py": "4ee179e3337a8f8d15f301632e51b35751150cef99fd2b05d37062077df03906",
+    "tests/test_maintenance.py": "0fd7f6674ef76ea662bae991b37c213196fde7ba1b49da39fbd9cd0b9ab44b81",
+    "tests/test_maintenance_postgres.py": "1468b6fa329c8ded3e0e490385e656e8a44645a4a5615b1f7f80135204c9ad06",
+    "tests/test_measurements.py": "b091d85924056836bd5ed092ac1d14a9953116a254b732caf2de8f1a357bed95",
+    "tests/test_skill_history.py": "3a9fb2b0d73cc59549935971826a815ee6ea3183d325e3db56ba93046d491d86",
+    "tests/test_reference_kinds.py": "ad945991e14948459be8a47c5e8157334d166086a97c123197a52b65e3836330"
+  }
+}

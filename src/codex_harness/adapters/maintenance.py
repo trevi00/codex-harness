@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import time
 
 from filelock import FileLock, Timeout
 
-from codex_harness.adapters.record_references import record_references
+from codex_harness.adapters.record_references import (
+    artifact_references,
+    potential_record_references,
+    potential_references,
+    record_references,
+)
 from codex_harness.domain.model import require, utcnow
 from codex_harness.domain.policy import POLICY
 
@@ -19,25 +25,73 @@ class ArtifactMaintenance:
 
     @staticmethod
     def _roots(tx):
-        return {reference for record in tx.records()
+        records = tx if isinstance(tx, list) else tx.records()
+        return {reference for record in records
                 for reference in record_references(record['bucket'], record['id'], record['body'])}
 
     def _mark(self, root, roots):
         marked, pending = set(roots), list(roots)
+        cache = {}
+        existing = self._existing(root)
+        parents = {}
         while pending:
             reference = pending.pop()
             path = root / (reference[7:] + ".txt")
             # INV-RESOURCE-001: missing evidence can hide dependencies. Fail closed.
             require(not path.is_symlink() and path.resolve().parent == root,
                     "Artifact escaped store")
-            require(path.exists(), "Referenced artifact missing; collection deferred")
+            require(path.exists(), f"Referenced artifact missing; collection deferred: {reference}"
+                    f" from {parents.get(reference, 'runtime record')}")
             content = path.read_bytes()
             require(hashlib.sha256(content).hexdigest() == reference[7:],
                     "Referenced artifact corrupted")
-            children = set(re.findall(r"sha256:[0-9a-f]{64}", content.decode("utf-8"))) - marked
+            children = self._dependencies(path, content, cache, existing) - marked
+            parents.update((child, reference) for child in children)
             marked.update(children)
             pending.extend(children)
         return marked
+
+    @staticmethod
+    def _existing(root):
+        return {'sha256:' + path.stem for path in root.glob('*.txt')
+                if re.fullmatch(r'[0-9a-f]{64}', path.stem)}
+
+    @staticmethod
+    def _live_roots(records, existing):
+        return {reference for record in records
+                for reference in potential_record_references(record['bucket'], record['id'], record['body'])} & existing
+
+    @staticmethod
+    def _dependencies(path, content, cache=None, existing=None):
+        # INV-RESOURCE-001: classification may identify missing metadata, but
+        # can never make an existing referenced blob eligible for deletion.
+        potential = potential_references(content.decode('utf-8'))
+        live = potential & existing if existing is not None else {
+            ref for ref in potential if (path.parent / (ref[7:] + '.txt')).exists()}
+        metadata_path = path.with_suffix('.json')
+        source = ''
+        if metadata_path.exists():
+            metadata = json.loads(metadata_path.read_text(encoding='utf-8'))
+            require(isinstance(metadata, dict) and metadata.get('ref') == 'sha256:' + path.stem
+                    and metadata.get('bytes') == len(content), 'Artifact metadata mismatch')
+            source = metadata.get('source', '')
+            require(isinstance(source, str), 'Artifact source metadata invalid')
+        snapshot_key = None
+        if source == 'conductor-measurements.v1' and cache is not None:
+            # Observed timestamps carry no references. Otherwise byte-identical
+            # measurement snapshots share decoding; all other bytes remain keyed.
+            normalized = re.sub(
+                rb'("observed_at"\s*:\s*")[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})(")',
+                rb'\1OBSERVED_TIME\2', content)
+            snapshot_key = ('measurement', hashlib.sha256(normalized).digest())
+            if snapshot_key in cache:
+                return set(cache[snapshot_key]) | live
+        references = artifact_references(content.decode('utf-8'), source=source, cache=cache)
+        if snapshot_key is not None:
+            if len(cache) >= 2048:
+                cache.pop(next(iter(cache)))
+            cache[snapshot_key] = frozenset(references)
+        return references | live
 
     def _generation(self):
         path = self.artifacts.root / 'generation'
@@ -52,8 +106,11 @@ class ArtifactMaintenance:
             if apply and (tx.get('maintenance_control', 'collection') or {}).get('status') == 'paused':
                 return {'id': 'latest', 'at': utcnow(), 'applied': False, 'files': 0, 'bytes': 0,
                         'deferred_scope': 'scan', 'reason': 'collection_paused', 'deferred': 1, 'errors': []}
-            roots = self._roots(tx)
+            records = tx.records()
         snapshot_seconds = time.monotonic() - started
+        # INV-RESOURCE-001: decode detached rows without holding DB serialization.
+        # Final deletion batches still recheck current roots transactionally.
+        roots = self._roots(records)
         # INV-RESOURCE-001: sample only between complete publications. A writer
         # changes generation before writing its body; an unlocked sample can
         # mistake an in-flight publication for an unchanged filesystem snapshot.
@@ -61,6 +118,9 @@ class ArtifactMaintenance:
         try:
             with FileLock(str(root.parent / "artifacts.lock"), timeout=0):
                 generation = self._generation()
+                # INV-RESOURCE-001: bind the file index to the same publication
+                # snapshot; an earlier index could miss a newly published edge.
+                existing = self._existing(root)
         except Timeout:
             # Defer the scan itself; no artifact count is known at this point.
             result = {"id": "latest", "at": utcnow(), "applied": apply, "files": 0,
@@ -72,8 +132,10 @@ class ArtifactMaintenance:
                 with self.store.transaction() as tx:
                     tx.put("maintenance", "latest", result)
             return result
+        roots.update(self._live_roots(records, existing))
         marked = self._mark(root, roots)
         candidates = []
+        scan_cache = {}
         # INV-RESOURCE-001: even uncommitted parents retain their children.
         # Traverse outside DB serialization; publication invalidates this snapshot.
         for path in root.glob("*.txt"):
@@ -83,7 +145,7 @@ class ArtifactMaintenance:
                 content = path.read_bytes()
                 require(hashlib.sha256(content).hexdigest() == path.stem,
                         "Artifact corrupted")
-                marked.update(re.findall(r"sha256:[0-9a-f]{64}", content.decode('utf-8')))
+                marked.update(self._dependencies(path, content, scan_cache, existing))
                 if path.stat().st_mtime < cutoff:
                     candidates.append(path)
             except FileNotFoundError:
@@ -104,7 +166,9 @@ class ArtifactMaintenance:
                     if apply and (tx.get('maintenance_control', 'collection') or {}).get('status') == 'paused':
                         deferred += len(candidates) - index
                         break
-                    if not self._roots(tx) <= marked:
+                    records = tx.records()
+                    current_roots = self._roots(records) | self._live_roots(records, existing)
+                    if not current_roots <= marked:
                         deferred += len(candidates) - index
                         break
                     lock.acquire()

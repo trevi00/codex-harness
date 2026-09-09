@@ -115,18 +115,27 @@ def test_postgres_concurrent_duplicate_delivery_has_one_sample():
     store = PostgresStore(os.environ['HARNESS_DATABASE_URL'])
     history = SkillHistory(store)
     project = 'test-skill-history-' + uuid4().hex
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        results = list(pool.map(lambda _: history.record(project, event('same')), range(8)))
-    assert sum(results) == 1
-    assert history.snapshot(project, event('same')['top'], '')[0]['count'] == 1
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        results = list(pool.map(lambda i: history.record(project, event('distinct-' + str(i))),
-                                range(12)))
-    assert all(results)
-    assert history.snapshot(project, event('same')['top'], '')[0]['count'] == 13
-    with store.transaction() as tx:
-        ids = {entry['id'] for entry in tx.get('skill_history', project)['events']}
-    assert ids == {'same'} | {'distinct-' + str(i) for i in range(12)}
+    try:
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(lambda _: history.record(project, event('same')), range(8)))
+        assert sum(results) == 1
+        assert history.snapshot(project, event('same')['top'], '')[0]['count'] == 1
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(lambda i: history.record(project, event('distinct-' + str(i))),
+                                    range(12)))
+        assert all(results)
+        assert history.snapshot(project, event('same')['top'], '')[0]['count'] == 13
+        with store.transaction() as tx:
+            ids = {entry['id'] for entry in tx.get('skill_history', project)['events']}
+        assert ids == {'same'} | {'distinct-' + str(i) for i in range(12)}
+    finally:
+        # Remove only this UUID-scoped fixture, including failed-test residue.
+        with store.transaction() as tx:
+            tx.conn.execute("DELETE FROM documents WHERE bucket=%s AND id=%s",
+                            ("skill_history", project))
+            for event_id in {"same"} | {"distinct-" + str(i) for i in range(12)}:
+                tx.conn.execute("DELETE FROM documents WHERE bucket=%s AND id=%s",
+                                ("skill_observations", digest([project, event_id])))
 
 
 def test_invalid_observation_does_not_write_history():

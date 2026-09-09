@@ -8,13 +8,13 @@ from threading import RLock
 import psycopg
 from psycopg.types.json import Jsonb
 
-from codex_harness.adapters.record_references import record_references
+from codex_harness.adapters.record_references import potential_record_references
 from codex_harness.domain.model import require
 
 
 def check_collected(tx, bucket, key, body):
     # INV-RESOURCE-001: serialize bare-reference publication with GC tombstones.
-    for reference in record_references(bucket, key, body):
+    for reference in potential_record_references(bucket, key, body):
         require(tx.get('artifact_tombstones', reference) is None,
                 "Artifact reference was collected")
 
