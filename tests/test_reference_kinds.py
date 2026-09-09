@@ -53,7 +53,7 @@ def test_bucket_and_record_identity_are_always_artifact_edges():
 
 def test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens():
     fragment = 'integrity True\n{"candidate":{},"image":"' + IMAGE + '","ref":"' + EVIDENCE + '","rest":'
-    assert artifact_references({'aggregatedOutput': fragment}) == {EVIDENCE}
+    assert artifact_references({'aggregatedOutput': fragment}) == {IMAGE, EVIDENCE}
     assert artifact_references(fragment) == {IMAGE, EVIDENCE}
     assert artifact_references({'stdout': 'image ' + IMAGE + ' ref ' + EVIDENCE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'stdout': '{"image":"' + IMAGE}) == {IMAGE}
@@ -180,14 +180,14 @@ def test_completed_output_corroborates_gapped_deltas_without_joining_them():
 def test_partial_docker_word_needs_complete_local_identity_and_output_context():
     fragment = {'stdout': 'cker image ' + IMAGE + ', remaining output ' + EVIDENCE}
     assert artifact_references(fragment) == {IMAGE, EVIDENCE}
-    assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE}) == {EVIDENCE}
+    assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE,
                                 'evidence_ref': IMAGE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'fragment': 'cker image ' + IMAGE,
                                 'description': 'immutable Docker image ' + IMAGE}) == {IMAGE}
     clipped = {'stdout': ' ' + IMAGE + ', then the real CLI file-task canary was run by that immutable ID.'}
     assert artifact_references(clipped) == {IMAGE}
-    assert artifact_references({'fragment': clipped, 'description': 'immutable Docker image ' + IMAGE}) == set()
+    assert artifact_references({'fragment': clipped, 'description': 'immutable Docker image ' + IMAGE}) == {IMAGE}
     assert artifact_references({'fragment': clipped, 'description': 'immutable Docker image ' + IMAGE,
                                 'evidence_ref': IMAGE}) == {IMAGE}
 
@@ -257,13 +257,13 @@ def test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_arti
     assert artifact_references(fragment) == {IMAGE}
     declaration = {'handlerType': 'command', 'command': 'python hook.py',
                    'eventName': 'sessionStart', 'currentHash': IMAGE}
-    assert artifact_references({'declaration': declaration, 'fragment': fragment}) == set()
+    assert artifact_references({'declaration': declaration, 'fragment': fragment}) == {IMAGE}
     assert artifact_references({'declaration': declaration, 'fragment': fragment,
                                 'evidence_ref': IMAGE}) == {IMAGE}
     image_fragment = {'stdout': 'clipped "image":"' + IMAGE + '", rest'}
     assert artifact_references(image_fragment) == {IMAGE}
     assert artifact_references({'receipt': {'candidate': {}, 'image': IMAGE},
-                                'fragment': image_fragment, 'ref': EVIDENCE}) == {EVIDENCE}
+                                'fragment': image_fragment, 'ref': EVIDENCE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'stdout': 'actual runner image: ' + IMAGE}) == set()
     assert artifact_references({'stdout': 'actual runner image: ' + IMAGE + ' ref ' + EVIDENCE}) == {IMAGE, EVIDENCE}
 

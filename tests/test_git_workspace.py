@@ -94,7 +94,8 @@ def test_failed_dirty_review_is_preserved_and_retry_uses_clean_checkout(tmp_path
         assert 'outside the checkout' in objective
         if len(paths) == 1:
             (Path(cwd) / 'review-evidence.txt').write_text('retain failed review evidence')
-        return {'accepted': True, 'reason': 'unit fixture', 'execution_ref': 'fixture:review'}
+        return {'accepted': True, 'reason': 'unit fixture', 'execution_ref': 'fixture:review',
+                'command_inspection_succeeded': True}
 
     monkeypatch.setattr(executor, '_run', review)
     first = executor.decide_one('lead:improvement')
