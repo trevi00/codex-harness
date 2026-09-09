@@ -49,6 +49,9 @@ class ArtifactMaintenance:
         cutoff = time.time() - days * 86400
         started = time.monotonic()
         with self.store.transaction() as tx:
+            if apply and (tx.get('maintenance_control', 'collection') or {}).get('status') == 'paused':
+                return {'id': 'latest', 'at': utcnow(), 'applied': False, 'files': 0, 'bytes': 0,
+                        'deferred_scope': 'scan', 'reason': 'collection_paused', 'deferred': 1, 'errors': []}
             roots = self._roots(tx)
         snapshot_seconds = time.monotonic() - started
         # INV-RESOURCE-001: sample only between complete publications. A writer
@@ -98,6 +101,9 @@ class ArtifactMaintenance:
             lock = FileLock(str(root.parent / "artifacts.lock"), timeout=0)
             try:
                 with self.store.transaction() as tx:
+                    if apply and (tx.get('maintenance_control', 'collection') or {}).get('status') == 'paused':
+                        deferred += len(candidates) - index
+                        break
                     if not self._roots(tx) <= marked:
                         deferred += len(candidates) - index
                         break
