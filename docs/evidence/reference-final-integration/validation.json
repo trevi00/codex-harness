@@ -1,0 +1,151 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "log": "ruff.log",
+      "result": "passed",
+      "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest"
+      ],
+      "exit_code": 0,
+      "log": "pytest.log",
+      "result": "799 passed, 36 skipped",
+      "log_sha256": "0a9a78694d9e25498b7c6ccffeb3c860c46943df1b83d09aa14252d66e8f9095"
+    },
+    {
+      "argv": [
+        "/app/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_historical_provenance.py",
+        "tests/test_occurrence_provenance.py",
+        "tests/test_reference_kinds.py",
+        "tests/test_maintenance.py",
+        "tests/test_tool_wait_budget.py"
+      ],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "exit_code": 0,
+      "log": "focused.log",
+      "result": "227 passed",
+      "log_sha256": "980fcb9b248dd80c14c3155e08250a844db27b58bd29ecdf23c4d302d6866d17"
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        ".qualification/test_reference_kinds.py"
+      ],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "exit_code": 1,
+      "log": "incumbent-reference.log",
+      "result": "3 failed, 108 passed; exact incumbent test and fixture bytes",
+      "log_sha256": "89b316b56d9542a3d576165ec08c4a8124c739f3ceb17e0a204e46980398d73a"
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        ".qualification/test_reference_kinds.py"
+      ],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "exit_code": 1,
+      "log": "incumbent-reference-incomplete-layout.log",
+      "result": "4 failed, 107 passed; incomplete scratch fixture layout, superseded by corrected setup",
+      "log_sha256": "9872c604a264214fb9285d243cecf31ff29cdf68320852b99ea414e867bf420f"
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-"
+      ],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "exit_code": 1,
+      "log": "cross-record-negative.log",
+      "result": "6 failed, 139 deselected; expected negative control",
+      "setup": "Import exact 11d79cc69a9c5a29a8a3ee834741033882c55849:src/codex_harness/adapters/record_references.py with exec(compile(source, filename, exec), decoder.__dict__), then pytest.main",
+      "pytest_argv": [
+        "-q",
+        "tests/test_reference_kinds.py",
+        "-k",
+        "malformed_image_fragment_cannot_borrow_another_receipt_identity"
+      ],
+      "log_sha256": "5d1c66dfb8285a7af5713aff9f441e6c3e6ff10f838f14e2f527a85aa7881cea"
+    }
+  ],
+  "incumbent_source_checks": [
+    {
+      "path": "tests/test_reference_kinds.py",
+      "revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+      "sha256": "0871e232c837c3710d4bb82b7e280e85cf3629f054d57bb8e60ccf06063131f0"
+    },
+    {
+      "path": "tests/fixtures/reference_runner/original.txt",
+      "revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+      "sha256": "b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855"
+    }
+  ],
+  "tested_additions": {
+    "src/codex_harness/adapters/historical_provenance.py": "c7f21ea9997b840379d65c0ed095b7d145202cca57461c0d2c87f454addb831b",
+    "src/codex_harness/resources/occurrence-copies.v1.json": "ce991a8dd1f8c5a433881d31c13b51272949a30da0c77204be62420537386454",
+    "tests/test_historical_provenance.py": "192833d0716321d71ae3ba44f6ccf3bbf4e99aa7bedfb3c4d949d666b1b3959f",
+    "docs/evidence/occurrence-provenance/prepare_copies.py": "858ca3d28528f03e6666f5bb57bf61066df473a925707a26c9a175de87682308"
+  },
+  "production_traversal": "not run; host-owned",
+  "independent_reviews": "required",
+  "actual_canaries": "not run",
+  "release_gate": "failed; incumbent compatibility migration requires independent review",
+  "raw_evidence_whitespace_check": {
+    "argv": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit_code": 2,
+    "stdout": "docs/evidence/reference-final-integration/incumbent-reference-incomplete-layout.log:10: trailing whitespace.\n+E         \ndocs/evidence/reference-final-integration/incumbent-reference-incomplete-layout.log:23: trailing whitespace.\n+E         \ndocs/evidence/reference-final-integration/incumbent-reference-incomplete-layout.log:38: trailing whitespace.\n+E         \ndocs/evidence/reference-final-integration/incumbent-reference-incomplete-layout.log:49: trailing whitespace.\n+    \ndocs/evidence/reference-final-integration/incumbent-reference-incomplete-layout.log:53: trailing whitespace.\n+.qualification/test_reference_kinds.py:359: \ndocs/evidence/reference-final-integration/incumbent-reference-incomplete-layout.log:54: trailing whitespace.\n+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ndocs/evidence/reference-final-integration/incumbent-reference-incomplete-layout.log:58: trailing whitespace.\n+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ndocs/evidence/reference-final-integration/incumbent-reference.log:10: trailing whitespace.\n+E         \ndocs/evidence/reference-final-integration/incumbent-reference.log:23: trailing whitespace.\n+E         \ndocs/evidence/reference-final-integration/incumbent-reference.log:38: trailing whitespace.\n+E         \n",
+    "stderr": "",
+    "disposition": "Preserve exact pytest output bytes, including whitespace; findings are confined to two raw incumbent failure logs."
+  },
+  "source_whitespace_check": {
+    "argv": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      "src",
+      "tests"
+    ],
+    "exit_code": 0
+  },
+  "initial_commit_attempt": {
+    "exit_code": 128,
+    "error": "Author identity unknown; fatal: unable to auto-detect email address",
+    "recovery": "Use command-local worker:implementation identity; no global Git configuration change."
+  }
+}

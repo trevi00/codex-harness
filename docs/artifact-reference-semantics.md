@@ -113,3 +113,16 @@ adjacent Unicode text. Concatenated literals remain conservative because comment
 can occur within their AST spans. Remaining source is scanned directly, so
 comments and explicit evidence equal to the image identity remain edges.
 The original runner is retained byte-for-byte as an inert test fixture.
+
+## Exact command-output occurrence provenance
+
+The packaged `occurrence-provenance.v1.json` binds individual decoded UTF-8 output
+intervals to immutable parent bytes, completed command/output hashes and stream
+identity. Only the listed synthetic test-token intervals are projected. Original
+bytes still drive live-edge retention and tombstone fencing; origins stay mandatory.
+Annotations are fixed for the process and their hash participates in measurement
+cache identity. Runtime metadata cannot supply them. Unknown or invalid bindings
+fail closed. Equal identifiers in other occurrences and arbitrary copied summaries
+remain dependencies. This bounded candidate leaves seven historical parents with
+explicit blockers; see [occurrence evidence](evidence/occurrence-provenance/README.md).
+It does not establish full production traversal or authorize resuming collection.

@@ -1,0 +1,272 @@
+[
+  {
+    "parent": "sha256:34387bcb5a12d3f30db01a3672548efeaf3a1f6be802c9c195f33e0b5f073613",
+    "bytes": 730659,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    },
+    "raw_occurrences": [
+      117370,
+      175284,
+      178110,
+      261317,
+      262064,
+      304135,
+      306961
+    ],
+    "attested_occurrences": 0,
+    "status": "blocked",
+    "remaining_selectors": [
+      {
+        "pointer": "/events/89/params/item/aggregatedOutput",
+        "occurrences": 1,
+        "counterexample": "arget=/probe.py,readonly',\\n            '--entrypoint', 'python',\\n            '<unresolved-identifier>', '/probe.py']\\n    result = subprocess.run(argv, capture_output=True, text=Tru"
+      },
+      {
+        "pointer": "/events/182/params/item/command",
+        "occurrences": 1,
+        "counterexample": "ER_SOURCE) == set()\n    assert artifact_references(body.decode()) == {\n        '<unresolved-identifier>'}\n\n\ndef test_python_runner_literal_operand_and_unicode_byte_positions():\n    bo"
+      },
+      {
+        "pointer": "/events/182/params/item/commandActions/0/command",
+        "occurrences": 1,
+        "counterexample": "ER_SOURCE) == set()\n    assert artifact_references(body.decode()) == {\n        '<unresolved-identifier>'}\n\n\ndef test_python_runner_literal_operand_and_unicode_byte_positions():\n    bo"
+      },
+      {
+        "pointer": "/events/307/params/delta",
+        "occurrences": 1,
+        "counterexample": "978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855\", \"observed_dependencies\": [\"<unresolved-identifier>\"], \"expected_dependencies\": [], \"result\": \"reproduced incorrect image dependenc"
+      },
+      {
+        "pointer": "/events/308/params/item/aggregatedOutput",
+        "occurrences": 1,
+        "counterexample": "978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855\", \"observed_dependencies\": [\"<unresolved-identifier>\"], \"expected_dependencies\": [], \"result\": \"reproduced incorrect image dependenc"
+      },
+      {
+        "pointer": "/events/424/params/item/command",
+        "occurrences": 1,
+        "counterexample": "ER_SOURCE) == set()\n    assert artifact_references(body.decode()) == {\n        '<unresolved-identifier>'}\n\n\ndef test_python_runner_literal_operand_and_unicode_byte_positions():\n    bo"
+      },
+      {
+        "pointer": "/events/424/params/item/commandActions/0/command",
+        "occurrences": 1,
+        "counterexample": "ER_SOURCE) == set()\n    assert artifact_references(body.decode()) == {\n        '<unresolved-identifier>'}\n\n\ndef test_python_runner_literal_operand_and_unicode_byte_positions():\n    bo"
+      }
+    ]
+  },
+  {
+    "parent": "sha256:52303f1f22318fbb6ba7de0b47f4cf6e137242c12fc0b74023ae53b236c390f6",
+    "bytes": 692674,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0"
+    },
+    "raw_occurrences": [
+      349296
+    ],
+    "attested_occurrences": 0,
+    "status": "blocked",
+    "remaining_selectors": [
+      {
+        "pointer": "/events/640/params/item/aggregatedOutput",
+        "occurrences": 1,
+        "counterexample": "0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855\",\n  \"observed_dependencies\": [\n    \"<unresolved-identifier>\"\n  ],\n  \"expected_dependencies\": [],\n  \"result\": \"reproduced incorrect image de"
+      }
+    ]
+  },
+  {
+    "parent": "sha256:4fe2f35b9494727f2409cc00763083869d8106434e02140c44d912f8ea86d0fd",
+    "bytes": 104782,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "raw_occurrences": [
+      16981
+    ],
+    "attested_occurrences": 0,
+    "status": "blocked",
+    "remaining_selectors": [
+      {
+        "pointer": "/independent_diff/diff",
+        "occurrences": 1,
+        "counterexample": "1111'} == set()\\nE         \\nE         Extra items in the left set:\\nE         '<unresolved-identifier>'\\nE         Use -v to get more diff\\n\\ntests/test_reference_kinds.py:114: Asser"
+      }
+    ]
+  },
+  {
+    "parent": "sha256:d4d820258190b7046e715d0d70c1a6df3a7cfc1b90c1af4ce5781c8a2dcd4b29",
+    "bytes": 663800,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "raw_occurrences": [
+      249106,
+      249250,
+      249480,
+      250628,
+      250772,
+      251002
+    ],
+    "attested_occurrences": 6,
+    "status": "locally_bound_pending_independent_review",
+    "origin": {
+      "event": 175,
+      "item_id": "exec-79b2a53c-14b6-4f32-a434-5e9b99f10f05",
+      "raw_path": "docs/evidence/occurrence-provenance/raw/d4d820258190b7046e715d0d70c1a6df3a7cfc1b90c1af4ce5781c8a2dcd4b29.json",
+      "raw_hex": "ee5cdae6d34c48740c820703ebfc080876fb863c527ed3e3ee78142042c9166a",
+      "command_hex": "8238cee0d697ccaebc04d5a6b2ac163c6bdf5643942edc86d9c48851a86fd7f5",
+      "output_hex": "7e1298f23058d3a1120058b93b19c989d9a5e39060a07988b43c234f7005a36b",
+      "expression": "'sha256:'+'1'*64"
+    },
+    "remaining_selectors": []
+  },
+  {
+    "parent": "sha256:eb56f9fd8f9bf13babf8c8e6360de6999fe2858412b7e4e15643b5c1b8ee949a",
+    "bytes": 829591,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "raw_occurrences": [
+      614189,
+      615740,
+      651447,
+      653250
+    ],
+    "attested_occurrences": 0,
+    "status": "blocked",
+    "remaining_selectors": [
+      {
+        "pointer": "/events/795/params/delta",
+        "occurrences": 1,
+        "counterexample": "1111111'} == set()\nE         \nE         Extra items in the left set:\nE         '<unresolved-identifier>'\nE         Use -v to get more diff\n\ntests/test_reference_kinds.py:114: Assertio"
+      },
+      {
+        "pointer": "/events/796/params/item/aggregatedOutput",
+        "occurrences": 1,
+        "counterexample": "1111111'} == set()\nE         \nE         Extra items in the left set:\nE         '<unresolved-identifier>'\nE         Use -v to get more diff\n\ntests/test_reference_kinds.py:114: Assertio"
+      },
+      {
+        "pointer": "/events/884/params/delta",
+        "occurrences": 1,
+        "counterexample": "1111111'} == set()\nE         \nE         Extra items in the left set:\nE         '<unresolved-identifier>'\nE         Use -v to get more diff\n\ntests/test_reference_kinds.py:114: Assertio"
+      },
+      {
+        "pointer": "/events/886/params/item/aggregatedOutput",
+        "occurrences": 1,
+        "counterexample": "1111111'} == set()\nE         \nE         Extra items in the left set:\nE         '<unresolved-identifier>'\nE         Use -v to get more diff\n\ntests/test_reference_kinds.py:114: Assertio"
+      }
+    ]
+  },
+  {
+    "parent": "sha256:7746a7d290352e522e73e481ced8ab51f3a474f99fbc85b7b5618e2405f48dfe",
+    "bytes": 98631,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    "raw_occurrences": [
+      16367,
+      16511
+    ],
+    "attested_occurrences": 0,
+    "status": "blocked",
+    "remaining_selectors": [
+      {
+        "pointer": "/independent_diff/diff",
+        "occurrences": 2,
+        "counterexample": "d\",\n+  \"input\": {\n+    \"stdout\": \"log [unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"<unresolved-identifier>\\\",\\\"image\\\":\\\"unknown\\\"}\"\n+  },\n+  \"expected\": [\n+    \"<unresolved-identifier>"
+      }
+    ]
+  },
+  {
+    "parent": "sha256:be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b",
+    "bytes": 660485,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    "raw_occurrences": [
+      251693,
+      251822,
+      251969,
+      252169,
+      253104,
+      253233,
+      253380,
+      253580,
+      491418,
+      491559
+    ],
+    "attested_occurrences": 8,
+    "status": "blocked",
+    "origin": {
+      "event": 230,
+      "item_id": "exec-093a4347-f621-4b8d-a581-f7ef36771e84",
+      "raw_path": "docs/evidence/occurrence-provenance/raw/be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b.json",
+      "raw_hex": "a22ff3ae6cfc5c3906ae17fa7cf9dbde0fe967d7d0f4266e4bcd7b0593a94baa",
+      "command_hex": "c8334c1a83780a9904817a0ab4a3b54de528e4bebd3430c5caa503c06660b782",
+      "output_hex": "3460eaf7a9ba44847ea2b007bfb4091b654e00924a343dba8ae7b5904f355180",
+      "expression": "'sha256:'+'2'*64"
+    },
+    "remaining_selectors": [
+      {
+        "pointer": "/events/1053/params/item/aggregatedOutput",
+        "occurrences": 2,
+        "counterexample": "cbd\",\n  \"input\": {\n    \"stdout\": \"log [unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"<unresolved-identifier>\\\",\\\"image\\\":\\\"unknown\\\"}\"\n  },\n  \"expected\": [\n    \"<unresolved-identifier>"
+      }
+    ]
+  },
+  {
+    "parent": "sha256:f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b",
+    "bytes": 774945,
+    "identifier": {
+      "namespace": "unresolved",
+      "hex": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "raw_occurrences": [
+      179882,
+      180011,
+      180160,
+      180363,
+      181359,
+      181488,
+      181637,
+      181840,
+      233191,
+      233291,
+      233413,
+      233562,
+      234335,
+      234435,
+      234557,
+      234706
+    ],
+    "attested_occurrences": 8,
+    "status": "blocked",
+    "origin": {
+      "event": 145,
+      "item_id": "exec-8226115b-69bc-4522-92cf-6f5ee16d6975",
+      "raw_path": "docs/evidence/occurrence-provenance/raw/f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b.json",
+      "raw_hex": "c079f1655d19383918f02be76d042575a077c651540f922d22cad54fa05be97f",
+      "command_hex": "96917ae0013597df6e53f0ea99f6fe6d4db1b6bbf1021edaf77ad4abba623b68",
+      "output_hex": "c310182e1778a273a4a74e9d527c6026efd0f4cd04167b56e826d54d5887cbec",
+      "expression": "'sha256:'+'a'*64"
+    },
+    "remaining_selectors": [
+      {
+        "pointer": "/events/296/params/delta",
+        "occurrences": 4,
+        "counterexample": "'{\"candidate\":{},\"image\":\"<unresolved-identifier>\",\"image\":\"unknown\"}' ['<unresolved-identifier>"
+      },
+      {
+        "pointer": "/events/297/params/item/aggregatedOutput",
+        "occurrences": 4,
+        "counterexample": "uppress this warning.\nInstalled 40 packages in 58.07s\n'{\"candidate\":{},\"image\":\"<unresolved-identifier>\",\"image\":\"unknown\"}' ['<unresolved-identifier>"
+      }
+    ]
+  }
+]

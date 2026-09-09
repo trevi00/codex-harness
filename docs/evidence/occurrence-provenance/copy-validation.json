@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "base_revision": "11d79cc69a9c5a29a8a3ee834741033882c55849",
+  "tested_files": {
+    "src/codex_harness/adapters/historical_provenance.py": "b7e01bfb8883891e58ba9c04b3cc56e4e065646b1e5fdda74c9043b43744b15f",
+    "src/codex_harness/adapters/occurrence_provenance.py": "6999e260e3b0c0308865165a490abec9c0e485f7bb64e5f19e8ae5a87658dcd5",
+    "src/codex_harness/resources/occurrence-copies.v1.json": "4d4a32dd04cebcfc7a757d5d265522b91f11982965a5c81ced5739920c3c9afb",
+    "src/codex_harness/resources/occurrence-provenance.v1.json": "2a0175745f673150d9a1425ec920ce09b08da809ef82011adf13d61e1b1154ee",
+    "tests/test_historical_provenance.py": "aac1f5d4ec8f6c1a96a49a6fae7e50865d770ff98d7c42e361787ae97db338c8",
+    "tests/test_integration.py": "60e05ae0952ba32f74e9cac9df3c73290844c6342ce830a88f1947318501117b",
+    "docs/evidence/occurrence-provenance/prepare_copies.py": "14af2acb54143fd45d840f3bb96514d9cc12710b846456e4e881e67c32c7230a"
+  },
+  "source_snapshot_unchanged": true,
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "duration_seconds": 1.285,
+      "log": "docs/evidence/occurrence-provenance/copy-ruff.txt",
+      "output_hex": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 117.485,
+      "log": "docs/evidence/occurrence-provenance/copy-pytest.txt",
+      "output_hex": "59e5d22628d68638b1872fcb651ded9abb938f8ff5dffe6f4c9ac61610120bc3"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.681,
+      "log": "docs/evidence/occurrence-provenance/copy-diff.txt",
+      "output_hex": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "prior_checks": {
+    "initial_full_suite": "781 passed, 35 skipped in 136.89s; before final additional tests",
+    "focused_provenance": "31 passed in 13.82s; then 19 historical-provenance tests passed after type identity hardening",
+    "ruff_initial": "Failed I001 import ordering; corrected before final run",
+    "snapshot_failure": "copy-prefinal-attempt.json preserves the unqualified source-changing attempt"
+  },
+  "qualification": "Local checks only; skipped service tests are not integration qualification; no independent review or actual CLI canary"
+}

@@ -1,0 +1,409 @@
+{
+  "dependency_candidate": "91bd1ed363d92e0c286d7e807f87b7e72b597e31",
+  "dependency_tree": "0aec074236fbe4c555b8d27a852f180bc53ecb71",
+  "prior_copy_entries_unchanged": 25,
+  "source_checks": [
+    {
+      "path": "src/codex_harness/resources/occurrence-provenance.v1.json",
+      "sha256": "2a0175745f673150d9a1425ec920ce09b08da809ef82011adf13d61e1b1154ee",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "src/codex_harness/adapters/app_server.py",
+      "sha256": "d1fb9f223954821bf1b7c6f233d7a8c668da7301389b7c73677a2ecf4cf70db3",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "src/codex_harness/adapters/executor.py",
+      "sha256": "00cc4fddf678eea2ee98aafcd214f1f3b3d051981a353f288d8afebe06379787",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "src/codex_harness/adapters/maintenance.py",
+      "sha256": "3ecf0766fe1bc2049b7d589cb061f4377935dc0834189b846c2be2488514deaa",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "src/codex_harness/adapters/occurrence_provenance.py",
+      "sha256": "6999e260e3b0c0308865165a490abec9c0e485f7bb64e5f19e8ae5a87658dcd5",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "src/codex_harness/domain/policy.py",
+      "sha256": "e2c9e39b2af144e4a0bc04db8ad2b8c4f2eb5288f84bc613d2a9ab51763f2214",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "tests/test_tool_wait_budget.py",
+      "sha256": "0a88f1168ad85e1910bb3e560b4c5b263eb46a29134e7d34cb0fcb979da2fd8b",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "tests/test_maintenance_postgres.py",
+      "sha256": "fa0a5b67754101cedaa1a9f98777b991aab058ebd9de33f1a0490590cf862688",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "tests/test_integration.py",
+      "sha256": "60e05ae0952ba32f74e9cac9df3c73290844c6342ce830a88f1947318501117b",
+      "identical_to": "91bd1ed363d92e0c286d7e807f87b7e72b597e31"
+    },
+    {
+      "path": "src/codex_harness/adapters/record_references.py",
+      "sha256": "31d5743b2f74319ee3b77865affc8a605de75eebab62d7f3ae9739cef74ced54",
+      "identical_to": "81d0274227d7c106fbad04fa4f64027b870d4995"
+    },
+    {
+      "path": "tests/test_reference_kinds.py",
+      "sha256": "c249ad7a395dc3bcc725badce8da0a3b37502c6cd09b088da6f0f5459cdcef56",
+      "identical_to": "81d0274227d7c106fbad04fa4f64027b870d4995"
+    }
+  ],
+  "new_bindings": [
+    {
+      "parent": "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+      "selector": "/independent_diff/diff",
+      "selector_hex": "bb9cb654b5775392bbeb4ce720de54a57df7547367ca22714372743b4d641110",
+      "start": 18629,
+      "end": 18700,
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "origins": [
+        "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+        "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e"
+      ],
+      "bindings": [
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/821",
+          "command_hex": "82b3ab77842981636f43f1d99ead0fb9f75ebe456749e19306e000a8ff8048b2",
+          "output_hex": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "output_encoding": "json-null",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-56a9207d-1e06-4d31-8e84-9d30d2787cad"
+        },
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/894",
+          "command_hex": "c49e1d07384fa91423a71882da6dfd2dc37a948739e312ebf2496040ec278acb",
+          "output_hex": "5d3ba2f14c6f888e0a3e6795f215463d8cca124a1b3f9f327ea251eaa6977316",
+          "output_encoding": "utf-8",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-54a890fb-6536-4840-85a0-6a743d3b64ce"
+        },
+        {
+          "revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "8c364524b4b6bada974301005ebe0d5785e4a8ff7792b80be7a4b6af55b23abb"
+        },
+        {
+          "revision": "b42e0955e3ecf12e54fd4190b6b310a16f44a544",
+          "tree": "c393a6de20487d98b16cec32992085266cb56998",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "5d18f8294f77e71bbe2fbbbc2e4706852b9c9815dbfc3c2c125311b6e45bf581"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "c538abd8e75335fc22fb2b8b84b2998d444bed583317b9eb0662b65e6eca66b7"
+        },
+        {
+          "expression": "'sha256:' + '1' * 64",
+          "namespace": "isolated-test-token"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "docs/evidence/malformed-prefix-rework/reproduction.json",
+          "source_hex": "377cba74097144430fb8be49d302be0d874118231a0e0eb93360fba06f2b18ae"
+        },
+        {
+          "base": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "base_tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e"
+        }
+      ]
+    },
+    {
+      "parent": "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+      "selector": "/independent_diff/diff",
+      "selector_hex": "bb9cb654b5775392bbeb4ce720de54a57df7547367ca22714372743b4d641110",
+      "start": 18935,
+      "end": 19006,
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "origins": [
+        "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+        "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e"
+      ],
+      "bindings": [
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/821",
+          "command_hex": "82b3ab77842981636f43f1d99ead0fb9f75ebe456749e19306e000a8ff8048b2",
+          "output_hex": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "output_encoding": "json-null",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-56a9207d-1e06-4d31-8e84-9d30d2787cad"
+        },
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/894",
+          "command_hex": "c49e1d07384fa91423a71882da6dfd2dc37a948739e312ebf2496040ec278acb",
+          "output_hex": "5d3ba2f14c6f888e0a3e6795f215463d8cca124a1b3f9f327ea251eaa6977316",
+          "output_encoding": "utf-8",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-54a890fb-6536-4840-85a0-6a743d3b64ce"
+        },
+        {
+          "revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "8c364524b4b6bada974301005ebe0d5785e4a8ff7792b80be7a4b6af55b23abb"
+        },
+        {
+          "revision": "b42e0955e3ecf12e54fd4190b6b310a16f44a544",
+          "tree": "c393a6de20487d98b16cec32992085266cb56998",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "5d18f8294f77e71bbe2fbbbc2e4706852b9c9815dbfc3c2c125311b6e45bf581"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "c538abd8e75335fc22fb2b8b84b2998d444bed583317b9eb0662b65e6eca66b7"
+        },
+        {
+          "expression": "'sha256:' + '1' * 64",
+          "namespace": "isolated-test-token"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "docs/evidence/malformed-prefix-rework/reproduction.json",
+          "source_hex": "377cba74097144430fb8be49d302be0d874118231a0e0eb93360fba06f2b18ae"
+        },
+        {
+          "base": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "base_tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e"
+        }
+      ]
+    },
+    {
+      "parent": "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+      "selector": "/independent_diff/diff",
+      "selector_hex": "bb9cb654b5775392bbeb4ce720de54a57df7547367ca22714372743b4d641110",
+      "start": 19049,
+      "end": 19120,
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "origins": [
+        "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+        "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e"
+      ],
+      "bindings": [
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/821",
+          "command_hex": "82b3ab77842981636f43f1d99ead0fb9f75ebe456749e19306e000a8ff8048b2",
+          "output_hex": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "output_encoding": "json-null",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-56a9207d-1e06-4d31-8e84-9d30d2787cad"
+        },
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/894",
+          "command_hex": "c49e1d07384fa91423a71882da6dfd2dc37a948739e312ebf2496040ec278acb",
+          "output_hex": "5d3ba2f14c6f888e0a3e6795f215463d8cca124a1b3f9f327ea251eaa6977316",
+          "output_encoding": "utf-8",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-54a890fb-6536-4840-85a0-6a743d3b64ce"
+        },
+        {
+          "revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "8c364524b4b6bada974301005ebe0d5785e4a8ff7792b80be7a4b6af55b23abb"
+        },
+        {
+          "revision": "b42e0955e3ecf12e54fd4190b6b310a16f44a544",
+          "tree": "c393a6de20487d98b16cec32992085266cb56998",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "5d18f8294f77e71bbe2fbbbc2e4706852b9c9815dbfc3c2c125311b6e45bf581"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "c538abd8e75335fc22fb2b8b84b2998d444bed583317b9eb0662b65e6eca66b7"
+        },
+        {
+          "expression": "'sha256:' + '1' * 64",
+          "namespace": "isolated-test-token"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "docs/evidence/malformed-prefix-rework/reproduction.json",
+          "source_hex": "377cba74097144430fb8be49d302be0d874118231a0e0eb93360fba06f2b18ae"
+        },
+        {
+          "base": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "base_tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e"
+        }
+      ]
+    },
+    {
+      "parent": "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+      "selector": "/independent_diff/diff",
+      "selector_hex": "bb9cb654b5775392bbeb4ce720de54a57df7547367ca22714372743b4d641110",
+      "start": 19515,
+      "end": 19586,
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "origins": [
+        "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+        "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e"
+      ],
+      "bindings": [
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/821",
+          "command_hex": "82b3ab77842981636f43f1d99ead0fb9f75ebe456749e19306e000a8ff8048b2",
+          "output_hex": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "output_encoding": "json-null",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-56a9207d-1e06-4d31-8e84-9d30d2787cad"
+        },
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/894",
+          "command_hex": "c49e1d07384fa91423a71882da6dfd2dc37a948739e312ebf2496040ec278acb",
+          "output_hex": "5d3ba2f14c6f888e0a3e6795f215463d8cca124a1b3f9f327ea251eaa6977316",
+          "output_encoding": "utf-8",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-54a890fb-6536-4840-85a0-6a743d3b64ce"
+        },
+        {
+          "revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "8c364524b4b6bada974301005ebe0d5785e4a8ff7792b80be7a4b6af55b23abb"
+        },
+        {
+          "revision": "b42e0955e3ecf12e54fd4190b6b310a16f44a544",
+          "tree": "c393a6de20487d98b16cec32992085266cb56998",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "5d18f8294f77e71bbe2fbbbc2e4706852b9c9815dbfc3c2c125311b6e45bf581"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "c538abd8e75335fc22fb2b8b84b2998d444bed583317b9eb0662b65e6eca66b7"
+        },
+        {
+          "expression": "'sha256:' + '1' * 64",
+          "namespace": "isolated-test-token"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "docs/evidence/malformed-prefix-rework/reproduction.json",
+          "source_hex": "377cba74097144430fb8be49d302be0d874118231a0e0eb93360fba06f2b18ae"
+        },
+        {
+          "base": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "base_tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e"
+        }
+      ]
+    },
+    {
+      "parent": "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+      "selector": "/independent_diff/diff",
+      "selector_hex": "bb9cb654b5775392bbeb4ce720de54a57df7547367ca22714372743b4d641110",
+      "start": 19629,
+      "end": 19700,
+      "identifier": {
+        "namespace": "isolated-test-token",
+        "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "origins": [
+        "sha256:0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b",
+        "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e"
+      ],
+      "bindings": [
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/821",
+          "command_hex": "82b3ab77842981636f43f1d99ead0fb9f75ebe456749e19306e000a8ff8048b2",
+          "output_hex": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "output_encoding": "json-null",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-56a9207d-1e06-4d31-8e84-9d30d2787cad"
+        },
+        {
+          "ref": "sha256:6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e",
+          "selector": "/events/894",
+          "command_hex": "c49e1d07384fa91423a71882da6dfd2dc37a948739e312ebf2496040ec278acb",
+          "output_hex": "5d3ba2f14c6f888e0a3e6795f215463d8cca124a1b3f9f327ea251eaa6977316",
+          "output_encoding": "utf-8",
+          "status": "completed",
+          "exit_code": 0,
+          "item_id": "exec-54a890fb-6536-4840-85a0-6a743d3b64ce"
+        },
+        {
+          "revision": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "8c364524b4b6bada974301005ebe0d5785e4a8ff7792b80be7a4b6af55b23abb"
+        },
+        {
+          "revision": "b42e0955e3ecf12e54fd4190b6b310a16f44a544",
+          "tree": "c393a6de20487d98b16cec32992085266cb56998",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "5d18f8294f77e71bbe2fbbbc2e4706852b9c9815dbfc3c2c125311b6e45bf581"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "src/codex_harness/adapters/record_references.py",
+          "source_hex": "c538abd8e75335fc22fb2b8b84b2998d444bed583317b9eb0662b65e6eca66b7"
+        },
+        {
+          "expression": "'sha256:' + '1' * 64",
+          "namespace": "isolated-test-token"
+        },
+        {
+          "revision": "b66e2017eb39643fd1128c1cf3b5173ea661991e",
+          "tree": "3977a8bea048fa78ab017a78b677fa01d5a5b098",
+          "path": "docs/evidence/malformed-prefix-rework/reproduction.json",
+          "source_hex": "377cba74097144430fb8be49d302be0d874118231a0e0eb93360fba06f2b18ae"
+        },
+        {
+          "base": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "base_tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e"
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import itertools
 import json
 import time
 
@@ -11,6 +12,44 @@ from codex_harness.adapters.record_references import (
 
 IMAGE = 'sha256:' + '1' * 64
 EVIDENCE = 'sha256:' + '2' * 64
+
+
+@pytest.mark.parametrize('broken', ['[}', '{]', '[}}'])
+@pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+def test_mismatched_nested_delimiters_preserve_reference_validation(broken, wrapper):
+    body = '{"candidate":' + broken + ',"image":"' + IMAGE + '","image":"unknown"}'
+    if wrapper == 'json':
+        body = json.dumps({'stdout': body})
+    elif wrapper == 'escaped':
+        body = json.dumps(body)[1:-1]
+    assert IMAGE in artifact_references({'stdout': body})
+
+
+def test_all_short_delimiter_mutations_keep_ambiguous_references():
+    for size in range(1, 6):
+        for symbols in itertools.product('{}[]', repeat=size):
+            broken = ''.join(symbols)
+            body = '{"candidate":' + broken + ',"image":"' + IMAGE + '","image":"unknown"}'
+            assert IMAGE in artifact_references({'stdout': body}), broken
+
+
+@pytest.mark.parametrize('prefix', [
+    '\n'.join('{"unrelated":true}' for _ in range(20)),
+    "@pytest.mark.parametrize('raw', [b'{', b'[]'])",
+])
+def test_log_structure_does_not_turn_typed_identities_into_missing_evidence(prefix):
+    handler = {'currentHash': IMAGE, 'handlerType': 'command',
+               'eventName': 'sessionStart', 'command': 'python hook.py'}
+    log = prefix + '\n' + json.dumps(handler) + '\nRetained evidence: ' + EVIDENCE
+    assert artifact_references({'stdout': log}) == {EVIDENCE}
+
+
+@pytest.mark.parametrize('closing', ['', '}'])
+def test_duplicate_guard_survives_json_envelopes_and_unmatched_prefix(closing):
+    log = 'log [unfinished {"candidate":{},"image":"' + IMAGE + '","image":"unknown"' + closing
+    for _ in range(3):
+        log = json.dumps({'stdout': log})
+    assert artifact_references(log) == {IMAGE}
 
 
 def test_nested_receipts_distinguish_images_from_evidence_without_dropping_real_edges():
@@ -51,9 +90,10 @@ def test_bucket_and_record_identity_are_always_artifact_edges():
     assert artifact_references({'stdout': json.dumps({'ref': EVIDENCE})}) == {EVIDENCE}
 
 
-def test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens():
+def test_clipped_diagnostic_json_keeps_unverified_object_references():
     fragment = 'integrity True\n{"candidate":{},"image":"' + IMAGE + '","ref":"' + EVIDENCE + '","rest":'
-    assert artifact_references({'aggregatedOutput': fragment}) == {EVIDENCE}
+    # A later duplicate key may change the meaning of a seemingly typed field.
+    assert artifact_references({'aggregatedOutput': fragment}) == {IMAGE, EVIDENCE}
     assert artifact_references(fragment) == {IMAGE, EVIDENCE}
     assert artifact_references({'stdout': 'image ' + IMAGE + ' ref ' + EVIDENCE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'stdout': '{"image":"' + IMAGE}) == {IMAGE}
@@ -177,17 +217,17 @@ def test_completed_output_corroborates_gapped_deltas_without_joining_them():
     assert artifact_references({'events': [event, completed]}) == {IMAGE, EVIDENCE}
 
 
-def test_partial_docker_word_needs_complete_local_identity_and_output_context():
+def test_partial_docker_word_cannot_borrow_another_occurrence_identity():
     fragment = {'stdout': 'cker image ' + IMAGE + ', remaining output ' + EVIDENCE}
     assert artifact_references(fragment) == {IMAGE, EVIDENCE}
-    assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE}) == {EVIDENCE}
+    assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE,
                                 'evidence_ref': IMAGE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'fragment': 'cker image ' + IMAGE,
                                 'description': 'immutable Docker image ' + IMAGE}) == {IMAGE}
     clipped = {'stdout': ' ' + IMAGE + ', then the real CLI file-task canary was run by that immutable ID.'}
     assert artifact_references(clipped) == {IMAGE}
-    assert artifact_references({'fragment': clipped, 'description': 'immutable Docker image ' + IMAGE}) == set()
+    assert artifact_references({'fragment': clipped, 'description': 'immutable Docker image ' + IMAGE}) == {IMAGE}
     assert artifact_references({'fragment': clipped, 'description': 'immutable Docker image ' + IMAGE,
                                 'evidence_ref': IMAGE}) == {IMAGE}
 
@@ -252,18 +292,18 @@ def test_source_metadata_is_validated_before_namespace_classification(tmp_path):
         ArtifactMaintenance._dependencies(path, path.read_bytes())
 
 
-def test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact():
+def test_clipped_identity_tokens_need_their_own_complete_declaration():
     fragment = {'stdout': 'clipped "currentHash":"' + IMAGE + '", rest'}
     assert artifact_references(fragment) == {IMAGE}
     declaration = {'handlerType': 'command', 'command': 'python hook.py',
                    'eventName': 'sessionStart', 'currentHash': IMAGE}
-    assert artifact_references({'declaration': declaration, 'fragment': fragment}) == set()
+    assert artifact_references({'declaration': declaration, 'fragment': fragment}) == {IMAGE}
     assert artifact_references({'declaration': declaration, 'fragment': fragment,
                                 'evidence_ref': IMAGE}) == {IMAGE}
     image_fragment = {'stdout': 'clipped "image":"' + IMAGE + '", rest'}
     assert artifact_references(image_fragment) == {IMAGE}
     assert artifact_references({'receipt': {'candidate': {}, 'image': IMAGE},
-                                'fragment': image_fragment, 'ref': EVIDENCE}) == {EVIDENCE}
+                                'fragment': image_fragment, 'ref': EVIDENCE}) == {IMAGE, EVIDENCE}
     assert artifact_references({'stdout': 'actual runner image: ' + IMAGE}) == set()
     assert artifact_references({'stdout': 'actual runner image: ' + IMAGE + ' ref ' + EVIDENCE}) == {IMAGE, EVIDENCE}
 
@@ -399,3 +439,47 @@ def test_python_runner_uncertain_shapes_retain_raw_evidence(body):
 def test_python_runner_same_identity_elsewhere_is_retained(elsewhere):
     body = "argv = ['docker', 'run', '" + IMAGE + "']\n" + elsewhere
     assert artifact_references(body, source=RUNNER_SOURCE) == {IMAGE}
+
+
+@pytest.mark.parametrize('closing', ['', '}'])
+def test_duplicate_scope_does_not_poison_preceding_valid_receipt(closing):
+    native = {'currentHash': IMAGE, 'handlerType': 'command',
+              'eventName': 'sessionStart', 'command': 'python hook.py'}
+    duplicate = '{"ref":"' + EVIDENCE + '","ref":"unknown"' + closing
+    assert artifact_references({'stdout': json.dumps(native) + '\n' + duplicate}) == {EVIDENCE}
+
+
+def test_duplicate_scope_preserves_reference_equal_to_image_identity():
+    receipt = {'candidate': {}, 'image': IMAGE}
+    duplicate = '{"ref":"' + IMAGE + '","ref":"unknown"}'
+    assert artifact_references({'stdout': duplicate + '\n' + json.dumps(receipt)}) == {IMAGE}
+
+
+def test_search_result_open_brace_does_not_capture_later_log_objects():
+    prefix = ('resources/research.schema.json:213:        "tests_not_run": {\n'
+              'resources/research.schema.json:235:        "tests_not_run"\n')
+    native = {'currentHash': IMAGE, 'handlerType': 'command',
+              'eventName': 'sessionStart', 'command': 'python hook.py'}
+    log = prefix + '{"other":1}\n{"other":2}\n' + json.dumps(native)
+    assert artifact_references({'stdout': log}) == set()
+
+
+@pytest.mark.parametrize('prefix', [',', ':', 'invalid ', ',[}', ',}'])
+@pytest.mark.parametrize('wrapped', [False, True])
+def test_malformed_prefix_cannot_disable_duplicate_tracking(prefix, wrapped):
+    body = '{' + prefix + '"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+    record = {'stdout': body}
+    assert IMAGE in artifact_references(json.dumps(record) if wrapped else record)
+
+
+@pytest.mark.parametrize('order', [False, True])
+@pytest.mark.parametrize('wrapper', ['raw', 'json', 'escaped'])
+def test_malformed_image_fragment_cannot_borrow_another_receipt_identity(order, wrapper):
+    malformed = '{,}"candidate":{},"image":"' + IMAGE + '","image":"unknown"}'
+    typed = json.dumps({'candidate': {}, 'image': IMAGE})
+    body = '\n'.join([typed, malformed] if order else [malformed, typed])
+    if wrapper == 'json':
+        body = json.dumps({'stdout': body})
+    elif wrapper == 'escaped':
+        body = json.dumps(body)[1:-1]
+    assert IMAGE in artifact_references({'stdout': body})

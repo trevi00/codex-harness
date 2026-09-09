@@ -1,0 +1,8 @@
+{
+  "pid": 68078,
+  "proc_stat": "68078 (python) Z 1 68076 68076 0 -1 4228364 4724862 0 24819 0 58204 2850 0 0 20 0 1 0 13492998 0 0 18446744073709551615 0 0 0 0 0 0 0 16781312 2 1 0 0 17 0 0 0 0 0 0 0 0 0 0 0 0 0 9\n",
+  "wait_status": 9,
+  "completed_parents": 53,
+  "cause": "Unknown; signal 9 is observed, not an established host diagnosis",
+  "result": "failed execution with partial checkpoints"
+}

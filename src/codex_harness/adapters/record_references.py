@@ -11,10 +11,8 @@ from urllib.parse import urlsplit
 
 PATTERN = re.compile(r"(?<!spec-)sha256:[0-9a-f]{64}(?![0-9a-f])")
 POTENTIAL_PATTERN = re.compile(r"sha256:[0-9a-f]{64}")
-IMAGE_FRAGMENT = re.compile(r'(?<!\\)(\\*"(?:image|Image|image_id|image_digest|container_image)\\*"\s*:\s*\\*")sha256:[0-9a-f]{64}(\\*")')
 NATIVE_FRAGMENT = re.compile(r'(?<!\\)\\*"currentHash\\*"\s*:\s*\\*"(sha256:[0-9a-f]{64})\\*"')
 IMAGE_CONTEXT = {'candidate', 'checks', 'source_binding', 'image_hashes', 'source_hashes', 'runner', 'Service', 'final_canaries', 'reader_output_characters', 'loaded_source', 'woken'}
-IMAGE_CONTEXT_FRAGMENT = re.compile(r'(?<!\\)\\*"(?:' + '|'.join(sorted(IMAGE_CONTEXT)) + r')\\*"\s*:')
 LEGACY_IMAGE_DIAGNOSTIC = 'OCI image digests in immutable execution receipts are traversed as artifact dependencies'
 
 
@@ -343,76 +341,70 @@ def _docker_argv_fragments(text, image_identities=None):
     return ''.join(pieces), references
 
 
-def _duplicate_object_keys(text):
-    """Spot duplicate keys even inside truncated objects or malformed prefixes."""
-    stack = []
-    for token in re.finditer(r'"(?:[^"\\]|\\.)*"|[{}\[\]]', text):
-        value = token[0]
-        if value == '{':
-            stack.append(set())
-        elif value == '[':
-            stack.append(None)
-        elif value in {'}', ']'}:
-            if stack:
-                scope = stack.pop()
-                if (value == '}') != isinstance(scope, set):
-                    return True
-        elif stack and isinstance(stack[-1], set):
-            suffix = text[token.end():token.end() + 1]
-            cursor = token.end()
-            while suffix and suffix.isspace():
-                cursor += 1
-                suffix = text[cursor:cursor + 1]
-            if suffix != ':':
-                continue
-            try:
-                key = json.loads(value)
-            except ValueError:
-                return True
-            if key in stack[-1]:
-                return True
-            stack[-1].add(key)
-    return False
-
-
 def _ambiguous_json_references(text):
-    """Preserve every scalar in duplicate-key JSON before any typed exclusions."""
+    """Fence duplicate objects locally, including truncated objects."""
     original = text
-    duplicate = False
-    if _duplicate_object_keys(text):
-        return potential_references(text)
-
-    def pairs(items):
-        nonlocal duplicate
-        keys = [key for key, _ in items]
-        duplicate |= len(set(keys)) != len(keys)
-        return items
-
-    # INV-RESOURCE-001: a rejected object must never become trusted fragments.
-    # Pair lists preserve overwritten values and decode escaped reference bytes.
     for _ in range(8):
-        start = re.search(r'[\[{]', text)
-        if start is None:
-            return None
+        stack, spans = [], []
+        for token in re.finditer(r'"(?:[^"\\]|\\.)*"|[{}\[\]]', text):
+            value = token[0]
+            if value in {'{', '['}:
+                # INV-RESOURCE-001: malformed prefixes cannot disable key tracking.
+                # Empty source braces have no observed keys to fence.
+                keys = set() if value == '{' else None
+                stack.append([value, token.start(), keys, False])
+            elif value in {'}', ']'}:
+                if stack:
+                    scope = stack[-1]
+                    if (value == '}') != (scope[0] == '{'):
+                        # INV-RESOURCE-001: mismatched nesting must not hide
+                        # references in a recognized enclosing JSON object.
+                        for enclosing in stack:
+                            if enclosing[2]:
+                                enclosing[3] = True
+                        discarded = stack.pop()
+                        if not stack and discarded[3]:
+                            spans.append((discarded[1], len(text)))
+                        continue
+                    stack.pop()
+                    if scope[2] and not any(parent[2] for parent in stack):
+                        try:
+                            json.loads(text[scope[1]:token.end()], object_pairs_hook=_unique_object)
+                        except (ValueError, RecursionError):
+                            scope[3] = True
+                    if scope[3]:
+                        spans.append((scope[1], token.end()))
+            elif stack and stack[-1][2] is not None:
+                if not re.compile(r'\s*:').match(text, token.end()):
+                    continue
+                try:
+                    key = json.loads(value)
+                except ValueError:
+                    stack[-1][3] = True
+                    continue
+                if key in stack[-1][2]:
+                    stack[-1][3] = True
+                stack[-1][2].add(key)
+        spans.extend((scope[1], len(text)) for scope in stack if scope[3] or scope[2])
+        if spans:
+            # INV-RESOURCE-001: ambiguous scopes retain every potential edge;
+            # a separate complete log receipt must still receive typed decoding.
+            pieces, found, cursor = [], set(), 0
+            for start, end in sorted(spans):
+                found.update(potential_references(text[start:end]))
+                if start >= cursor:
+                    pieces.extend((text[cursor:start], 'AMBIGUOUS_JSON'))
+                cursor = max(cursor, end)
+            pieces.append(text[cursor:])
+            return ''.join(pieces), found
         try:
-            decoded, end = json.JSONDecoder(object_pairs_hook=pairs).raw_decode(text, start.start())
+            unescaped = json.loads('"' + text + '"')
         except (ValueError, RecursionError):
-            try:
-                unescaped = json.loads('"' + text + '"')
-                if unescaped == text:
-                    return potential_references(original) if duplicate else None
-                text = unescaped
-            except (ValueError, RecursionError):
-                if duplicate:
-                    return potential_references([original, text])
-                # An unmatched prefix must not hide a subsequent complete object.
-                text = text[start.start() + 1:]
-        else:
-            if duplicate:
-                return potential_references([original, text, decoded])
-            text = text[end:]
-    # Exceeding the bounded preflight cannot authorize dropping an edge.
-    return potential_references(original)
+            return text, set()
+        if unescaped == text:
+            return text, set()
+        text = unescaped
+    return '', potential_references([original, text])
 
 
 def artifact_references(value, *, source: str = '', cache: dict | None = None) -> set[str]:
@@ -514,10 +506,18 @@ def artifact_references(value, *, source: str = '', cache: dict | None = None) -
         elif isinstance(current, str):
             if 'sha256' not in current and '\\u' not in current:
                 continue
-            ambiguous = _ambiguous_json_references(current)
-            if ambiguous is not None:
-                found.update(ambiguous)
-                continue
+            # INV-RESOURCE-001: establish complete JSON boundaries before probing
+            # malformed fragments. A valid escaped log is not an ambiguous object.
+            if depth < 128:
+                try:
+                    complete = json.loads(current, object_pairs_hook=_unique_object)
+                except (ValueError, RecursionError):
+                    complete = None
+                if isinstance(complete, (dict, list, str)):
+                    pending.append((complete, depth + 1, output_fragment))
+                    continue
+            current, ambiguous = _ambiguous_json_references(current)
+            found.update(ambiguous)
             if output_fragment and re.fullmatch(r'actual runner image: sha256:[0-9a-f]{64}', current.strip()):
                 continue
             current = re.sub(
@@ -561,22 +561,15 @@ def artifact_references(value, *, source: str = '', cache: dict | None = None) -
                 if '\n' in current:
                     pending.extend((line, depth + 1, output_fragment) for line in current.splitlines())
                     continue
-            if output_fragment and IMAGE_CONTEXT_FRAGMENT.search(current):
-                # Artifact-reader pages may clip JSON. Only complete typed image
-                # scalar tokens in diagnostic output are excluded; all other
-                # references, including explicit ref fields, remain mandatory.
-                current = IMAGE_FRAGMENT.sub(lambda match: match[1] + 'OCI_IMAGE' + match[2], current)
             current, native_refs = _typed_metadata_fragments(current, native_identities)
             found.update(native_refs)
             if output_fragment:
-                # A clipped diagnostic token may use an identity declared by a
-                # complete receipt elsewhere in this artifact. Explicit evidence
-                # scalars and prose are never removed by this local binding.
+                # Preserve incomplete identity fields independently of complete
+                # declarations elsewhere; value equality cannot prove provenance.
                 unresolved_native.update(match[1] for match in NATIVE_FRAGMENT.finditer(current))
                 current = NATIVE_FRAGMENT.sub('NATIVE_IDENTITY_TOKEN', current)
-                for match in IMAGE_FRAGMENT.finditer(current):
-                    unresolved_images.update(PATTERN.findall(match[0]))
-                current = IMAGE_FRAGMENT.sub('IMAGE_IDENTITY_TOKEN', current)
+                # INV-RESOURCE-001: malformed JSON image fields cannot borrow
+                # typed identity from a different receipt with the same value.
                 clipped_image = re.match(r'^(?:ocker|cker|ker|er|r) image (sha256:[0-9a-f]{64})(?![0-9a-f])', current)
                 if not clipped_image:
                     clipped_image = re.match(
@@ -590,7 +583,8 @@ def artifact_references(value, *, source: str = '', cache: dict | None = None) -
             current = re.sub(r'\b(?:immutable )?Docker image sha256:[0-9a-f]{64}',
                              'Docker image OCI_DIGEST', current)
             found.update(PATTERN.findall(_without_buildkit_identities(_without_toml_download_hash(current))))
-    return found | (unresolved_native - native_identities) | (unresolved_images - image_identities)
+    # INV-RESOURCE-001: equal digest values do not prove shared occurrence provenance.
+    return found | unresolved_native | unresolved_images
 
 
 def record_references(bucket: str, key: str, body: dict) -> set[str]:

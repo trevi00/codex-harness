@@ -1,0 +1,44 @@
+[
+  {
+    "parent": "sha256:f13f5ed79f9981fc13be1911227f3facdd2f3e46fde34c0a62f2c4edcaf5a25b",
+    "archived_missing": [
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83",
+      "sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812",
+      "sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64",
+      "sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88"
+    ],
+    "source": "canary",
+    "still_required": [],
+    "typed_exclusions": [
+      "sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812",
+      "sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64",
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83",
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+      "sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88",
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e"
+    ],
+    "occurrences": {
+      "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e": [
+        "ookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [stage-1  1/11] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e\\n#8 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n#8 DONE 0.0s\\n\\n#9 [internal] load build"
+      ],
+      "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5": [
+        "22-bookworm-slim\\n#2 DONE 1.5s\\n\\n#6 [internal] load .dockerignore\\n#6 transferring context: 103B done\\n#6 DONE 0.0s\\n\\n#7 [codex 1/2] FROM docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5\\n#7 resolve docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [stage-1  1/11] FROM dock"
+      ],
+      "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83": [
+        "776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-5dc00f184a6bfff4 done\\n#21 unpacking to docker.io/library/codex-harness:candidate-5dc00f184a6bfff4 0.1s done\\n#2"
+      ],
+      "sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812": [
+        "21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423"
+      ],
+      "sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64": [
+        "bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-5"
+      ],
+      "sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88": [
+        "s\\n#20 1.839  + codex-self-harness==0.1.0 (from file:///app)\\n#20 DONE 1.9s\\n\\n#21 exporting to image\\n#21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4"
+      ]
+    },
+    "status": "inspected"
+  }
+]

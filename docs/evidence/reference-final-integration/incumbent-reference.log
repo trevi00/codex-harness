@@ -1,0 +1,48 @@
+.........F...............F......F....................................... [ 64%]
+.......................................                                  [100%]
+=================================== FAILURES ===================================
+____ test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens ____
+
+    def test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens():
+        fragment = 'integrity True\n{"candidate":{},"image":"' + IMAGE + '","ref":"' + EVIDENCE + '","rest":'
+>       assert artifact_references({'aggregatedOutput': fragment}) == {EVIDENCE}
+E       AssertionError: assert {'sha256:1111...222222222222'} == {'sha256:2222...222222222222'}
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+.qualification/test_reference_kinds.py:56: AssertionError
+__ test_partial_docker_word_needs_complete_local_identity_and_output_context ___
+
+    def test_partial_docker_word_needs_complete_local_identity_and_output_context():
+        fragment = {'stdout': 'cker image ' + IMAGE + ', remaining output ' + EVIDENCE}
+        assert artifact_references(fragment) == {IMAGE, EVIDENCE}
+>       assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE}) == {EVIDENCE}
+E       AssertionError: assert {'sha256:1111...222222222222'} == {'sha256:2222...222222222222'}
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+.qualification/test_reference_kinds.py:183: AssertionError
+_ test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact _
+
+    def test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact():
+        fragment = {'stdout': 'clipped "currentHash":"' + IMAGE + '", rest'}
+        assert artifact_references(fragment) == {IMAGE}
+        declaration = {'handlerType': 'command', 'command': 'python hook.py',
+                       'eventName': 'sessionStart', 'currentHash': IMAGE}
+>       assert artifact_references({'declaration': declaration, 'fragment': fragment}) == set()
+E       AssertionError: assert {'sha256:1111...111111111111'} == set()
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+.qualification/test_reference_kinds.py:260: AssertionError
+=========================== short test summary info ============================
+FAILED .qualification/test_reference_kinds.py::test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens
+FAILED .qualification/test_reference_kinds.py::test_partial_docker_word_needs_complete_local_identity_and_output_context
+FAILED .qualification/test_reference_kinds.py::test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact
+3 failed, 108 passed in 2.93s

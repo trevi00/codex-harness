@@ -160,6 +160,9 @@ class Executor:
             required['review_contract'] = {
                 'scope': 'Independent source and evidence review before host qualification',
                 'qualification_owner': 'Host ReleaseRunner',
+                'review_testing': 'Independently run focused defect and negative-control tests. '
+                                  'The host owns full incumbent/candidate suites after source approval; '
+                                  'do not repeat bulk artifact scans inside an LLM review turn.',
                 'approval_effect': 'Authorizes qualification only; does not verify or promote a release',
                 'promotion_requires': ['independent lead and conductor approval of the exact revision',
                                        'incumbent and candidate test suites',

@@ -1,0 +1,29 @@
+{
+  "emittedAtMs": 1788927916840,
+  "method": "item/completed",
+  "params": {
+    "completedAtMs": 1788927916815,
+    "item": {
+      "aggregatedOutput": "{\"payload\": \"{\\\"candidate\\\":{},\\\"image\\\":\\\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\",\\\"image\\\":\\\"unknown\\\"}\", \"references\": [\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]}\n{\"payload\": \"log [unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\",\\\"image\\\":\\\"unknown\\\"}\", \"references\": []}\n{\"payload\": \"log {unfinished {\\\"candidate\\\":{},\\\"image\\\":\\\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\",\\\"image\\\":\\\"unknown\\\"}\", \"references\": []}\n{\"collection\": {\"id\": \"latest\", \"at\": \"2026-09-09T04:25:16.769903+00:00\", \"applied\": true, \"files\": 1, \"bytes\": 23, \"retained_references\": 1, \"grace_days\": 7, \"deferred\": 0, \"errors\": [], \"snapshot_seconds\": 5.7487981393933296e-05, \"max_batch_seconds\": 0.01951582101173699}, \"child\": \"sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652\", \"parent\": \"sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a\", \"child_exists\": false, \"parent_exists\": true}\n",
+      "command": "/bin/bash -lc \"PYTHONPATH=src /app/.venv/bin/python - <<'PY'\nimport json, os, time, tempfile\nfrom pathlib import Path\nfrom codex_harness.adapters.record_references import artifact_references\nfrom codex_harness.adapters.artifacts import FileArtifacts\nfrom codex_harness.adapters.maintenance import ArtifactMaintenance\nfrom codex_harness.adapters.store import MemoryStore\nr='sha256:'+'a'*64\nfor prefix in ('', 'log [unfinished ', 'log {unfinished '):\n payload=prefix+'{\\\"candidate\\\":{},\\\"image\\\":\\\"'+r+'\\\",\\\"image\\\":\\\"unknown\\\"}'\n print(json.dumps({'payload':payload,'references':sorted(artifact_references({'stdout':payload}))}))\nwith tempfile.TemporaryDirectory(dir='.') as d:\n artifacts,store=FileArtifacts(str(Path(d)/'artifacts')),MemoryStore()\n child=artifacts.put('retained child evidence','fixture')['ref']\n payload='log [unfinished '+ '{\\\"candidate\\\":{},\\\"image\\\":\\\"'+child+'\\\",\\\"image\\\":\\\"unknown\\\"}'\n parent=artifacts.put(json.dumps({'stdout':payload}),'fixture')['ref']\n for path in artifacts.root.glob('*.txt'):\n  old=time.time()-14*86400; os.utime(path,(old,old))\n with store.transaction() as tx: tx.put('roots','parent',{'ref':parent})\n result=ArtifactMaintenance(store,artifacts).collect(apply=True)\n print(json.dumps({'collection':result,'child':child,'parent':parent,'child_exists':(artifacts.root/(child[7:]+'.txt')).exists(),'parent_exists':(artifacts.root/(parent[7:]+'.txt')).exists()}))\nPY\"",
+      "commandActions": [
+        {
+          "command": "PYTHONPATH=src /app/.venv/bin/python - <<'PY'\nimport json, os, time, tempfile\nfrom pathlib import Path\nfrom codex_harness.adapters.record_references import artifact_references\nfrom codex_harness.adapters.artifacts import FileArtifacts\nfrom codex_harness.adapters.maintenance import ArtifactMaintenance\nfrom codex_harness.adapters.store import MemoryStore\nr='sha256:'+'a'*64\nfor prefix in ('', 'log [unfinished ', 'log {unfinished '):\n payload=prefix+'{\"candidate\":{},\"image\":\"'+r+'\",\"image\":\"unknown\"}'\n print(json.dumps({'payload':payload,'references':sorted(artifact_references({'stdout':payload}))}))\nwith tempfile.TemporaryDirectory(dir='.') as d:\n artifacts,store=FileArtifacts(str(Path(d)/'artifacts')),MemoryStore()\n child=artifacts.put('retained child evidence','fixture')['ref']\n payload='log [unfinished '+ '{\"candidate\":{},\"image\":\"'+child+'\",\"image\":\"unknown\"}'\n parent=artifacts.put(json.dumps({'stdout':payload}),'fixture')['ref']\n for path in artifacts.root.glob('*.txt'):\n  old=time.time()-14*86400; os.utime(path,(old,old))\n with store.transaction() as tx: tx.put('roots','parent',{'ref':parent})\n result=ArtifactMaintenance(store,artifacts).collect(apply=True)\n print(json.dumps({'collection':result,'child':child,'parent':parent,'child_exists':(artifacts.root/(child[7:]+'.txt')).exists(),'parent_exists':(artifacts.root/(parent[7:]+'.txt')).exists()}))\nPY",
+          "type": "unknown"
+        }
+      ],
+      "cwd": "/runtime/workspaces/review-8e42382b-fd30-4b1a-8f10-0f35dc1f6c60",
+      "durationMs": 746,
+      "exitCode": 0,
+      "id": "exec-8226115b-69bc-4522-92cf-6f5ee16d6975",
+      "pluginId": null,
+      "processId": "43347",
+      "scriptPath": null,
+      "source": "unifiedExecStartup",
+      "status": "completed",
+      "type": "commandExecution"
+    },
+    "threadId": "01a08468-4563-7ab0-99ab-d6cc61ce910c",
+    "turnId": "01a08468-5947-72f1-9a89-561f2082c9d0"
+  }
+}

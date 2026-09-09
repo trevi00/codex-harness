@@ -1,0 +1,360 @@
+[
+  {
+    "reference": "sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd",
+    "parent": "sha256:44ec28a94acca06db9f2e80b00f847dc650cd0006fa88b620b1a24d610e9be62",
+    "excerpt": "/runtime/workspaces/c89e94d9-4e8b-4a5d-8fc7-7dfdc05ae093/harness_hooks/codex_output_schema_guard.py\\\",\\\"currentHash\\\":\\\"sha256:0a8dd81dd0b058a528bdd0cc3decd18cacf74b1a1193635a3e21116a1fa64bbd\\\",\\\"displayOrder\\\":0,\\\"enabled\\\":true,\\\"eventName\\\":\\\"sessionStart\\\",\\\"handlerType\\\":\\\"command\\\",\\\"isManaged\\\":false,\\\"key\\\":\\\"/<session-fl",
+    "namespace": "native hook identity",
+    "disposition": "Typed occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5",
+    "parent": "sha256:06c49b3e5c244029e876f194eb9e3277b02441a5f20afa057700c2c741662ea3",
+    "excerpt": "1.7639694, \\\"hook_state\\\": {\\\"/<session-flags>/config.toml:session_start:0:0\\\": {\\\"enabled\\\": true, \\\"trusted_hash\\\": \\\"sha256:e5df0db7e1efbd6c5288565c8a82656d44173e67f22397be9647978d12bf9be5\\\"}}, \\\"hooks\\\": {\\\"SessionStart\\\": [{\\\"hooks\\\": [{\\\"command\\\": \\\"/runtime/workspaces/f3ff7591-e500-446d-9e2b-473f52bd2a02/.venv/bin/python3",
+    "namespace": "native hook identity",
+    "disposition": "Typed occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:39ec6c1ef8e7db455c4d0517f52cc7e003cb71828db8dd4104eef63d502ac318",
+    "parent": "sha256:e2a9df299f9fd551a8ee0b93f982b30b9c0809bca42848757c3d9b44736ea735",
+    "excerpt": "\\\"task_id\\\":\\\"889b5191-173a-4c0b-a51d-f8b992da43aa\\\",\\\"tree\\\":\\\"4e22dc358a4d1fb917bb431034dc30513dcef19e\\\"},\\\"image\\\":\\\"sha256:39ec6c1ef8e7db455c4d0517f52cc7e003cb71828db8dd4104eef63d502ac318\\\",\\\"mode\\\":\\\"Actual PostgreSQL request/client/host Docker command/receipt roundtrip; authorization fixture in isolated test schema, not pro",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac",
+    "parent": "sha256:e750c39211efa240ef5e0a2bbdc50c7d277e73c17726cf218f628cb8928f6bd9",
+    "excerpt": "me/workspaces/7ef45a25-e2f7-4dc5-aa08-71d3b5f8bd5b/harness_hooks/codex_usage_limit_guard.py\\\\\\\",\\\\\\\"currentHash\\\\\\\":\\\\\\\"sha256:9604cdaf85b203b44fb0510d926262b723d0719b660621debf4191de5c32c1ac\\\\\\\",\\\\\\\"displayOrder\\\\\\\":0,\\\\\\\"enabled\\\\\\\":true,\\\\\\\"eventName\\\\\\\":\\\\\\\"sessionStart\\\\\\\",\\\\\\\"handlerType\\\\\\\":\\\\\\\"command\\\\\\\",\\\\\\\"isManaged\\\\\\",
+    "namespace": "native hook identity",
+    "disposition": "Typed occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:839ddc0e3839b363353652d7677d453d595a20e5e849c5ce3227ebd36c7f5af3",
+    "parent": "sha256:f0592b31d3386246496edfd4f875ad22abda9bdddad5d2ec67a2597c67046faa",
+    "excerpt": "1067c8-0d5b-434f-adf2-d09f8ef78035\\\\\\\",\\\\\\\"tree\\\\\\\":\\\\\\\"12d70274145acf72a7d132a4293efaa229fc4ebf\\\\\\\"},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:839ddc0e3839b363353652d7677d453d595a20e5e849c5ce3227ebd36c7f5af3\\\\\\\",\\\\\\\"mode\\\\\\\":\\\\\\\"Actual PostgreSQL request/client/host Docker command/receipt roundtrip; authorization fixture in isolated test schema,",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:459a2c19244cfc007c03573fc984dfc685e3a32d00c9aec7f30445008bbddd31",
+    "parent": "sha256:f0592b31d3386246496edfd4f875ad22abda9bdddad5d2ec67a2597c67046faa",
+    "excerpt": "15-ef70-7d90-814a-bedc4691c097`.\\\\\\\\n+- `hooks/list` discovered the SessionStart command; trusted handler hash:\\\\\\\\n+  `sha256:459a2c19244cfc007c03573fc984dfc685e3a32d00c9aec7f30445008bbddd31`.\\\\\\\\n+  This is Codex's handler hash, distinct from the script-content hash.\\\\\\\\n+- `hook/completed`: `sessionStart`, `completed`, 68 ms, ",
+    "namespace": "native hook identity",
+    "disposition": "Typed occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:313f487b3acfa6d61f1a9f40dcd0fe9b08ae351060de66f9fea3ae01726ce782",
+    "parent": "sha256:f0592b31d3386246496edfd4f875ad22abda9bdddad5d2ec67a2597c67046faa",
+    "excerpt": "305445-adef-4532-b7fe-6c17d70728c8\\\\\\\",\\\\\\\"tree\\\\\\\":\\\\\\\"4d789fa1fb871f7b1ac3f6fce815c032f817d4bc\\\\\\\"},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:313f487b3acfa6d61f1a9f40dcd0fe9b08ae351060de66f9fea3ae01726ce782\\\\\\\",\\\\\\\"mode\\\\\\\":\\\\\\\"Actual PostgreSQL request/client/host Docker command/receipt roundtrip; authorization fixture in isolated test schema,",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82",
+    "parent": "sha256:9d0abe5bcc9cfb1226897ceac26f094b152af71b8c0e42e31c712268d750f3da",
+    "excerpt": "cted exact-image CLI evidence. All 52 tracked source/config/lock files were hash-matched against immutable Docker image sha256:34dc71c2c69a76e464564ae32d1b79a0b8c746362046c0cdd1ed8f626c078f82, then the real CLI file-task canary was run by that immutable ID. The bound receipt links candidate commit/tree, image ID, source-hash comp",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057",
+    "parent": "sha256:7e2a277c84e8dba7864f05dcfc82dae16269df40abbbb41eaaab7c572e2a6123",
+    "excerpt": "session-flags>/config.toml:session_start:0:0\\\\\\\\\\\\\\\"={\\\\\\\\\\\\\\\"enabled\\\\\\\\\\\\\\\"=true,\\\\\\\\\\\\\\\"trusted_hash\\\\\\\\\\\\\\\"=\\\\\\\\\\\\\\\"sha256:3e0420398172bd2546b5d0b04bdc8577b7c0626dcf1918e4fec10b97867bd057\\\\\\\\\\\\\\\"}}}\\\\\\\",\\\\\\\"--enable\\\\\\\",\\\\\\\"hooks\\\\\\\"]],\\\\\\\"elapsed_seconds\\\\\\\":11.27697416600131,\\\\\\\"kind\\\\\\\":\\\\\\\"actual-installed-app-server-cana",
+    "namespace": "native hook identity",
+    "disposition": "Typed occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:6826ad56b10718393fde310ba3a158f254deb7ea179a812ac64c78c65521ee61",
+    "parent": "sha256:b5ac7a51e7f3c97bc55ba8e8840780337909571e7575698d336d32acb84532de",
+    "excerpt": "/runtime/workspaces/17709152-e0d1-45ec-a46b-7cefc999e00a/harness_hooks/codex_usage_limit_guard.py\\\", \\\"currentHash\\\": \\\"sha256:6826ad56b10718393fde310ba3a158f254deb7ea179a812ac64c78c65521ee61\\\", \\\"displayOrder\\\": 0, \\\"enabled\\\": true, \\\"eventName\\\": \\\"sessionStart\\\", \\\"handlerType\\\": \\\"command\\\", \\\"isManaged\\\": false, \\\"key\\\": \\\"",
+    "namespace": "native hook identity",
+    "disposition": "Typed occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0",
+    "parent": "sha256:adb4e2bace474667c7ddc0efde718fb03029e65ca7f7c7647bb6e18155b47225",
+    "excerpt": "\\\", \\\\\\\"-e\\\\\\\", \\\\\\\"GIT_CONFIG_VALUE_0=*\\\\\\\", \\\\\\\"-w\\\\\\\", \\\\\\\"/candidate\\\\\\\", \\\\\\\"--entrypoint\\\\\\\", \\\\\\\"python\\\\\\\", \\\\\\\"sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0\\\\\\\", \\\\\\\"-m\\\\\\\", \\\\\\\"pytest\\\\\\\", \\\\\\\"tests/test_maintenance_postgres.py\\\\\\\", \\\\\\\"-q\\\\\\\", \\\\\\\"-s\\\\\\\", \\\\\\\"-p\\\\\\\", \\\\\\\"no:cacheprovider\\\\\\\"],",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "rg/packages/ed/c9/d7977eaacb9df673210491da99e6a247e93df98c715fc43fd136ce1d3d33/arrow-1.4.0-py3-none-any.whl\\\", hash = \\\"sha256:749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205\\\", size = 68797, upload-time = \\\"2025-10-18T17:46:45.663Z\\\" },\\n40:sdist = { url = \\\"https://files.pythonhosted.org/packages/9a/8e/82a0fe20",
+    "namespace": "package download integrity",
+    "disposition": "Typed URL/hash occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "nhosted.org/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171802bc1d26985/attrs-26.1.0.tar.gz\\\", hash = \\\"sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32\\\", size = 952055, upload-time = \\\"2026-03-19T14:22:25.026Z\\\" }\\n42:    { url = \\\"https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc",
+    "namespace": "package download integrity",
+    "disposition": "Typed URL/hash occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "ed.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz\\\", hash = \\\"sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55\\\", size = 138112, upload-time = \\\"2026-07-22T03:35:12.644Z\\\" }\\n51:    { url = \\\"https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fe",
+    "namespace": "package download integrity",
+    "disposition": "Typed URL/hash occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "kages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl\\\", hash = \\\"sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775\\\", size = 136983, upload-time = \\\"2026-07-22T03:35:11.276Z\\\" },\\n\",\"command\":\"/bin/bash -lc \\\"ls -l .venv/bin/python .venv/bin/ruff; rg -n ",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "onhosted.org/packages/b9/33/032cdc44182491aa708d06a68b62434140d8c50820a087fac7af37703357/arrow-1.4.0.tar.gz\\\", hash = \\\"sha256:ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7\\\", size = 152931, upload-time = \\\"2025-10-18T17:46:46.761Z\\\" }\\n33:    { url = \\\"https://files.pythonhosted.org/packages/ed/c9/d7977eaacb9d",
+    "namespace": "package download integrity",
+    "disposition": "Typed URL/hash occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "nhosted.org/packages/a9/d2/f4d173e22df740bc37b1db102b386ba719b66e95b0f0d751f556b387e6d2/anyio-4.15.1.tar.gz\\\", hash = \\\"sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94\\\", size = 276966, upload-time = \\\"2026-09-05T10:42:39.44Z\\\" }\\n20:    { url = \\\"https://files.pythonhosted.org/packages/12/b8/4bd346e22b289",
+    "namespace": "package download integrity",
+    "disposition": "Typed URL/hash occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "g/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl\\\", hash = \\\"sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101\\\", size = 132079, upload-time = \\\"2026-09-05T10:42:37.923Z\\\" },\\n31:sdist = { url = \\\"https://files.pythonhosted.org/packages/b9/33/032cdc4",
+    "namespace": "package download integrity",
+    "disposition": "Typed URL/hash occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
+    "parent": "sha256:52979275dddfab05af7f64899d44dcc43d017b5543cc5d53916c7403a218b100",
+    "excerpt": "g/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl\\\", hash = \\\"sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309\\\", size = 67548, upload-time = \\\"2026-03-19T14:22:23.645Z\\\" },\\n49:sdist = { url = \\\"https://files.pythonhosted.org/packages/a3/c2/24167ea9",
+    "namespace": "package download integrity",
+    "disposition": "Typed URL/hash occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e",
+    "parent": "sha256:7a017c79c29f4d6e8b6967ed674d5ce8aa24fe62fd85ad16ce35ff09e065d28f",
+    "excerpt": "#6 transferring context: 103B done\\n#6 DONE 0.0s\\n\\n#7 [stage-1  1/11] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e\\n#7 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f",
+    "parent": "sha256:7a017c79c29f4d6e8b6967ed674d5ce8aa24fe62fd85ad16ce35ff09e065d28f",
+    "excerpt": "config sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1 done\\n#21 exporting attestation manifest sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f 0.0s done\\n#21 exporting manifest list sha256:a23534401b82ff6075822d9b111f5f78f5a7f518b0a9d30fbb111611cd6988a0 done\\n#21 naming to docker.i",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6",
+    "parent": "sha256:7a017c79c29f4d6e8b6967ed674d5ce8aa24fe62fd85ad16ce35ff09e065d28f",
+    "excerpt": "1.0 (from file:///app)\\n#20 DONE 0.7s\\n\\n#21 exporting to image\\n#21 exporting layers 0.1s done\\n#21 exporting manifest sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6 done\\n#21 exporting config sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1 done\\n#21 exporting attestation manifest",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5",
+    "parent": "sha256:7a017c79c29f4d6e8b6967ed674d5ce8aa24fe62fd85ad16ce35ff09e065d28f",
+    "excerpt": "7df0b603332063cb5c6e32bd220c3e6e 0.0s done\\n#7 DONE 0.0s\\n\\n#8 [codex 1/2] FROM docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5\\n#8 resolve docker.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 0.0s done\\n#8 D",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1",
+    "parent": "sha256:7a017c79c29f4d6e8b6967ed674d5ce8aa24fe62fd85ad16ce35ff09e065d28f",
+    "excerpt": "1 exporting manifest sha256:c25e058fe1b86030fd01278f8d5411f781c49f59e75214fca1ce51b4f4e6a1a6 done\\n#21 exporting config sha256:9a479eb640c67d77a4528e859c18d19d3c13e1c14431eb7fc52b234d3322f3c1 done\\n#21 exporting attestation manifest sha256:59be73f8a5dfcfe725dcb7fb87927cab7f9251a046cb861473be58f221f86b9f 0.0s done\\n#21 exporting m",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777afb183fe8",
+    "parent": "sha256:1309e41fc8bcf6188b4adba42864ed17ca11dfcfc2cd710553ec5c23a7c2902e",
+    "excerpt": "{\"woken\": \"lead:improvement\", \"queued\": 0, \"durable_tasks\": false, \"image\": \"sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777afb183fe8\"}\n{\"woken\": \"worker:github\", \"queued\": 0, \"durable_tasks\": true, \"image\": \"sha256:396dc52e2d0f1399a48fa81cd76964af69a17be9d48331624a60777af",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:055c812ebd596d7100d2cd9560e320d9ed2b2b93038ae85748009f84c126e781",
+    "parent": "sha256:1309e41fc8bcf6188b4adba42864ed17ca11dfcfc2cd710553ec5c23a7c2902e",
+    "excerpt": "773ea725320a272483b96244d127141640896c6fd817c1ac0363d1987f817a4\"}, \"at\": \"2026-09-07T23:30:10.227651+00:00\"}, \"image\": \"sha256:055c812ebd596d7100d2cd9560e320d9ed2b2b93038ae85748009f84c126e781\", \"merge\": {\"merged\": true, \"revision\": \"51a3ba02e8231562660d1e4ea524e4d8b28e824c\", \"merged_revision\": \"09f9ea69af52d915ac6b309d6a38ae94507",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a",
+    "parent": "sha256:456306047746a5640076c6823ef039d326a7d5cbc3f957722713bc52b6ba2916",
+    "excerpt": "g sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b 0.0s done\\n#21 exporting attestation manifest sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a 0.0s done\\n#21 exporting manifest list sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c 0.0s done\\n#21 naming to doc",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c",
+    "parent": "sha256:456306047746a5640076c6823ef039d326a7d5cbc3f957722713bc52b6ba2916",
+    "excerpt": "manifest sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a 0.0s done\\n#21 exporting manifest list sha256:85bc58fd84ac5db44c7e483231da82d0048bed993a3c3a103272e9c89920377c 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-6fec51db27e23ac7 done\\n#21 unpacking to docker.io/library/codex-harness:",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b",
+    "parent": "sha256:456306047746a5640076c6823ef039d326a7d5cbc3f957722713bc52b6ba2916",
+    "excerpt": "orting manifest sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9 0.0s done\\n#21 exporting config sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b 0.0s done\\n#21 exporting attestation manifest sha256:f4a38f7bd6afe630fd3dd5742ac6194be3edd59afe506a917d1c94a8415a491a 0.0s done\\n#21 export",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9",
+    "parent": "sha256:456306047746a5640076c6823ef039d326a7d5cbc3f957722713bc52b6ba2916",
+    "excerpt": "\\n#20 DONE 3.3s\\n\\n#21 exporting to image\\n#21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:c80f52e31a4cb8b1738b0c0427cfe8d851583f567f84ad3d6ec78d7c3743c6e9 0.0s done\\n#21 exporting config sha256:7777ba17a7274b9c66374237a6319fae101ed31bda0d48e27c1a0abb73677d7b 0.0s done\\n#21 exporting attestatio",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752",
+    "parent": "sha256:07bbf24f20e8d481224174cc8851ddbb76265f806a7c3de2d470ab7164be7ade",
+    "excerpt": "manifest sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f 0.0s done\\n#21 exporting manifest list sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752 done\\n#21 naming to docker.io/library/codex-harness:candidate-bfef3a243e4ecb41 done\\n#21 unpacking to docker.io/library/codex-harness:candi",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7",
+    "parent": "sha256:07bbf24f20e8d481224174cc8851ddbb76265f806a7c3de2d470ab7164be7ade",
+    "excerpt": "orting manifest sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414 0.0s done\\n#21 exporting config sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7 0.0s done\\n#21 exporting attestation manifest sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f 0.0s done\\n#21 export",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414",
+    "parent": "sha256:07bbf24f20e8d481224174cc8851ddbb76265f806a7c3de2d470ab7164be7ade",
+    "excerpt": "\\n#20 DONE 3.2s\\n\\n#21 exporting to image\\n#21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:c0043c4ebda03b4a033eb38a99be104e6171972bc7f4189b78404ad5e499f414 0.0s done\\n#21 exporting config sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7 0.0s done\\n#21 exporting attestatio",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f",
+    "parent": "sha256:07bbf24f20e8d481224174cc8851ddbb76265f806a7c3de2d470ab7164be7ade",
+    "excerpt": "g sha256:f37f19b3468ca5af934c47e3b5210066c384b29b04fb9969b688db01244720d7 0.0s done\\n#21 exporting attestation manifest sha256:49971d09468845e10f5ba187c87c2196f5e63c0c7792e38b173a66efd9176f3f 0.0s done\\n#21 exporting manifest list sha256:a6ba2e7966face7917c695750c7f35c299431d66628759a026e0ce2ca114b752 done\\n#21 naming to docker.i",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83",
+    "parent": "sha256:f13f5ed79f9981fc13be1911227f3facdd2f3e46fde34c0a62f2c4edcaf5a25b",
+    "excerpt": "manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83 0.0s done\\n#21 naming to docker.io/library/codex-harness:candidate-5dc00f184a6bfff4 done\\n#21 unpacking to docker.io/library/codex-harness:",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812",
+    "parent": "sha256:f13f5ed79f9981fc13be1911227f3facdd2f3e46fde34c0a62f2c4edcaf5a25b",
+    "excerpt": "orting manifest sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 export",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64",
+    "parent": "sha256:f13f5ed79f9981fc13be1911227f3facdd2f3e46fde34c0a62f2c4edcaf5a25b",
+    "excerpt": "g sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestation manifest sha256:67d8bb2a1667db78554fc4f2d9ba35b308470db9da63f1cdf394aa22447fba64 0.0s done\\n#21 exporting manifest list sha256:778f8fa26716423650d35b2e315f0cbdfda25a219a6841de6b48f0eddabe5e83 0.0s done\\n#21 naming to doc",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88",
+    "parent": "sha256:f13f5ed79f9981fc13be1911227f3facdd2f3e46fde34c0a62f2c4edcaf5a25b",
+    "excerpt": "\\n#20 DONE 1.9s\\n\\n#21 exporting to image\\n#21 exporting layers\\n#21 exporting layers 0.2s done\\n#21 exporting manifest sha256:847f98cc9701fca09cfeb8ab58719d63b64bc31ea5caf013855253356b6bec88 0.0s done\\n#21 exporting config sha256:0b5f25c29c18c142f52bb360b2bdf4bfea62f2814d776627bce056a74019a812 0.0s done\\n#21 exporting attestatio",
+    "namespace": "OCI image/build identity",
+    "disposition": "Typed receipt, argv, prose or BuildKit occurrence; all-parent classification in parent-inspection.json",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "parent": "sha256:d4d820258190b7046e715d0d70c1a6df3a7cfc1b90c1af4ce5781c8a2dcd4b29",
+    "excerpt": "commandExecution/outputDelta\",\"params\":{\"delta\":\"duplicate_image {\\\"stdout\\\": \\\"{\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:1111111111111111111111111111111111111111111111111111111111111111\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"}\\\"} []\\ninvalid_context {\\\"image\\\": \\\"sha256:111111111111111111111111111111111111111111111111111111111111",
+    "namespace": "isolated historical command input/output",
+    "command_item": "exec-79b2a53c-14b6-4f32-a434-5e9b99f10f05",
+    "disposition": "Exact command occurrence identified; copied occurrences remain conservative",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652",
+    "parent": "sha256:f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b",
+    "excerpt": "\\\"errors\\\": [], \\\"snapshot_seconds\\\": 5.7487981393933296e-05, \\\"max_batch_seconds\\\": 0.01951582101173699}, \\\"child\\\": \\\"sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652\\\", \\\"parent\\\": \\\"sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a\\\", \\\"child_exists\\\": false, \\\"parent_exists\\\": tru",
+    "namespace": "isolated historical command input/output",
+    "command_item": "exec-8226115b-69bc-4522-92cf-6f5ee16d6975",
+    "disposition": "Exact command occurrence identified; copied occurrences remain conservative",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "parent": "sha256:f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b",
+    "excerpt": "\"method\":\"item/commandExecution/outputDelta\",\"params\":{\"delta\":\"{\\\"payload\\\": \\\"{\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"}\\\", \\\"references\\\": [\\\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\"]}\\n{\\\"pa",
+    "namespace": "isolated historical command input/output",
+    "command_item": "exec-8226115b-69bc-4522-92cf-6f5ee16d6975",
+    "disposition": "Exact command occurrence identified; copied occurrences remain conservative",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a",
+    "parent": "sha256:f83af829cfbdef93c0bc5f75901d453dedf9c0211450910115cf27536dc7098b",
+    "excerpt": "951582101173699}, \\\"child\\\": \\\"sha256:2b68c042419691b4e9f443019c79790590873d6cd81190f7f0702ca30ed2a652\\\", \\\"parent\\\": \\\"sha256:0e06d0c62b50b1b35069834169ed35b65acc0ef41b7b7ada6f18dbcfd873d68a\\\", \\\"child_exists\\\": false, \\\"parent_exists\\\": true}\\n\",\"itemId\":\"exec-8226115b-69bc-4522-92cf-6f5ee16d6975\",\"threadId\":\"01a08468-4563-7ab0",
+    "namespace": "isolated historical command input/output",
+    "command_item": "exec-8226115b-69bc-4522-92cf-6f5ee16d6975",
+    "disposition": "Exact command occurrence identified; copied occurrences remain conservative",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "parent": "sha256:be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b",
+    "excerpt": "/commandExecution/outputDelta\",\"params\":{\"delta\":\"{\\\"input\\\": \\\"log [unfinished {\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"}\\\", \\\"references\\\": [\\\"sha256:2222222222222222222222222222222222222222222222222222222222222222\\\"]}\\n{\\\"in",
+    "namespace": "isolated historical command input/output",
+    "command_item": "exec-093a4347-f621-4b8d-a581-f7ef36771e84",
+    "disposition": "Exact command occurrence identified; copied occurrences remain conservative",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  },
+  {
+    "reference": "sha256:527a340c302d89fae069b524a8d553b48468107c5deb6e6917a15a206dacff99",
+    "parent": "sha256:be0a89b15234f46da28627c293493598fa7a145d4a9f4ab2cb85706e79ecb67b",
+    "excerpt": "ot_seconds\\\": 4.872999852523208e-05}, \\\"input\\\": {\\\"stdout\\\": \\\"log [unfinished {\\\\\\\"candidate\\\\\\\":{},\\\\\\\"image\\\\\\\":\\\\\\\"sha256:527a340c302d89fae069b524a8d553b48468107c5deb6e6917a15a206dacff99\\\\\\\",\\\\\\\"image\\\\\\\":\\\\\\\"unknown\\\\\\\"\\\"}, \\\"parent_exists\\\": true, \\\"stale_publication_accepted\\\": true}\\n\",\"itemId\":\"exec-32fe3585-ee2a-4578-9",
+    "namespace": "isolated historical command input/output",
+    "command_item": "exec-32fe3585-ee2a-4578-9d2f-c7203e7bcb0e",
+    "disposition": "Exact command occurrence identified; copied occurrences remain conservative",
+    "scope": "Observed occurrence only; does not exempt equal hashes elsewhere"
+  }
+]

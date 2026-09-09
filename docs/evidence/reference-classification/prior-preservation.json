@@ -1,0 +1,272 @@
+[
+  {
+    "path": "docs/artifact-reference-semantics.md",
+    "previous_sha256": "b4f49476621501b024d94f679ebaad17c61a72269adf7b8ce525896d474bfcb6",
+    "current_sha256": "4afee7c000846c7a18fa88a933aa29cc2fded4ecc49b1d8a1299ddaef24297fa",
+    "identical": false
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/README.md",
+    "previous_sha256": "a3bb991ce8fd6a6f174b862d0c49b7fd1d0cada2375b1e4fc0def160804cfec2",
+    "current_sha256": "a3bb991ce8fd6a6f174b862d0c49b7fd1d0cada2375b1e4fc0def160804cfec2",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/focused.log",
+    "previous_sha256": "b45d168004e4e3f23a24c38d52474002dfb962416073d596efd7aab0989cf771",
+    "current_sha256": "b45d168004e4e3f23a24c38d52474002dfb962416073d596efd7aab0989cf771",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/negative-control.json",
+    "previous_sha256": "3a7581263b58f0a42744c5e3ebfab07e8de58d93a04013071ab9b0be2f59186d",
+    "current_sha256": "3a7581263b58f0a42744c5e3ebfab07e8de58d93a04013071ab9b0be2f59186d",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/pytest-initial.log",
+    "previous_sha256": "f3d5149e6e3fd4edc06c3df73dd426f3baa2b1e405bb2725a3148e9889e74e6d",
+    "current_sha256": "f3d5149e6e3fd4edc06c3df73dd426f3baa2b1e405bb2725a3148e9889e74e6d",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/pytest-intermediate.log",
+    "previous_sha256": "51e768ede6907415347f35fc81d7f21889dc6bf1a9c8744216bbbea2e1da1b24",
+    "current_sha256": "51e768ede6907415347f35fc81d7f21889dc6bf1a9c8744216bbbea2e1da1b24",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/pytest-newlines.log",
+    "previous_sha256": "444908784002a5bb3559c948f19226dcb70904befc0a12b1be55aed0ac171278",
+    "current_sha256": "444908784002a5bb3559c948f19226dcb70904befc0a12b1be55aed0ac171278",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/pytest.log",
+    "previous_sha256": "80ec10dc30f2a93e496e4de0f52c86c18f84f99c959320e85257892b2f6861a1",
+    "current_sha256": "80ec10dc30f2a93e496e4de0f52c86c18f84f99c959320e85257892b2f6861a1",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/ruff-initial.log",
+    "previous_sha256": "8ee4f5214e0810d95ff12c1e415e0a6df3c2fe448d30e33986707bfca5789268",
+    "current_sha256": "8ee4f5214e0810d95ff12c1e415e0a6df3c2fe448d30e33986707bfca5789268",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/ruff.log",
+    "previous_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "current_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/python-runner-rework/validation.json",
+    "previous_sha256": "4046f8cfeca9c81b7ac6f646ca7769140d595a65bde94616d802c48f5c45b154",
+    "current_sha256": "4046f8cfeca9c81b7ac6f646ca7769140d595a65bde94616d802c48f5c45b154",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/README.md",
+    "previous_sha256": "0746da4b470e687f52d54ddf786a638132e86a05c1c01555eacd235bf4dff182",
+    "current_sha256": "0746da4b470e687f52d54ddf786a638132e86a05c1c01555eacd235bf4dff182",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/diff-check.json",
+    "previous_sha256": "cdd6f8450d526a617d05dea435eb8c4f157bc5c5905009d9023e4defa6cac0fc",
+    "current_sha256": "cdd6f8450d526a617d05dea435eb8c4f157bc5c5905009d9023e4defa6cac0fc",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/focused-failure.json",
+    "previous_sha256": "92f96938e48cb2f51367cfdad5e8bbf944ca43c76a328ae43f0eea8a17eb1a69",
+    "current_sha256": "92f96938e48cb2f51367cfdad5e8bbf944ca43c76a328ae43f0eea8a17eb1a69",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/intermediate-diff-check.json",
+    "previous_sha256": "cdd6f8450d526a617d05dea435eb8c4f157bc5c5905009d9023e4defa6cac0fc",
+    "current_sha256": "cdd6f8450d526a617d05dea435eb8c4f157bc5c5905009d9023e4defa6cac0fc",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/intermediate-pytest.json",
+    "previous_sha256": "7affacda044a66586bdae33b54b04862383fff1ed20885af5cc27d1e62f261a6",
+    "current_sha256": "7affacda044a66586bdae33b54b04862383fff1ed20885af5cc27d1e62f261a6",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/intermediate-ruff.json",
+    "previous_sha256": "fca108a46fe08a021278923f7a2d8cf8e719332e837591371c1a45f2a92dca6d",
+    "current_sha256": "fca108a46fe08a021278923f7a2d8cf8e719332e837591371c1a45f2a92dca6d",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/intermediate-validation.json",
+    "previous_sha256": "9e9d06e72ee0fc5a7aa928135cc37952e05ef5a020abcef261b2f6990605d065",
+    "current_sha256": "9e9d06e72ee0fc5a7aa928135cc37952e05ef5a020abcef261b2f6990605d065",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/negative-control.json",
+    "previous_sha256": "069d6f208c973d37d97e840431e7030bf95de0940a43e72efc43b3d77a6a7472",
+    "current_sha256": "069d6f208c973d37d97e840431e7030bf95de0940a43e72efc43b3d77a6a7472",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/pytest.json",
+    "previous_sha256": "a58139184530e87b7ab509f0aa0fa1328f7e15d4b9733c6ac5e84a34404afc33",
+    "current_sha256": "a58139184530e87b7ab509f0aa0fa1328f7e15d4b9733c6ac5e84a34404afc33",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/rejected-negative-control.json",
+    "previous_sha256": "61fcdf2f54f323277ae1190425da28527d70c02d30190e7e4b3b07a887bf0fca",
+    "current_sha256": "61fcdf2f54f323277ae1190425da28527d70c02d30190e7e4b3b07a887bf0fca",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/ruff.json",
+    "previous_sha256": "fca108a46fe08a021278923f7a2d8cf8e719332e837591371c1a45f2a92dca6d",
+    "current_sha256": "fca108a46fe08a021278923f7a2d8cf8e719332e837591371c1a45f2a92dca6d",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/reference-rework/validation.json",
+    "previous_sha256": "f38aa82722099e47e9b19903cc9a7168f10a304c24f72a35d84c490c6528a42b",
+    "current_sha256": "f38aa82722099e47e9b19903cc9a7168f10a304c24f72a35d84c490c6528a42b",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/README.md",
+    "previous_sha256": "ca206fa60af68eb31258c85346fbe1ee0b5d88217fe9693a89bd5a80b48ce930",
+    "current_sha256": "ca206fa60af68eb31258c85346fbe1ee0b5d88217fe9693a89bd5a80b48ce930",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/controls.py",
+    "previous_sha256": "39745d2a2d18f21f4a4fba2e426190795971996e2f48aa76f86079bd838b96bc",
+    "current_sha256": "39745d2a2d18f21f4a4fba2e426190795971996e2f48aa76f86079bd838b96bc",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/environment.json",
+    "previous_sha256": "0d1576c38d16e2b1d440ddcf7339e88571e43f391792e179410a7aa71c614c82",
+    "current_sha256": "0d1576c38d16e2b1d440ddcf7339e88571e43f391792e179410a7aa71c614c82",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/negative-controls.json",
+    "previous_sha256": "8c84281fd6e65c9572a4a37b692d8ec1ef824ffaf122345a07af0f0e8b8902c9",
+    "current_sha256": "8c84281fd6e65c9572a4a37b692d8ec1ef824ffaf122345a07af0f0e8b8902c9",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/postgres-readonly.json",
+    "previous_sha256": "75a2ace6c8eb46ebab90ab49796d8f57c9567abbdecffc4282da152fcb5a4f31",
+    "current_sha256": "75a2ace6c8eb46ebab90ab49796d8f57c9567abbdecffc4282da152fcb5a4f31",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/pytest.log",
+    "previous_sha256": "3928746e2f8892677fc3e582df6076030953acdc4be0fa723243be86dc485bb5",
+    "current_sha256": "3928746e2f8892677fc3e582df6076030953acdc4be0fa723243be86dc485bb5",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/ruff.log",
+    "previous_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "current_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "identical": true
+  },
+  {
+    "path": "docs/evidence/retention-consolidation/validation.json",
+    "previous_sha256": "c5529d26f03841185ecb53bbea53fb89af3fbd8f258483c2fe4478b9aa1c3de7",
+    "current_sha256": "c5529d26f03841185ecb53bbea53fb89af3fbd8f258483c2fe4478b9aa1c3de7",
+    "identical": true
+  },
+  {
+    "path": "src/codex_harness/adapters/artifacts.py",
+    "previous_sha256": "dc1695f87b68cbdc88ad30a2c24b92cfabf79edb866a92a7c7d99e7045ca5142",
+    "current_sha256": "dc1695f87b68cbdc88ad30a2c24b92cfabf79edb866a92a7c7d99e7045ca5142",
+    "identical": true
+  },
+  {
+    "path": "src/codex_harness/adapters/executor.py",
+    "previous_sha256": "cb44642e1009b0c8ab6ac3e609b3fe09b571f24f49211e784daf8693b526beac",
+    "current_sha256": "cb44642e1009b0c8ab6ac3e609b3fe09b571f24f49211e784daf8693b526beac",
+    "identical": true
+  },
+  {
+    "path": "src/codex_harness/adapters/maintenance.py",
+    "previous_sha256": "f70c1fab2d8b8037e932f6570355558fd8badbca7edb3ad2ca3506caa05383ad",
+    "current_sha256": "f70c1fab2d8b8037e932f6570355558fd8badbca7edb3ad2ca3506caa05383ad",
+    "identical": true
+  },
+  {
+    "path": "src/codex_harness/adapters/record_references.py",
+    "previous_sha256": "8c364524b4b6bada974301005ebe0d5785e4a8ff7792b80be7a4b6af55b23abb",
+    "current_sha256": "9a040472ee3fb145c89d5759a71c6ae648bddedfeb4158819aba72a907648cea",
+    "identical": false
+  },
+  {
+    "path": "src/codex_harness/adapters/store.py",
+    "previous_sha256": "7b6041d39b6db53b1c8ca166c2a468b4385fd3ed969d0964f7508f43f7706494",
+    "current_sha256": "7b6041d39b6db53b1c8ca166c2a468b4385fd3ed969d0964f7508f43f7706494",
+    "identical": true
+  },
+  {
+    "path": "src/codex_harness/application/measurements.py",
+    "previous_sha256": "7c1cb23a981888b74215bf262b610fbf9b2519badc9af651b6e5b07bca1d3eea",
+    "current_sha256": "7c1cb23a981888b74215bf262b610fbf9b2519badc9af651b6e5b07bca1d3eea",
+    "identical": true
+  },
+  {
+    "path": "src/codex_harness/domain/measurements.py",
+    "previous_sha256": "4ee179e3337a8f8d15f301632e51b35751150cef99fd2b05d37062077df03906",
+    "current_sha256": "4ee179e3337a8f8d15f301632e51b35751150cef99fd2b05d37062077df03906",
+    "identical": true
+  },
+  {
+    "path": "tests/fixtures/reference_runner/original.txt",
+    "previous_sha256": "b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855",
+    "current_sha256": "b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855",
+    "identical": true
+  },
+  {
+    "path": "tests/test_git_workspace.py",
+    "previous_sha256": "d57c5aac057fa49383a0cedceaf915dde9553226d588442ca85c562774d96f04",
+    "current_sha256": "d57c5aac057fa49383a0cedceaf915dde9553226d588442ca85c562774d96f04",
+    "identical": true
+  },
+  {
+    "path": "tests/test_maintenance.py",
+    "previous_sha256": "a6a04dd164b347d22e9ecb39370f3a66e8f4269a51f3c287f07b992eb920ae7d",
+    "current_sha256": "a6a04dd164b347d22e9ecb39370f3a66e8f4269a51f3c287f07b992eb920ae7d",
+    "identical": true
+  },
+  {
+    "path": "tests/test_maintenance_postgres.py",
+    "previous_sha256": "1468b6fa329c8ded3e0e490385e656e8a44645a4a5615b1f7f80135204c9ad06",
+    "current_sha256": "1468b6fa329c8ded3e0e490385e656e8a44645a4a5615b1f7f80135204c9ad06",
+    "identical": true
+  },
+  {
+    "path": "tests/test_measurements.py",
+    "previous_sha256": "b091d85924056836bd5ed092ac1d14a9953116a254b732caf2de8f1a357bed95",
+    "current_sha256": "b091d85924056836bd5ed092ac1d14a9953116a254b732caf2de8f1a357bed95",
+    "identical": true
+  },
+  {
+    "path": "tests/test_reference_kinds.py",
+    "previous_sha256": "0871e232c837c3710d4bb82b7e280e85cf3629f054d57bb8e60ccf06063131f0",
+    "current_sha256": "ac3360e6129948be09ba711a9e08d41bb30295bb730bfce8618f2ae0ab9131c0",
+    "identical": false
+  },
+  {
+    "path": "tests/test_skill_history.py",
+    "previous_sha256": "3a9fb2b0d73cc59549935971826a815ee6ea3183d325e3db56ba93046d491d86",
+    "current_sha256": "3a9fb2b0d73cc59549935971826a815ee6ea3183d325e3db56ba93046d491d86",
+    "identical": true
+  }
+]

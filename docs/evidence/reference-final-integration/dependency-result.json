@@ -1,0 +1,82 @@
+{
+  "id": "dcc9922a-a3de-47f7-81f7-4f136fc45ea9",
+  "status": "succeeded",
+  "attempt": 3,
+  "error": "ContractError: Codex turn failed: {'message': 'Selected model is at capacity. Please try a different model.', 'codexErrorInfo': 'serverOverloaded', 'additionalDetails': None, 'misalignment': None}",
+  "result": {
+    "tests": [
+      "uv run ruff check . \u2014 passed",
+      "uv run pytest \u2014 785 passed, 36 skipped",
+      "git diff --check \u2014 passed",
+      "Recovered test receipts and source hashes verified against current workspace files."
+    ],
+    "origin": {
+      "plan": {
+        "origin": {
+          "operator": "Codex interactive session",
+          "importance": "important"
+        },
+        "objective": "Complete remaining seven historical provenance parents from consolidated source",
+        "design_ref": "sha256:f3a09a9be31f98be9b9f26867de31dc226c7a5b61773720e704823146df10100",
+        "importance": "important",
+        "input_archive_ref": "sha256:efc0d90da04bb8f4f9caf8cc0887692e394ce04643a8c2e2e880862fdfb46eaa",
+        "previous_candidate": {
+          "base": "445fbc8859e896b90e974ed69447ce58e3446251",
+          "path": "C:\\Users\\rudtn\\codex-harness\\.runtime\\workspaces\\501d7c61-a41b-438b-9f2f-08cc7e26299c",
+          "tree": "af4afd1edc9b7fe242ca778217240b045590bb4f",
+          "author": "worker:implementation",
+          "branch": "harness/501d7c61-a41b-438b-9f2f-08cc7e26299c",
+          "task_id": "501d7c61-a41b-438b-9f2f-08cc7e26299c",
+          "revision": "11d79cc69a9c5a29a8a3ee834741033882c55849",
+          "audit_lifecycle_version": 1
+        },
+        "acceptance_criteria": [
+          "Complete the SEVEN still-blocked original parents documented in docs/evidence/occurrence-provenance/observations.json, rather than repeating the already completed 22 V1 bindings. Start from consolidated candidate 11d79cc, preserving its stricter malformed JSON decoder and bounded tool-wait tests. This task is independent of its pending review; any later review finding must also be incorporated before release.",
+          "Resolve Git diff copies by binding exact candidate/base/tree and immutable Git blob bytes; resolve pytest fixture/log copies by tracing the exact test source and completed command receipts; resolve observed_dependencies diagnostics by matching original completed diagnostic command output and source evidence. Digest equality alone, arbitrary summaries, blanket source-name exemptions, repeated-character patterns, fabricated SHA preimages and edited historical failure results are prohibited.",
+          "Work only on the seven named original parents and exact origin artifacts, not a whole archive scan. Every original byte-range classification must be justified with machine-verified source/selector hashes, retained source dependencies, unchanged original-byte fencing, and negative controls for forged/stale/swapped/corrupt provenance. Keep equal-valued actual artifact handles mandatory.",
+          "A result that merely re-lists already known blockers is incomplete. Implement every provenance category that can be proven from available Git and artifact originals, and report a concrete missing piece of evidence only where proof really cannot be obtained. Do not weaken conservative behavior to force success.",
+          "Preserve previous candidate 11d79cc byte-for-byte except carefully reviewed additive provenance changes and every independent retention/fencing safeguard. Inspect the supplied design and implement a bounded, reviewed occurrence-provenance solution for the four remaining identifier kinds across eight original artifacts. No global digest exemption, metadata self-approval or invented artifact preimage is allowed.",
+          "Use exact immutable source command/receipt provenance in the retained classification evidence. Source descriptions alone are not authentication. Attest only individually verified byte ranges/selectors, keep origin artifacts as mandatory dependencies, and retain every unannotated equal-valued reference.",
+          "Keep original bytes for conservative existing-edge retention and tombstone fencing. Reject stale/corrupt/overlapping/unknown attestations; prove a real child cannot be deleted even when metadata classification or an attestation is wrong. Include annotations in the reviewed source tree and cache identity.",
+          "Avoid creating new false references while reporting observations: represent non-artifact identifiers with explicit namespace and hex fields, and archive raw diagnostic copies separately. Do not treat arbitrary copied summaries as automatically proven by a matching digest. Verified copies may refer back to their immutable source only after content/selector binding is validated.",
+          "Do not repeat the 58-parent bulk scan inside a Codex turn. Work on the eight named artifacts with bounded source reads and focused tests; use deterministic scripts with checkpoints for long scans. The full host production traversal is a separate rollout gate, not an LLM waiting loop.",
+          "Run full pytest and Ruff. Reviewers must inspect the exact data attestations and code, write scratch evidence outside the checkout, and require fresh incumbent/candidate integration qualification plus actual exact-candidate CLI canaries. Do not weaken a failed inspection into an approval.",
+          "Keep collection paused until complete current production traversal succeeds and host supervisor, monitor collector, and container writers converge. Preserve all failed/cancelled attempts and unreviewed migration scope. If any occurrence cannot be proven, retain it as an explicit blocker and provide its counterexample."
+        ]
+      }
+    },
+    "summary": "Implemented all 25 remaining occurrence bindings across the seven parents, preserving the 22 V1 bindings and retention/fencing safeguards. Changes are ready for independent review. Evidence: docs/evidence/occurrence-provenance/COPIES.md and copy-validation.json. Collection must remain paused pending independent reviews, integration qualification, actual canaries, production traversal, and writer convergence; none is claimed complete.",
+    "candidate": {
+      "base": "445fbc8859e896b90e974ed69447ce58e3446251",
+      "path": "/runtime/workspaces/dcc9922a-a3de-47f7-81f7-4f136fc45ea9",
+      "tree": "0aec074236fbe4c555b8d27a852f180bc53ecb71",
+      "author": "worker:implementation",
+      "branch": "harness/dcc9922a-a3de-47f7-81f7-4f136fc45ea9",
+      "task_id": "dcc9922a-a3de-47f7-81f7-4f136fc45ea9",
+      "revision": "91bd1ed363d92e0c286d7e807f87b7e72b597e31",
+      "audit_lifecycle_version": 1
+    },
+    "execution_ref": "sha256:b549665c0faa65997cfcf61f096f2303371ea287b19ed969edd06f0d2209a786",
+    "basis_revision": "11d79cc69a9c5a29a8a3ee834741033882c55849"
+  },
+  "attempt_outcomes": [
+    {
+      "at": "2026-09-09T06:42:27.167912+00:00",
+      "error": "ContractError: Codex turn execution budget exceeded",
+      "status": "failed",
+      "attempt": 1
+    },
+    {
+      "at": "2026-09-09T06:53:56.834513+00:00",
+      "error": "ContractError: Codex turn failed: {'message': 'Selected model is at capacity. Please try a different model.', 'codexErrorInfo': 'serverOverloaded', 'additionalDetails': None, 'misalignment': None}",
+      "status": "failed",
+      "attempt": 2
+    },
+    {
+      "at": "2026-09-09T06:59:53.114981+00:00",
+      "error": null,
+      "status": "succeeded",
+      "attempt": 3
+    }
+  ]
+}

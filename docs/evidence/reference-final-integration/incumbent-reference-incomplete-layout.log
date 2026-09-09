@@ -1,0 +1,81 @@
+.........F...............F......F....................................... [ 64%]
+.......................F...............                                  [100%]
+=================================== FAILURES ===================================
+____ test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens ____
+
+    def test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens():
+        fragment = 'integrity True\n{"candidate":{},"image":"' + IMAGE + '","ref":"' + EVIDENCE + '","rest":'
+>       assert artifact_references({'aggregatedOutput': fragment}) == {EVIDENCE}
+E       AssertionError: assert {'sha256:1111...222222222222'} == {'sha256:2222...222222222222'}
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+.qualification/test_reference_kinds.py:56: AssertionError
+__ test_partial_docker_word_needs_complete_local_identity_and_output_context ___
+
+    def test_partial_docker_word_needs_complete_local_identity_and_output_context():
+        fragment = {'stdout': 'cker image ' + IMAGE + ', remaining output ' + EVIDENCE}
+        assert artifact_references(fragment) == {IMAGE, EVIDENCE}
+>       assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE}) == {EVIDENCE}
+E       AssertionError: assert {'sha256:1111...222222222222'} == {'sha256:2222...222222222222'}
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+.qualification/test_reference_kinds.py:183: AssertionError
+_ test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact _
+
+    def test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact():
+        fragment = {'stdout': 'clipped "currentHash":"' + IMAGE + '", rest'}
+        assert artifact_references(fragment) == {IMAGE}
+        declaration = {'handlerType': 'command', 'command': 'python hook.py',
+                       'eventName': 'sessionStart', 'currentHash': IMAGE}
+>       assert artifact_references({'declaration': declaration, 'fragment': fragment}) == set()
+E       AssertionError: assert {'sha256:1111...111111111111'} == set()
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+.qualification/test_reference_kinds.py:260: AssertionError
+______ test_original_python_runner_bytes_are_classified_without_execution ______
+
+    def test_original_python_runner_bytes_are_classified_without_execution():
+        import hashlib
+        from pathlib import Path
+    
+>       body = (Path(__file__).parent / 'fixtures/reference_runner/original.txt').read_bytes()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.qualification/test_reference_kinds.py:359: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/pathlib/_abc.py:625: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/runtime/workspaces/3fdbf869-26ef-4851-ae78-bfee57f5bf31/.qualification/fixtures/reference_runner/original.txt')
+mode = 'rb', buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/runtime/workspaces/3fdbf869-26ef-4851-ae78-bfee57f5bf31/.qualification/fixtures/reference_runner/original.txt'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+=========================== short test summary info ============================
+FAILED .qualification/test_reference_kinds.py::test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens
+FAILED .qualification/test_reference_kinds.py::test_partial_docker_word_needs_complete_local_identity_and_output_context
+FAILED .qualification/test_reference_kinds.py::test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact
+FAILED .qualification/test_reference_kinds.py::test_original_python_runner_bytes_are_classified_without_execution
+4 failed, 107 passed in 6.76s

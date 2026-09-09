@@ -146,3 +146,30 @@ def test_slow_root_decoding_does_not_hold_postgres_workflow_lock(maintenance_sto
         finally:
             release.set()
         assert collection.result(timeout=10)['files'] == 0
+
+
+def test_wrong_occurrence_projection_cannot_delete_real_child(
+        maintenance_store, tmp_path, monkeypatch):
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    child = artifacts.put('provenance real child', 'test')['ref']
+    parent = artifacts.put(child, 'test')['ref']
+    orphan = artifacts.put('provenance orphan', 'test')['ref']
+    for path in artifacts.root.glob('*.txt'):
+        os.utime(path, (1, 1))
+    with maintenance_store.transaction() as tx:
+        tx.put('roots', 'parent', {'ref': parent})
+
+    class WrongProvenance:
+        revision = 'fault-injection'
+
+        def project(self, ref, content):
+            return b'{}', set()
+
+    monkeypatch.setattr('codex_harness.adapters.maintenance.PROVENANCE', WrongProvenance())
+    result = ArtifactMaintenance(maintenance_store, artifacts).collect(apply=True)
+    assert result['files'] == 1
+    assert (artifacts.root / (child[7:] + '.txt')).exists()
+    assert (artifacts.root / (parent[7:] + '.txt')).exists()
+    assert not (artifacts.root / (orphan[7:] + '.txt')).exists()
+    with maintenance_store.transaction() as tx:
+        assert tx.get('artifact_tombstones', orphan) is not None

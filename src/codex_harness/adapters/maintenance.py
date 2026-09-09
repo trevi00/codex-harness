@@ -7,6 +7,7 @@ import time
 
 from filelock import FileLock, Timeout
 
+from codex_harness.adapters.occurrence_provenance import PROVENANCE
 from codex_harness.adapters.record_references import (
     artifact_references,
     potential_record_references,
@@ -68,6 +69,7 @@ class ArtifactMaintenance:
         potential = potential_references(content.decode('utf-8'))
         live = potential & existing if existing is not None else {
             ref for ref in potential if (path.parent / (ref[7:] + '.txt')).exists()}
+        projected, origins = PROVENANCE.project('sha256:' + path.stem, content)
         metadata_path = path.with_suffix('.json')
         source = ''
         if metadata_path.exists():
@@ -83,10 +85,10 @@ class ArtifactMaintenance:
             normalized = re.sub(
                 rb'("observed_at"\s*:\s*")[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})(")',
                 rb'\1OBSERVED_TIME\2', content)
-            snapshot_key = ('measurement', hashlib.sha256(normalized).digest())
+            snapshot_key = ('measurement', PROVENANCE.revision, hashlib.sha256(normalized).digest())
             if snapshot_key in cache:
                 return set(cache[snapshot_key]) | live
-        references = artifact_references(content.decode('utf-8'), source=source, cache=cache)
+        references = artifact_references(projected.decode('utf-8'), source=source, cache=cache) | origins
         if snapshot_key is not None:
             if len(cache) >= 2048:
                 cache.pop(next(iter(cache)))
