@@ -15,6 +15,7 @@ from codex_harness.adapters.project_skills import project_context
 from codex_harness.adapters.skill_history import prepare_history, project_identity, record_history
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
+from codex_harness.domain.evaluator_migration import approval_binding, validate_policy
 from codex_harness.domain.model import (
     ContextItem,
     ContractError,
@@ -174,6 +175,12 @@ class Executor:
                                  'or evidence integrity cannot be established, report the specific blocker. '
                                  'Assess rollback compatibility independently of CLI startup success.',
             }
+        if evidence.get('migration_review'):
+            required['migration_review'] = evidence['migration_review']
+            required['review_contract']['approval_effect'] = (
+                'Explicitly authorize the bound evaluator migration for qualification only. '
+                'Inspect exact manifest/source delta, controller and policy; generic source approval '
+                'does not authorize migration. Return migration_approved only after successful inspection.')
         # INV-SESSION-001: task identity is stable, but recovery belongs to one
         # stage, evidence set and harness revision; never replay shortlist as final.
         binding = {"stage": stage, "evidence_ref": raw["ref"], "basis_revision": basis_revision}
@@ -314,7 +321,15 @@ class Executor:
                                   "required command inspection failed; host cause unconfirmed",
                         "execution_ref": evidence_ref["ref"], "basis_revision": basis_revision}
             if not result["interrupted"]:
-                return {**result["answer"], "execution_ref": evidence_ref["ref"], "basis_revision": basis_revision}
+                # INV-RELEASE-001: model assertions cannot substitute for command receipts.
+                inspected = any(
+                    event.get('method') == 'item/completed'
+                    and (item := event.get('params', {}).get('item', {})).get('type') == 'commandExecution'
+                    and item.get('status') == 'completed'
+                    and type(item.get('exitCode')) is int and item['exitCode'] == 0
+                    for event in result['events'])
+                return {**result["answer"], "execution_ref": evidence_ref["ref"],
+                        "basis_revision": basis_revision, "command_inspection_succeeded": inspected}
             completed = [event for event in result["events"] if event.get("method") == "item/completed"]
             recovery = {"checkpoint": state, "completed": completed[-4:]}
         raise RuntimeError("Session handoff budget exhausted; task remains resumable from checkpoint")
@@ -490,6 +505,24 @@ class Executor:
                 from codex_harness.adapters.threshold_reviews import review_threshold
 
                 return review_threshold(self, lease, VERDICT)
+            migration_record = None
+            verdict_schema = VERDICT
+            if phase.startswith('review_') and data.get('release_id'):
+                with self.service.store.transaction() as tx:
+                    proposed = tx.get('releases', data['release_id'])
+                require(proposed is not None and proposed['candidate'] == data['candidate'],
+                        'Stale review release candidate')
+                if 'migration' in proposed['policy']:
+                    from codex_harness.adapters.evaluator_migration import validate_manifest
+
+                    validate_policy(proposed['candidate'], proposed['policy'])
+                    manifest = validate_manifest(self.git.repository, proposed['policy'], proposed['candidate'])
+                    migration_record = proposed
+                    data = {**data, 'migration_review': {'policy': proposed['policy'],
+                            'binding': approval_binding(proposed), 'manifest': manifest}}
+                    verdict_schema = object_schema({**VERDICT['properties'],
+                        'migration_approved': {'type': 'boolean'},
+                        'migration_binding': object_schema({k: TEXT for k in approval_binding(proposed)})})
             if phase.startswith("review_"):
                 candidate = data["candidate"]
                 inspected = self.git.inspect(candidate["revision"], candidate["base"])
@@ -504,7 +537,7 @@ class Executor:
                                "ID only when the cause and scope are the same. For source reviews, keep the "
                                "checkout unchanged; write temporary logs and reproduction scripts in a system "
                                "temporary directory outside the checkout and retain evidence through artifact tools.", data, cwd,
-                                DIAGNOSIS if phase == "diagnose" else VERDICT, True,
+                                DIAGNOSIS if phase == "diagnose" else verdict_schema, True,
                                 heartbeat=lambda: self.workflow.heartbeat(lease), lease=lease,
                                 workload="design" if phase == "diagnose" else "final_validation")
             if phase.startswith("review_"):
@@ -528,6 +561,15 @@ class Executor:
                     current.update(status="blocked", result=result, completed_at=utcnow())
                     tx.put("decisions_pending", decision["id"], current)
                 return current
+            migration_kwargs = {}
+            if migration_record:
+                require(result.get('command_inspection_succeeded') is True,
+                        'Migration review requires successful command inspection')
+                require(result.get('migration_binding') == approval_binding(migration_record),
+                        'Migration review binding mismatch')
+                require(not result['accepted'] or result.get('migration_approved') is True,
+                        'Qualification-only review cannot authorize migration')
+                migration_kwargs = {'migration_approval': result['migration_binding']}
             message = decision["message"]
             next_message = None
             if phase == "diagnose" and result["confirmed"]:
@@ -552,9 +594,9 @@ class Executor:
                           "revision": data["candidate"]["base"]}
                 if data["candidate"].get("hook_id"):
                     policy["checks"] += ["hook_reproduction", "hook_normal_case"]
-                release = self.releases.propose(data["candidate"], policy)
+                release = migration_record or self.releases.propose(data["candidate"], policy)
                 self.releases.review(release["id"], agent, data["candidate"]["revision"],
-                                     result["accepted"], result["execution_ref"])
+                                     result["accepted"], result["execution_ref"], **migration_kwargs)
                 self._review_hook(data["candidate"], agent, result)
                 importance = (data.get("origin", {}).get("plan", {}).get("origin", {})
                               .get("importance"))
@@ -567,13 +609,16 @@ class Executor:
                                             message["correlation_id"], message["message_id"])
             elif phase == "review_conductor":
                 self.releases.review(data["release_id"], agent, data["candidate"]["revision"],
-                                     result["accepted"], result["execution_ref"])
+                                     result["accepted"], result["execution_ref"], **migration_kwargs)
                 self._review_hook(data["candidate"], agent, result)
                 if result["accepted"]:
                     with self.service.store.transaction() as tx:
                         tx.put("release_queue", data["release_id"],
-                               {"id": data["release_id"], "status": "queued", "at": utcnow()})
-                    result["deployment"] = {"status": "queued", "release_id": data["release_id"]}
+                               {"id": data["release_id"],
+                                "status": "awaiting_bootstrap" if migration_record else "queued",
+                                "at": utcnow()})
+                    result["deployment"] = {"status": "awaiting_bootstrap" if migration_record else "queued",
+                                            "release_id": data["release_id"]}
             if phase in {"review_lead", "review_conductor"} and not result["accepted"]:
                 with self.service.store.transaction() as tx:
                     loop = tx.get("improvement_loops", message["correlation_id"]) or {

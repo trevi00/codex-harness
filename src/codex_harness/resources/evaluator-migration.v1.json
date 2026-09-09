@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "source_base": "445fbc8859e896b90e974ed69447ce58e3446251",
+  "evaluator_revision": "c9eb4c7c5d82a94f772c50dd7bfb510c493bfb76",
+  "preserved_candidate": "87b1b36244e4371f53318b8d813ea8d42a2372a8",
+  "source_tree": "e71f0c9ade6e7e7c63987a2e91b8e3ebec014a8e",
+  "evaluator_tree": "99dcc03074ffe7bcb1d5fc651d2d07b412c7aaeb",
+  "file": "tests/test_reference_kinds.py",
+  "source_blob": "29d12defe7f4e37e059a1cdf0c409d73baaddf75",
+  "evaluator_blob": "5622fbdc910befd6eaa25a111131ea14df0fd030",
+  "source_sha256": "0871e232c837c3710d4bb82b7e280e85cf3629f054d57bb8e60ccf06063131f0",
+  "evaluator_sha256": "e093dd577bcc07f7a350f009e1007a8e15fe100039ef9a8ba33a3b85900477b2",
+  "delta": [
+    {
+      "test": "test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens",
+      "line": 56,
+      "old": "{EVIDENCE}",
+      "new": "{IMAGE, EVIDENCE}"
+    },
+    {
+      "test": "test_partial_docker_word_needs_complete_local_identity_and_output_context",
+      "line": 183,
+      "old": "{EVIDENCE}",
+      "new": "{IMAGE, EVIDENCE}"
+    },
+    {
+      "test": "test_partial_docker_word_needs_complete_local_identity_and_output_context",
+      "line": 190,
+      "old": "set()",
+      "new": "{IMAGE}"
+    },
+    {
+      "test": "test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact",
+      "line": 260,
+      "old": "set()",
+      "new": "{IMAGE}"
+    },
+    {
+      "test": "test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact",
+      "line": 266,
+      "old": "{EVIDENCE}",
+      "new": "{IMAGE, EVIDENCE}"
+    }
+  ],
+  "rationale": "INV-RESOURCE-001: ambiguous clipped tokens remain artifact edges; unrelated records cannot establish token provenance."
+}

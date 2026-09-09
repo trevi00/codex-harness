@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from codex_harness.domain.model import digest, require, utcnow
+from codex_harness.domain.evaluator_migration import (
+    approval_binding,
+    validate_approvals,
+    validate_policy,
+)
+from codex_harness.domain.model import digest, envelope, require, utcnow
 
 
 class Releases:
@@ -48,6 +53,7 @@ class Releases:
                 "Candidate identity incomplete")
         self.org.actor(candidate["author"], "worker")
         require(bool(policy.get("checks")), "Incumbent checks required")
+        validate_policy(candidate, policy)
         identity = digest({"candidate": candidate, "policy": policy})
         with self.store.transaction() as tx:
             old = tx.get("releases", identity)
@@ -59,14 +65,44 @@ class Releases:
             tx.put("releases", identity, record)
             return record
 
+    def request_migration_reviews(self, release_id: str) -> dict:
+        """Operator entry point: queue fresh review; never record an approval here."""
+        with self.store.transaction() as tx:
+            record = tx.get('releases', release_id)
+            require(record is not None and 'migration' in record['policy'], 'Migration release required')
+            validate_policy(record['candidate'], record['policy'])
+            require(record['status'] == 'candidate' and not record['reviews'], 'Fresh release required')
+            actor = self.org.actor(record['candidate']['author'], 'worker').parent
+            identity = digest({'migration_review': release_id})
+            old = tx.get('decisions_pending', identity)
+            if old:
+                return old
+            message = envelope('review.result', record['candidate']['author'], actor, 'review',
+                               {'release_id': release_id}, identity)
+            row = {'id': identity, 'actor': actor, 'phase': 'review_lead', 'message': message,
+                   'input': {'candidate': record['candidate'], 'release_id': release_id},
+                   'status': 'pending', 'attempt': 0}
+            tx.put('decisions_pending', identity, row)
+            return row
+
     def review(self, release_id: str, actor: str, revision: str, accepted: bool,
-               evidence: str) -> dict:
+               evidence: str, *, migration_approval: dict | None = None) -> dict:
         require(type(accepted) is bool and bool(evidence), "Review verdict and evidence required")
         reviewer = self.org.actor(actor)
         with self.store.transaction() as tx:
             record = tx.get("releases", release_id)
             require(record is not None, "Release not found")
             require(record["candidate"]["revision"] == revision, "Stale release review")
+            validate_policy(record['candidate'], record['policy'])
+            if 'migration' in record['policy']:
+                require(record['policy_hash'] == digest(record['policy']), 'Migration policy changed')
+                require(record['id'] == digest({'candidate': record['candidate'],
+                                                'policy': record['policy']}),
+                        'Migration release identity changed')
+                require(migration_approval == approval_binding(record),
+                        'Explicit migration approval required; qualification-only review is insufficient')
+            else:
+                require(migration_approval is None, 'Unexpected migration approval')
             previous = next((r for r in record["reviews"] if r["actor"] == actor), None)
             if previous:
                 require(previous["accepted"] == accepted, "Conflicting duplicate review")
@@ -80,6 +116,8 @@ class Releases:
             require(not any(r["actor"] == actor for r in record["reviews"]), "Duplicate release review")
             record["reviews"].append({"actor": actor, "revision": revision,
                                       "accepted": accepted, "evidence": evidence})
+            if migration_approval is not None:
+                record['reviews'][-1]['migration_approval'] = migration_approval
             record["status"] = ("rejected" if not accepted else "reviewed"
                                 if reviewer.role == "conductor" else "candidate")
             tx.put("releases", release_id, record)
@@ -91,6 +129,7 @@ class Releases:
             require(record is not None and record["status"] == "reviewed", "Reviews incomplete")
             require(record["candidate"]["revision"] == revision
                     and record["policy_hash"] == policy_hash, "Stale candidate or evaluator")
+            validate_approvals(record, self.org)
             require(set(checks) == set(record["policy"]["checks"]), "Missing or extra canary checks")
             require(all(isinstance(c, dict) and type(c.get("passed")) is bool and c.get("evidence")
                         for c in checks.values()), "Checks require real execution evidence")
@@ -103,6 +142,7 @@ class Releases:
         with self.store.transaction() as tx:
             record = tx.get("releases", release_id)
             require(record is not None and record["status"] == "verified", "Release not verified")
+            validate_approvals(record, self.org)
             active = tx.get("deployment", "active")
             require((active or {}).get("release_id") == expected_active, "Active deployment changed")
             require(record["policy_hash"] == digest(record["policy"]), "Evaluator changed")

@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "docker",
+    "version"
+  ],
+  "exit_code": null,
+  "error": "[Errno 2] No such file or directory: 'docker'",
+  "error_type": "FileNotFoundError",
+  "scope": "Prerequisite probe only; no container canary executed",
+  "canaries": "blocked",
+  "migration": "proposed; no independent approval created",
+  "gc": "must remain paused"
+}

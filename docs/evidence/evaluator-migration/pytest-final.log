@@ -1,0 +1,83 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1
+collected 858 items
+
+tests/test_app_server.py ..................                              [  2%]
+tests/test_architecture.py ..                                            [  2%]
+tests/test_artifact_query.py ...........                                 [  3%]
+tests/test_bus.py ........                                               [  4%]
+tests/test_context_recovery.py ..                                        [  4%]
+tests/test_core.py .................                                     [  6%]
+tests/test_evaluator_migration.py .......................                [  9%]
+tests/test_executor_research.py .......................                  [ 12%]
+tests/test_external_context.py ....                                      [ 12%]
+tests/test_git_workspace.py .....                                        [ 13%]
+tests/test_graph_topology.py .                                           [ 13%]
+tests/test_historical_provenance.py ...........................          [ 16%]
+tests/test_integration.py ssssssssssssssssssssssssss                     [ 19%]
+tests/test_maintenance.py ..................................             [ 23%]
+tests/test_maintenance_postgres.py sssssss                               [ 24%]
+tests/test_measurements.py .........................                     [ 27%]
+tests/test_model_routing.py .................                            [ 29%]
+tests/test_monitoring.py ......                                          [ 29%]
+tests/test_namespace_guard.py ...............................            [ 33%]
+tests/test_native_hooks.py ...............                               [ 35%]
+tests/test_native_routing_replay.py .........                            [ 36%]
+tests/test_occurrence_provenance.py ..............                       [ 37%]
+tests/test_output_schema.py ......................................       [ 42%]
+tests/test_pipeline.py .................                                 [ 44%]
+tests/test_project_detection.py .....................                    [ 46%]
+tests/test_project_skills.py .......................                     [ 49%]
+tests/test_reference_kinds.py .......................................... [ 54%]
+........................................................................ [ 62%]
+...............................                                          [ 66%]
+tests/test_release_test_imports.py .....                                 [ 66%]
+tests/test_release_test_services.py s                                    [ 67%]
+tests/test_research_audits.py .......................................... [ 71%]
+...........................                                              [ 75%]
+tests/test_reverse_progress.py ..............                            [ 76%]
+tests/test_review_context_contract.py .                                  [ 76%]
+tests/test_rollback_compatibility.py ...                                 [ 77%]
+tests/test_runtime_projection.py .                                       [ 77%]
+tests/test_runtime_thresholds.py ..............                          [ 78%]
+tests/test_skill_audit.py ....................                           [ 81%]
+tests/test_skill_guidance.py ......                                      [ 81%]
+tests/test_skill_history.py ...s...                                      [ 82%]
+tests/test_skill_import.py ...............                               [ 84%]
+tests/test_skill_routing.py ......                                       [ 85%]
+tests/test_threshold_collection.py ..........                            [ 86%]
+tests/test_threshold_proposals.py .........                              [ 87%]
+tests/test_threshold_replay.py ......                                    [ 88%]
+tests/test_threshold_reviews.py ....................                     [ 90%]
+tests/test_tool_wait_budget.py .......                                   [ 91%]
+tests/test_usage_limit.py .........................s......               [ 94%]
+tests/test_workflow.py ...........................................       [100%]
+
+=========================== short test summary info ============================
+SKIPPED [6] tests/test_integration.py:60: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [3] tests/test_integration.py:76: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:99: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:115: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [5] tests/test_integration.py:127: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:147: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:157: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:167: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:179: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:200: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:217: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:235: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:260: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:271: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:303: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [4] tests/test_maintenance_postgres.py:43: Set HARNESS_INTEGRATION=1
+SKIPPED [1] tests/test_maintenance_postgres.py:109: Set HARNESS_INTEGRATION=1
+SKIPPED [1] tests/test_maintenance_postgres.py:125: Set HARNESS_INTEGRATION=1
+SKIPPED [1] tests/test_maintenance_postgres.py:151: Set HARNESS_INTEGRATION=1
+SKIPPED [1] tests/test_release_test_services.py:15: Requires Docker-capable qualification host
+SKIPPED [1] tests/test_skill_history.py:114: Integration environment required
+SKIPPED [1] tests/test_usage_limit.py:179: Local PostgreSQL required
+================= 822 passed, 36 skipped in 129.74s (0:02:09) ==================

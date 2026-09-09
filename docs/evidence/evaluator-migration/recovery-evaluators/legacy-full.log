@@ -1,0 +1,119 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /runtime/workspaces/b40cb2f2-da71-434a-886a-13c76172417d/.git/migration-legacy-zom9tbg9
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 751 items
+
+tests/test_app_server.py ..................                              [  2%]
+tests/test_architecture.py ..                                            [  2%]
+tests/test_artifact_query.py ...........                                 [  4%]
+tests/test_bus.py ........                                               [  5%]
+tests/test_context_recovery.py ..                                        [  5%]
+tests/test_core.py .................                                     [  7%]
+tests/test_executor_research.py .......................                  [ 10%]
+tests/test_external_context.py ....                                      [ 11%]
+tests/test_git_workspace.py .....                                        [ 11%]
+tests/test_graph_topology.py .                                           [ 12%]
+tests/test_integration.py sssssssssssssssssssssssss                      [ 15%]
+tests/test_maintenance.py ..................................             [ 19%]
+tests/test_maintenance_postgres.py ssssss                                [ 20%]
+tests/test_measurements.py .........................                     [ 24%]
+tests/test_model_routing.py .................                            [ 26%]
+tests/test_monitoring.py ......                                          [ 27%]
+tests/test_namespace_guard.py ...............................            [ 31%]
+tests/test_native_hooks.py ...............                               [ 33%]
+tests/test_native_routing_replay.py .........                            [ 34%]
+tests/test_output_schema.py ......................................       [ 39%]
+tests/test_pipeline.py .................                                 [ 41%]
+tests/test_project_detection.py .....................                    [ 44%]
+tests/test_project_skills.py .......................                     [ 47%]
+tests/test_reference_kinds.py .........F...............F......F......... [ 53%]
+.....................................................................    [ 62%]
+tests/test_release_test_imports.py .....                                 [ 63%]
+tests/test_release_test_services.py s                                    [ 63%]
+tests/test_research_audits.py .......................................... [ 68%]
+...........................                                              [ 72%]
+tests/test_reverse_progress.py ..............                            [ 74%]
+tests/test_review_context_contract.py .                                  [ 74%]
+tests/test_rollback_compatibility.py ...                                 [ 74%]
+tests/test_runtime_projection.py .                                       [ 74%]
+tests/test_runtime_thresholds.py ..............                          [ 76%]
+tests/test_skill_audit.py ....................                           [ 79%]
+tests/test_skill_guidance.py ......                                      [ 80%]
+tests/test_skill_history.py ...s...                                      [ 81%]
+tests/test_skill_import.py ...............                               [ 83%]
+tests/test_skill_routing.py ......                                       [ 84%]
+tests/test_threshold_collection.py ..........                            [ 85%]
+tests/test_threshold_proposals.py .........                              [ 86%]
+tests/test_threshold_replay.py ......                                    [ 87%]
+tests/test_threshold_reviews.py ....................                     [ 90%]
+tests/test_usage_limit.py .........................s......               [ 94%]
+tests/test_workflow.py ...........................................       [100%]
+
+=================================== FAILURES ===================================
+____ test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens ____
+
+    def test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens():
+        fragment = 'integrity True\n{"candidate":{},"image":"' + IMAGE + '","ref":"' + EVIDENCE + '","rest":'
+>       assert artifact_references({'aggregatedOutput': fragment}) == {EVIDENCE}
+E       AssertionError: assert {'sha256:1111...222222222222'} == {'sha256:2222...222222222222'}
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+tests/test_reference_kinds.py:56: AssertionError
+__ test_partial_docker_word_needs_complete_local_identity_and_output_context ___
+
+    def test_partial_docker_word_needs_complete_local_identity_and_output_context():
+        fragment = {'stdout': 'cker image ' + IMAGE + ', remaining output ' + EVIDENCE}
+        assert artifact_references(fragment) == {IMAGE, EVIDENCE}
+>       assert artifact_references({'fragment': fragment, 'description': 'immutable Docker image ' + IMAGE}) == {EVIDENCE}
+E       AssertionError: assert {'sha256:1111...222222222222'} == {'sha256:2222...222222222222'}
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+tests/test_reference_kinds.py:183: AssertionError
+_ test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact _
+
+    def test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact():
+        fragment = {'stdout': 'clipped "currentHash":"' + IMAGE + '", rest'}
+        assert artifact_references(fragment) == {IMAGE}
+        declaration = {'handlerType': 'command', 'command': 'python hook.py',
+                       'eventName': 'sessionStart', 'currentHash': IMAGE}
+>       assert artifact_references({'declaration': declaration, 'fragment': fragment}) == set()
+E       AssertionError: assert {'sha256:1111...111111111111'} == set()
+E         
+E         Extra items in the left set:
+E         'sha256:1111111111111111111111111111111111111111111111111111111111111111'
+E         Use -v to get more diff
+
+tests/test_reference_kinds.py:260: AssertionError
+=========================== short test summary info ============================
+SKIPPED [6] tests/test_integration.py:60: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [3] tests/test_integration.py:76: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:99: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:115: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [5] tests/test_integration.py:127: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:147: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:157: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:167: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:179: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:200: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:217: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:235: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:260: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [1] tests/test_integration.py:271: Set HARNESS_INTEGRATION=1 for local services
+SKIPPED [4] tests/test_maintenance_postgres.py:43: Set HARNESS_INTEGRATION=1
+SKIPPED [1] tests/test_maintenance_postgres.py:109: Set HARNESS_INTEGRATION=1
+SKIPPED [1] tests/test_maintenance_postgres.py:125: Set HARNESS_INTEGRATION=1
+SKIPPED [1] tests/test_release_test_services.py:15: Requires Docker-capable qualification host
+SKIPPED [1] tests/test_skill_history.py:114: Integration environment required
+SKIPPED [1] tests/test_usage_limit.py:179: Local PostgreSQL required
+FAILED tests/test_reference_kinds.py::test_clipped_diagnostic_json_excludes_only_complete_typed_image_tokens
+FAILED tests/test_reference_kinds.py::test_partial_docker_word_needs_complete_local_identity_and_output_context
+FAILED tests/test_reference_kinds.py::test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact
+============ 3 failed, 714 passed, 34 skipped in 115.60s (0:01:55) =============
