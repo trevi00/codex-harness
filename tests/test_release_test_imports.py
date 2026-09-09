@@ -116,10 +116,20 @@ def test_evaluator_preserves_history_config_and_cleans_failure(tmp_path, monkeyp
 
 
 def test_release_runner_invokes_ephemeral_incumbent_suite(tmp_path, monkeypatch):
+    from contextlib import contextmanager
+
     from codex_harness.adapters.artifacts import FileArtifacts
     from codex_harness.adapters.deployment import ReleaseRunner
     from codex_harness.adapters.store import MemoryStore
     from codex_harness.bootstrap import organization
+
+    @contextmanager
+    def environment(*args):
+        # Layout unit test only. Real Docker lifecycle is tested separately.
+        yield {**os.environ, 'HARNESS_INTEGRATION': '1'}
+
+    monkeypatch.setattr('codex_harness.adapters.deployment.isolated_release_services',
+                        environment)
 
     original, selected = tmp_path / 'incumbent', tmp_path / 'candidate'
     for root, value in ((original, 'old'), (selected, 'new')):
@@ -152,6 +162,8 @@ def test_release_runner_invokes_ephemeral_incumbent_suite(tmp_path, monkeypatch)
     visited = []
     real_check = runner._check
     def check(argv, cwd=None, timeout=300, env=None):
+        if argv[1:3] == ['-m', 'pytest']:
+            assert timeout == 900
         if '--import-mode=importlib' in argv:
             evaluator = Path(cwd)
             visited.append(evaluator)

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from codex_harness.adapters.commands import run_process
 from codex_harness.adapters.hooks import NativeHooks
+from codex_harness.adapters.release_test_services import isolated_release_services
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import canonical, digest, require, utcnow
@@ -88,17 +89,15 @@ class ReleaseRunner:
         # Fresh candidate venv; test definitions are taken from the incumbent commit.
         install = self._check(["uv", "sync", "--frozen"], path)
         python = Path(path) / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-        test_env = {**os.environ, "HARNESS_INTEGRATION": "1",
-                    "HARNESS_DATABASE_URL": self.service.store.dsn,
-                    "HARNESS_REDIS_URL": os.environ.get("HARNESS_REDIS_URL", "redis://127.0.0.1:56379/0")}
-        with incumbent_test_workspace(incumbent, path) as evaluator:
-            incumbent_env = {**test_env, "PYTHONPATH": os.pathsep.join(
-                [str(evaluator / 'tests'), str(evaluator / 'src')])}
-            tests = self._check([str(python), "-m", "pytest", str(evaluator / 'tests'),
-                                 "-c", str(evaluator / 'pyproject.toml'),
-                                 "--import-mode=importlib", "-q"],
-                                str(evaluator), env=incumbent_env)
-        candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path, env=test_env)
+        with isolated_release_services(python, path, self.artifacts) as test_env:
+            with incumbent_test_workspace(incumbent, path) as evaluator:
+                incumbent_env = {**test_env, "PYTHONPATH": os.pathsep.join(
+                    [str(evaluator / 'tests'), str(evaluator / 'src')])}
+                tests = self._check([str(python), "-m", "pytest", str(evaluator / 'tests'),
+                                     "-c", str(evaluator / 'pyproject.toml'),
+                                     "--import-mode=importlib", "-q"],
+                                    str(evaluator), timeout=900, env=incumbent_env)
+            candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path, timeout=900, env=test_env)
         tests = {"passed": tests["passed"] and candidate_tests["passed"],
                  "evidence": self.artifacts.put(canonical({"incumbent": tests, "candidate": candidate_tests}),
                                                 "test-suites:" + release_id)["ref"]}
