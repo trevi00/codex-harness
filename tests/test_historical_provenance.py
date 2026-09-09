@@ -39,8 +39,8 @@ def test_all_seven_original_parents_are_bound_with_origin_dependencies(document,
         'occurrence-provenance.v1.json').read_bytes())
     combined = CombinedProvenance(original, copies)
     parents = {e['parent'] for e in document['occurrences']}
-    assert len(parents) == 8
-    assert len(document['occurrences']) == 30
+    assert len(parents) == 9
+    assert len(document['occurrences']) == 34
     for source in document['sources'].values():
         if source['ref'] not in parents:
             continue
@@ -131,9 +131,9 @@ def test_catalogue_covers_exact_original_blocked_selectors(document):
     observations = json.loads(Path('docs/evidence/occurrence-provenance/observations.json').read_text())
     blocked = [row for row in observations if row['status'] == 'blocked']
     sources = {source['ref']: unpack(source['data']) for source in document['sources'].values()}
-    new_parent = document['sources']['malformed_diff']['ref']
+    new_parents = {document['sources'][name]['ref'] for name in ('malformed_diff', 'printed_execution')}
     assert {row['parent'] for row in blocked} == {
-        e['parent'] for e in document['occurrences'] if e['parent'] != new_parent}
+        e['parent'] for e in document['occurrences'] if e['parent'] not in new_parents}
     for row in blocked:
         token = ('sha256:' + row['identifier']['hex']).encode()
         raw = sources[row['parent']]
@@ -211,3 +211,32 @@ def test_new_diff_derivation_rejects_swapped_or_unproven_sources(document, mutat
     corpus.raw[name] = json.dumps(value).encode()
     with pytest.raises(ValueError):
         derive_malformed(corpus)
+
+
+@pytest.mark.parametrize('mutation', ['output', 'command', 'source_reference', 'source_body'])
+def test_printed_receipts_require_exact_original_outputs(document, mutation):
+    from codex_harness.adapters.printed_provenance import derive_printed
+    corpus = Corpus(document)
+    if mutation in {'output', 'command'}:
+        parsed = corpus.document('printed_execution')
+        item = parsed['events'][138]['params']['item']
+        item['aggregatedOutput' if mutation == 'output' else 'command'] += 'tampered'
+        corpus.raw['printed_execution'] = json.dumps(parsed).encode()
+    elif mutation == 'source_reference':
+        corpus.sources = copy.deepcopy(corpus.sources)
+        corpus.sources['printed_validation_0']['ref'] = 'sha256:' + '0' * 64
+    else:
+        corpus.raw['printed_validation_0'] += b' '
+    with pytest.raises(ValueError):
+        derive_printed(corpus)
+
+
+def test_printed_receipt_parent_retains_raw_edges_and_all_original_sources(document, copies):
+    source = document['sources']['printed_execution']
+    raw = unpack(source['data'])
+    projected, origins = copies.project(source['ref'], raw, raw)
+    image = json.loads(unpack(document['sources']['printed_binding']['data']))['image']
+    assert image in potential_references(raw.decode())
+    assert image not in projected.decode()
+    expected = {v['ref'] for k, v in document['sources'].items() if k.startswith('printed_')}
+    assert origins == expected

@@ -18,6 +18,16 @@ from codex_harness.domain.model import require
 # INV-RESOURCE-001: Git-reviewed trust roots; a repacked receipt cannot
 # authenticate itself by changing its own digest and generated annotations.
 SOURCES = {
+    'printed_execution': '26f4e92f18f03d9eb01b30077a902c3effd02dfbf16284ac940bd7210d00e8d9',
+    'printed_task': 'd0b95563b845fcb2f6cfccf25c4a0391ab6fbdb9785c2d2db180dbe36af925be',
+    'printed_binding': '74cd30cd3e8b313e037fb15447a4a77d4dfe2fdcffb96e47d69400f44b037cf7',
+    'printed_canary': '0b022b0df8cd400e86437e10f899bdc64f8ff8773042a2b83f10eb9cc82b4f08',
+    'printed_validation_0': '4d8afff2538a73c65739b1c7573b290d3bd887c1849b3c4a8514a52b3c190315',
+    'printed_validation_1': 'be0b53c257cfd5c413c37d8084fefb8b09a91eff4dbebff7d4da8b1ea5db09c9',
+    'printed_validation_2': 'ed40c481e3f623fd7e5758f8cc94583602fa0d6175d321b924bc2d3612dbb50e',
+    'printed_validation_3': '2a7ba5567ab2ae1ba6cd670597d1b96d7853bec095c96b70f000279d6b64c81f',
+    'printed_validation_4': '39ba9ee3a962efa9b6940b2d9e8dd31b045b8f19c377cc31f8ba964885b9e4c2',
+
     'malformed_diff': '0a709c9ce8c3cd550e12f8a47c151bd884132fb6ec0c3ccb24c7861cccbb577b',
     'malformed_execution': '6b145c4bc3834cc1af4c84543ae0ae922345d47eda894d4d4f6db76d8c31a52e',
     'runner_execution': '34387bcb5a12d3f30db01a3672548efeaf3a1f6be802c9c195f33e0b5f073613',
@@ -452,6 +462,8 @@ PY'''
             'Unbound printed prefix diagnostic')
     c.output('prefix_review', 1053, token, ['prefix_review', 'prefix_execution'], binding)
     derive_malformed(c)
+    from codex_harness.adapters.printed_provenance import derive_printed
+    derive_printed(c)
     return c.entries
 
 
