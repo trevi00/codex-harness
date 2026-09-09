@@ -8,6 +8,7 @@ import time
 from filelock import FileLock, Timeout
 
 from codex_harness.adapters.occurrence_provenance import PROVENANCE
+from codex_harness.adapters.reader_provenance import READER_PROVENANCE
 from codex_harness.adapters.record_references import (
     artifact_references,
     potential_record_references,
@@ -69,7 +70,9 @@ class ArtifactMaintenance:
         potential = potential_references(content.decode('utf-8'))
         live = potential & existing if existing is not None else {
             ref for ref in potential if (path.parent / (ref[7:] + '.txt')).exists()}
-        projected, origins = PROVENANCE.project('sha256:' + path.stem, content)
+        projected, reader_origins = READER_PROVENANCE.project(path, content)
+        projected, origins = PROVENANCE.project('sha256:' + path.stem, projected)
+        origins |= reader_origins
         metadata_path = path.with_suffix('.json')
         source = ''
         if metadata_path.exists():

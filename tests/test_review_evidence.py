@@ -38,7 +38,8 @@ def test_typed_image_identity_is_not_a_published_artifact_requirement(tmp_path):
                              {'accepted': True, 'candidate': {}, 'image': 'sha256:' + 'a' * 64})
 
 
-def test_unpublished_review_never_creates_approval_then_exact_publication_allows_retry(tmp_path, monkeypatch):
+@pytest.mark.parametrize('inspected_initially', [False, True])
+def test_unpublished_review_never_creates_approval_then_exact_publication_allows_retry(tmp_path, monkeypatch, inspected_initially):
     from types import SimpleNamespace
 
     from codex_harness.adapters.executor import Executor
@@ -64,13 +65,18 @@ def test_unpublished_review_never_creates_approval_then_exact_publication_allows
         tx.put('decisions_pending', 'review', {'id': 'review', 'actor': 'lead:improvement',
                'phase': 'review_lead', 'input': {'candidate': candidate}, 'message': message,
                'status': 'pending', 'attempt': 0})
+    if not inspected_initially:
+        assert shared.put(body, 'unit-fixture')['ref'] == ref
+    inspected = [inspected_initially]
     monkeypatch.setattr(executor, '_run', lambda *a, **k: {
-        'accepted': True, 'reason': ref, 'execution_ref': 'fixture:execution'})
+        'accepted': True, 'reason': ref, 'execution_ref': 'fixture:execution',
+        'command_inspection_succeeded': inspected[0]})
     assert executor.decide_one('lead:improvement')['status'] == 'retry'
     with service.store.transaction() as tx:
         assert tx.scan('releases') == []
         assert tx.scan('outbox') == []
     assert shared.put(body, 'unit-fixture')['ref'] == ref
+    inspected[0] = True
     assert executor.decide_one('lead:improvement')['status'] == 'succeeded'
     with service.store.transaction() as tx:
         assert len(tx.scan('releases')[0]['reviews']) == 1

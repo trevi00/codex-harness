@@ -570,6 +570,8 @@ class Executor:
             if phase.startswith('review_') and result.get('accepted') is True:
                 from codex_harness.adapters.review_evidence import validate_review_evidence
 
+                require(result.get('command_inspection_succeeded') is True,
+                        'Source review requires successful command inspection')
                 validate_review_evidence(self.artifacts, result)
             migration_kwargs = {}
             if migration_record:
