@@ -180,7 +180,7 @@ def test_lead_review_projects_only_importance_and_conductor_rework_preserves_it(
     verdicts = iter([True, False])
     monkeypatch.setattr(executor, '_run', lambda *args, **kwargs: {
         'accepted': next(verdicts), 'blocked': False, 'reason': 'fix it',
-        'execution_ref': 'sha256:review'})
+        'execution_ref': 'sha256:review', 'command_inspection_succeeded': True})
     lead = executor.decide_one('lead:improvement')
     assert lead['result']['origin'] == {'plan': {'origin': {'importance': 'simple'}}}
     with service.store.transaction() as tx:

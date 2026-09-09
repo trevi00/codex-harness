@@ -273,3 +273,18 @@ def test_command_inspection_is_derived_from_execution_not_model(tmp_path, monkey
                            str(tmp_path), VERDICT, read_only=True)
     assert result['command_inspection_succeeded'] is (type(exit_code) is int and exit_code == 0)
     assert json.loads(artifacts.text(result['execution_ref'], 100000))['events'] == [event]
+
+
+@pytest.mark.parametrize('name', ['tests/test_git_workspace.py', 'tests/test_model_routing.py', 'tests/test_workflow.py'])
+def test_review_fixture_proof_rejects_assertion_or_unrelated_edits(name):
+    from codex_harness.adapters.evaluator_migration import git_bytes, prove_fixture
+    root = Path(__file__).resolve().parents[1]
+    old = git_bytes(root, 'show', SOURCE_BASE + ':' + name)
+    new = git_bytes(root, 'show', EVALUATOR + ':' + name)
+    assert prove_fixture(name, old, new)['file'] == name
+    with pytest.raises(ContractError):
+        prove_fixture(name, old, new + b'\n# unrelated\n')
+    with pytest.raises(ContractError):
+        prove_fixture(name, old, new.replace(b'assert ', b'assert False and ', 1))
+    with pytest.raises(ContractError):
+        prove_fixture(name, old, new.replace(b"'command_inspection_succeeded':", b"'forged_inspection_succeeded':"))

@@ -8,7 +8,7 @@ from importlib.resources import files
 from codex_harness.domain.model import digest, require
 
 SOURCE_BASE = '445fbc8859e896b90e974ed69447ce58e3446251'
-EVALUATOR = 'c9eb4c7c5d82a94f772c50dd7bfb510c493bfb76'
+EVALUATOR = '4055d2d0b2a21908abc803f243c97953d928d994'
 PRESERVED = '87b1b36244e4371f53318b8d813ea8d42a2372a8'
 FILE = 'tests/test_reference_kinds.py'
 ALLOWED = {
@@ -16,6 +16,31 @@ ALLOWED = {
     'test_partial_docker_word_needs_complete_local_identity_and_output_context': 2,
     'test_clipped_identity_tokens_bind_only_to_complete_declarations_in_same_artifact': 2,
 }
+
+
+FIXTURES = {
+    'tests/test_workflow.py': (
+        "'accepted': True, 'inspection_blocked': blocked,",
+        "'accepted': True, 'inspection_blocked': blocked, 'command_inspection_succeeded': not blocked,"),
+    'tests/test_git_workspace.py': (
+        "return {'accepted': True, 'reason': 'unit fixture', 'execution_ref': 'fixture:review'}",
+        "return {'accepted': True, 'reason': 'unit fixture', 'execution_ref': 'fixture:review',\n                'command_inspection_succeeded': True}"),
+    'tests/test_model_routing.py': (
+        "'execution_ref': 'sha256:review'})",
+        "'execution_ref': 'sha256:review', 'command_inspection_succeeded': True})"),
+}
+
+
+def prove_fixture(path, old, new):
+    left, right = (value.encode() for value in FIXTURES[path])
+    prefix, sep, suffix = old.rpartition(left)
+    require(bool(sep) and prefix + right + suffix == new, 'Unrelated review fixture edit')
+    before = [ast.dump(n) for n in ast.walk(ast.parse(old)) if isinstance(n, ast.Assert)]
+    after = [ast.dump(n) for n in ast.walk(ast.parse(new)) if isinstance(n, ast.Assert)]
+    require(before == after, 'Review fixture assertions changed')
+    return {'file': path, 'source_sha256': hashlib.sha256(old).hexdigest(),
+            'evaluator_sha256': hashlib.sha256(new).hexdigest(),
+            'change': 'Add successful command inspection to existing accepted-review fixture; assertions unchanged'}
 
 
 def git_bytes(repository, *args):
@@ -72,11 +97,14 @@ def inspect_manifest(repository):
         return git_bytes(repository, *args)
     require(read('rev-list', '--parents', '-n', '1', EVALUATOR).decode().split()
             == [EVALUATOR, SOURCE_BASE], 'Evaluator parent changed')
-    require(read('diff', '--name-only', SOURCE_BASE, EVALUATOR).decode().splitlines() == [FILE],
+    require(read('diff', '--name-only', SOURCE_BASE, EVALUATOR).decode().splitlines() == sorted([FILE, *FIXTURES]),
             'Unrelated evaluator paths changed')
     old, new = (read('show', revision + ':' + FILE) for revision in (SOURCE_BASE, EVALUATOR))
     return {'version': 1, 'source_base': SOURCE_BASE, 'evaluator_revision': EVALUATOR,
             'preserved_candidate': PRESERVED,
+            'review_fixtures': [prove_fixture(path, read('show', SOURCE_BASE + ':' + path),
+                                             read('show', EVALUATOR + ':' + path))
+                               for path in FIXTURES],
             'source_tree': read('rev-parse', SOURCE_BASE + '^{tree}').decode().strip(),
             'evaluator_tree': read('rev-parse', EVALUATOR + '^{tree}').decode().strip(),
             'file': FILE, 'source_blob': read('rev-parse', SOURCE_BASE + ':' + FILE).decode().strip(),

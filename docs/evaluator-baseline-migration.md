@@ -1,3 +1,20 @@
+# Current proposal update
+
+The current proposed evaluator is `4055d2d0b2a21908abc803f243c97953d928d994`.
+It retains the five conservative expected-set changes below and adds the explicit
+successful-inspection field to three pre-existing review fixtures in
+`tests/test_git_workspace.py`, `tests/test_model_routing.py` and `tests/test_workflow.py`. Their assertions
+remain byte-for-byte unchanged. The manifest verifies exactly these four files,
+the original sole parent, exact fixture replacements and unchanged assertion ASTs.
+This closes the newly reproduced generic-review admission defect without allowing
+missing inspection evidence. The previous c9eb4c7 proposal and original failures
+remain historical evidence. No approval is inherited; final controller/policy-bound
+reviews and full qualification must use the current manifest.
+
+The historical implementation handoff below describes the earlier narrower
+proposal. Its c9eb4c7 identity and one-file scope are superseded by the current
+manifest; the isolated review/qualification procedure otherwise remains applicable.
+
 # Retention evaluator migration proposal
 
 This implementation preserves final candidate `87b1b36244e4371f53318b8d813ea8d42a2372a8`

@@ -157,7 +157,7 @@ def test_executor_blocked_inspection_never_records_release_review(tmp_path, monk
         tx.put('decisions_pending', 'decision', {'id': 'decision', 'actor': actor, 'phase': phase,
                'input': data, 'message': message, 'status': 'pending', 'attempt': 0})
     monkeypatch.setattr(executor, '_run', lambda *a, **k: {
-        'accepted': True, 'inspection_blocked': blocked,
+        'accepted': True, 'inspection_blocked': blocked, 'command_inspection_succeeded': not blocked,
         'reason': 'fixture accepted verdict despite inspection failure', 'execution_ref': 'fixture:commands'})
     result = executor.decide_one(actor)
     with service.store.transaction() as tx:
