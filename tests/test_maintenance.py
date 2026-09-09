@@ -1,6 +1,8 @@
 import os
 import time
 
+import pytest
+
 from codex_harness.adapters.artifacts import FileArtifacts
 from codex_harness.adapters.maintenance import ArtifactMaintenance
 from codex_harness.adapters.store import MemoryStore
@@ -34,3 +36,440 @@ def test_research_schedule_deduplicates_each_interval():
     assert schedule_research(service, now=0) == 2
     assert schedule_research(service, now=1) == 0
     assert schedule_research(service, now=6 * 3600) == 2
+
+
+def age(artifacts, *refs):
+    for ref in refs:
+        path = artifacts.root / (ref[7:] + '.txt')
+        old = time.time() - 14 * 86400
+        os.utime(path, (old, old))
+
+
+def test_new_transitive_root_after_mark_defers_all_deletion(tmp_path, monkeypatch):
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('old child', 'test')['ref']
+    parent = artifacts.put(child, 'test')['ref']
+    age(artifacts, child, parent)
+    collector = ArtifactMaintenance(store, artifacts)
+    mark = collector._mark
+
+    def publish(root, roots):
+        result = mark(root, roots)
+        with store.transaction() as tx:
+            tx.put('arbitrary', 'root', {'ref': parent})
+            tx.put('outbox', 'pending', {'ref': child, 'sent': False})
+        return result
+
+    monkeypatch.setattr(collector, '_mark', publish)
+    result = collector.collect(apply=True)
+    assert result['files'] == 0 and result['deferred'] == 1
+    assert artifacts.read(child) == 'old child'
+    assert artifacts.read(parent) == child
+
+
+def test_republication_renews_grace_before_deletion(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('republished', 'test')['ref']
+    age(artifacts, ref)
+    glob = Path.glob
+
+    def enumerate_then_publish(path, pattern):
+        yield from glob(path, pattern)
+        artifacts.put('republished', 'again')
+
+    monkeypatch.setattr(Path, 'glob', enumerate_then_publish)
+    assert ArtifactMaintenance(store, artifacts).collect(apply=True)['files'] == 0
+    assert artifacts.read(ref) == 'republished'
+
+
+def test_missing_or_corrupted_root_fails_closed(tmp_path):
+    import pytest
+
+    from codex_harness.domain.model import ContractError
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    orphan = artifacts.put('orphan', 'test')['ref']
+    root = artifacts.put('root', 'test')['ref']
+    age(artifacts, orphan, root)
+    with store.transaction() as tx:
+        tx.put('roots', 'one', {'ref': root})
+    path = artifacts.root / (root[7:] + '.txt')
+    path.write_text('corruption')
+    with pytest.raises(ContractError, match='corrupted'):
+        ArtifactMaintenance(store, artifacts).collect(apply=True)
+    path.unlink()
+    with pytest.raises(ContractError, match='missing'):
+        ArtifactMaintenance(store, artifacts).collect(apply=True)
+    assert artifacts.read(orphan) == 'orphan'
+
+
+def test_partial_metadata_failure_counts_removed_body(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('orphan', 'test')['ref']
+    age(artifacts, ref)
+    unlink = Path.unlink
+
+    def fail_metadata(path, *args, **kwargs):
+        if path.suffix == '.json':
+            raise OSError('injected metadata failure')
+        return unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'unlink', fail_metadata)
+    result = ArtifactMaintenance(store, artifacts).collect(apply=True)
+    assert result['files'] == 1 and result['bytes'] == 6
+    assert len(result['errors']) == 1
+    with store.transaction() as tx:
+        assert tx.get('maintenance', 'latest') == result
+
+
+def test_grace_boundary_and_symlink_are_retained(tmp_path, monkeypatch):
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('boundary', 'test')['ref']
+    now = 2000000000
+    path = artifacts.root / (ref[7:] + '.txt')
+    os.utime(path, (now - 86400, now - 86400))
+    external = tmp_path / 'external'
+    external.write_text('outside')
+    (artifacts.root / ('a' * 64 + '.txt')).symlink_to(external)
+    monkeypatch.setattr('codex_harness.adapters.maintenance.time.time', lambda: now)
+    assert ArtifactMaintenance(store, artifacts).collect(apply=True, days=1)['files'] == 0
+    assert external.read_text() == 'outside'
+
+
+def test_publisher_file_lock_does_not_block_database(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    from filelock import FileLock
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('orphan', 'test')['ref']
+    age(artifacts, ref)
+    entered, release = Event(), Event()
+
+    def publisher():
+        with FileLock(str(artifacts.root.parent / 'artifacts.lock')):
+            entered.set()
+            assert release.wait(5)
+            with store.transaction() as tx:
+                tx.put('callback', 'root', {'ref': ref})
+
+    with ThreadPoolExecutor() as pool:
+        future = pool.submit(publisher)
+        try:
+            assert entered.wait(2)
+            result = ArtifactMaintenance(store, artifacts).collect(apply=True)
+            assert result['files'] == 0 and result['deferred'] == 1
+        finally:
+            release.set()
+        future.result(timeout=5)
+
+
+def test_multiple_collectors_count_each_body_once(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    refs = [artifacts.put(str(i), 'test')['ref'] for i in range(20)]
+    age(artifacts, *refs)
+    with ThreadPoolExecutor() as pool:
+        results = list(pool.map(lambda _: ArtifactMaintenance(store, artifacts).collect(apply=True),
+                                range(2)))
+    assert sum(r['files'] for r in results) == 20
+    assert not list(artifacts.root.glob('*.txt'))
+
+
+def test_repeated_new_roots_conservatively_defer_each_run(tmp_path, monkeypatch):
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    refs = [artifacts.put('old ' + str(i), 'test')['ref'] for i in range(3)]
+    age(artifacts, *refs)
+    collector = ArtifactMaintenance(store, artifacts)
+    mark = collector._mark
+    publications = iter(refs[:2])
+
+    def publish(root, roots):
+        marked = mark(root, roots)
+        with store.transaction() as tx:
+            tx.put('outbox', 'pending', {'ref': next(publications), 'sent': False})
+        return marked
+
+    monkeypatch.setattr(collector, '_mark', publish)
+    for _ in range(2):
+        result = collector.collect(apply=True)
+        assert result['files'] == 0 and result['deferred'] > 0
+    assert all(artifacts.read(ref).startswith('old ') for ref in refs)
+
+
+def test_cycle_traversal_terminates_with_synthetic_digest_fixture(tmp_path, monkeypatch):
+    # A real SHA-256 reference cycle needs infeasible fixed points. Stub ONLY the
+    # digest for this graph test; corrupted-content tests exercise real hashes.
+    from types import SimpleNamespace
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    first, second = 'sha256:' + 'a' * 64, 'sha256:' + 'b' * 64
+    (artifacts.root / (first[7:] + '.txt')).write_text(second)
+    (artifacts.root / (second[7:] + '.txt')).write_text(first)
+    hashes = {second.encode(): first[7:], first.encode(): second[7:]}
+    monkeypatch.setattr('codex_harness.adapters.maintenance.hashlib.sha256',
+                        lambda content: SimpleNamespace(hexdigest=lambda: hashes[content]))
+    assert ArtifactMaintenance(store, artifacts)._mark(artifacts.root, {first}) == {first, second}
+
+
+def test_recent_uncommitted_parent_retains_old_child(tmp_path):
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('old dependency', 'test')['ref']
+    age(artifacts, child)
+    parent = artifacts.put(child, 'publisher')['ref']
+    ArtifactMaintenance(store, artifacts).collect(apply=True)
+    with store.transaction() as tx:
+        tx.put('outbox', 'pending', {'ref': parent, 'sent': False})
+    # INV-RESOURCE-001: a freshly published parent must retain its dependency.
+    assert artifacts.read(child) == 'old dependency'
+
+
+def test_rlm_publication_after_deletion_retains_source(tmp_path):
+
+    from codex_harness.application.rlm import RecursiveContext
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('old dependency', 'test')['ref']
+    age(artifacts, child)
+
+    class Runtime:
+        def run(self, *args):
+            # Deterministic interleaving: analyze has read the source, but has
+            # not published its result. Collection wins during the provider call.
+            assert ArtifactMaintenance(store, artifacts).collect(apply=True)['files'] == 0
+            return {'answer': {'finding': 'fixture', 'sufficient': True}}
+
+    result = RecursiveContext(artifacts, Runtime(), str(tmp_path)).analyze(child, 'inspect')
+    with store.transaction() as tx:
+        tx.put('outbox', 'pending', {'ref': result['artifact'], 'sent': False})
+    assert artifacts.document(result['artifact'])['source'] == child
+    # INV-RESOURCE-001: this is a real publication caller, not a fabricated review.
+    assert artifacts.read(child) == 'old dependency'
+
+
+def test_slow_unlink_releases_database_serialization(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from pathlib import Path
+    from threading import Event
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('orphan', 'test')['ref']
+    age(artifacts, ref)
+    entered, release = Event(), Event()
+    unlink = Path.unlink
+
+    def paused_unlink(path, *args, **kwargs):
+        if path.name == ref[7:] + '.txt':
+            entered.set()
+            assert release.wait(5)
+        return unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'unlink', paused_unlink)
+    with ThreadPoolExecutor() as pool:
+        collection = pool.submit(ArtifactMaintenance(store, artifacts).collect, True)
+        try:
+            assert entered.wait(2)
+            # Inspect actual lock ownership without timing a competing thread.
+            acquired = store.lock.acquire(blocking=False)
+            if acquired:
+                store.lock.release()
+            assert acquired
+        finally:
+            release.set()
+        assert collection.result(timeout=5)['files'] == 1
+
+
+def test_collected_reference_cannot_be_published_directly_or_in_parent(tmp_path):
+    import pytest
+
+    from codex_harness.domain.model import ContractError
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('retired', 'test')['ref']
+    age(artifacts, ref)
+    assert ArtifactMaintenance(store, artifacts).collect(apply=True)['files'] == 1
+    with pytest.raises(ContractError, match='collected'):
+        artifacts.put(ref, 'late parent')
+    with pytest.raises(ContractError, match='collected'):
+        artifacts.put('retired', 'resurrection')
+    with pytest.raises(ContractError, match='collected'):
+        with store.transaction() as tx:
+            tx.put('outbox', 'late', {'ref': ref})
+    with store.transaction() as tx:
+        assert tx.get('outbox', 'late') is None
+
+
+def test_publication_during_mark_defers_collection(tmp_path, monkeypatch):
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('child', 'test')['ref']
+    age(artifacts, child)
+    collector = ArtifactMaintenance(store, artifacts)
+    original = collector._mark
+
+    def publish(root, roots):
+        marked = original(root, roots)
+        artifacts.put(child, 'parent')
+        return marked
+
+    monkeypatch.setattr(collector, '_mark', publish)
+    assert collector.collect(apply=True)['files'] == 0
+    assert artifacts.read(child) == 'child'
+
+
+def test_failed_unlink_preserves_fence_and_body(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('orphan', 'test')['ref']
+    age(artifacts, ref)
+    original = Path.unlink
+
+    def fail(path, *args, **kwargs):
+        if path.suffix == '.txt':
+            raise OSError('injected slow storage failure')
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'unlink', fail)
+    result = ArtifactMaintenance(store, artifacts).collect(apply=True)
+    assert result['files'] == 0 and len(result['errors']) == 1
+    assert artifacts.read(ref) == 'orphan'
+    with store.transaction() as tx:
+        assert tx.get('artifact_tombstones', ref)
+
+
+def reference_record(location, ref):
+    if location == 'bucket':
+        return 'prefix:' + ref, 'record', {}
+    if location == 'id':
+        return 'records', 'prefix:' + ref, {}
+    if location == 'body_key':
+        return 'records', 'record', {'nested': [{ref: 'value'}]}
+    return 'records', 'record', {'nested': ['prefix:' + ref]}
+
+
+def test_collected_references_in_all_record_fields_are_rejected(tmp_path):
+    import pytest
+
+    from codex_harness.domain.model import ContractError
+
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    ref = artifacts.put('deleted record reference', 'test')['ref']
+    age(artifacts, ref)
+    collector = ArtifactMaintenance(store, artifacts)
+    assert collector.collect(apply=True)['files'] == 1
+    for location in ('bucket', 'id', 'body_key', 'body_value'):
+        record = reference_record(location, ref)
+        with pytest.raises(ContractError, match='Artifact reference was collected'):
+            with store.transaction() as tx:
+                tx.put('atomic', 'before-invalid-write', {})
+                tx.put(*record)
+        with store.transaction() as tx:
+            assert tx.get(*record[:2]) is None
+            assert tx.get('atomic', 'before-invalid-write') is None
+        assert collector.collect(apply=True)['files'] == 0
+
+
+def test_live_references_in_all_record_fields_retain_artifacts(tmp_path):
+    artifacts, store = FileArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    refs = []
+    for location in ('bucket', 'id', 'body_key', 'body_value'):
+        ref = artifacts.put(location, 'test')['ref']
+        refs.append(ref)
+        bucket, key, body = reference_record(location, ref)
+        with store.transaction() as tx:
+            tx.put(bucket, key + location, body)
+    age(artifacts, *refs)
+    assert ArtifactMaintenance(store, artifacts).collect(apply=True)['files'] == 0
+    assert all(artifacts.read(ref) for ref in refs)
+
+
+def test_postgres_transaction_rejects_collected_record_fields_before_insert():
+    import pytest
+
+    from codex_harness.adapters.store import PostgresTransaction
+    from codex_harness.domain.model import ContractError
+
+    class TombstonedConnection:
+        def execute(self, query, params):
+            assert query.startswith('SELECT body')  # No INSERT may be issued.
+            assert params == ('artifact_tombstones', ref)
+            return self
+
+        def fetchone(self):
+            return ({'id': ref[7:]},)
+
+    ref = 'sha256:' + 'a' * 64
+    tx = PostgresTransaction(TombstonedConnection())
+    for location in ('bucket', 'id', 'body_key', 'body_value'):
+        with pytest.raises(ContractError, match='Artifact reference was collected'):
+            tx.put(*reference_record(location, ref))
+
+
+@pytest.mark.parametrize('apply', [False, True])
+def test_generation_snapshot_waits_for_complete_publication_without_db_lock(tmp_path, apply):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    changed, release, sampled, roots_read = Event(), Event(), Event(), Event()
+
+    class PausedArtifacts(FileArtifacts):
+        pause = False
+
+        def _changed(self):
+            super()._changed()
+            if self.pause:
+                changed.set()
+                assert release.wait(5)
+
+    class ObservedMaintenance(ArtifactMaintenance):
+        def _roots(self, tx):
+            roots = super()._roots(tx)
+            roots_read.set()
+            return roots
+
+        def _generation(self):
+            sampled.set()
+            return super()._generation()
+
+    artifacts, store = PausedArtifacts(str(tmp_path / 'artifacts')), MemoryStore()
+    child = artifacts.put('publication dependency', 'test')['ref']
+    age(artifacts, child)
+    artifacts.pause = True
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        publisher = pool.submit(artifacts.put, child, 'parent')
+        assert changed.wait(2)
+        collector = pool.submit(ObservedMaintenance(store, artifacts).collect, apply)
+        try:
+            assert roots_read.wait(2)
+            # A real publisher owns the file lock. Snapshot sampling must wait
+            # without retaining DB serialization needed for claims/heartbeats.
+            assert not sampled.wait(0.25)
+            acquired = store.lock.acquire(blocking=False)
+            if acquired:
+                store.lock.release()
+            assert acquired
+            result = collector.result(timeout=2)
+            assert not release.is_set() and not publisher.done()
+            assert result['reason'] == 'publication_in_progress'
+            assert result['deferred_scope'] == 'scan'
+            assert result['deferred'] == 1 and result['files'] == 0
+            assert result['applied'] is apply
+            assert artifacts.read(child) == 'publication dependency'
+            with store.transaction() as tx:
+                tx.put('heartbeat', 'during-publication', {'alive': True})
+                assert tx.get('maintenance', 'latest') == (result if apply else None)
+        finally:
+            release.set()
+        parent = publisher.result(timeout=5)['ref']
+        assert collector.result(timeout=5)['files'] == 0
+    with store.transaction() as tx:
+        tx.put('outbox', 'published-parent', {'ref': parent})
+    assert artifacts.read(parent) == child
+    assert artifacts.read(child) == 'publication dependency'

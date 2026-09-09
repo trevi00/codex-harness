@@ -2,14 +2,41 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
+
+from filelock import FileLock
 
 from codex_harness.adapters.commands import run_process
 from codex_harness.adapters.hooks import NativeHooks
+from codex_harness.adapters.release_test_services import isolated_release_services
 from codex_harness.application.releases import Releases
 from codex_harness.application.workflow import Workflow
 from codex_harness.domain.model import canonical, digest, require, utcnow
+
+
+@contextmanager
+def incumbent_test_workspace(incumbent: str, candidate: str):
+    """Keep incumbent tests/history while file-based fixtures inspect candidate source."""
+    original, selected = Path(incumbent).resolve(), Path(candidate).resolve()
+    require((original / '.git').is_dir(), 'Evaluator requires a native Git checkout')
+    with tempfile.TemporaryDirectory(prefix='harness-incumbent-evaluator-') as directory:
+        root = Path(directory) / 'evaluation'
+
+        def ignore(path, names):
+            excluded = {'__pycache__', '.pytest_cache', '.venv'}
+            if Path(path).resolve() == original:
+                excluded.add('src')
+            return set(names) & excluded
+
+        # INV-RELEASE-001: never rewrite either reviewed checkout or test bytes.
+        # __file__-relative fixtures and imported code must describe one candidate.
+        shutil.copytree(original, root, ignore=ignore)
+        shutil.copytree(selected / 'src', root / 'src',
+                        ignore=shutil.ignore_patterns('__pycache__'))
+        yield root
 
 
 class ReleaseRunner:
@@ -64,15 +91,15 @@ class ReleaseRunner:
         # Fresh candidate venv; test definitions are taken from the incumbent commit.
         install = self._check(["uv", "sync", "--frozen"], path)
         python = Path(path) / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-        test_env = {**os.environ, "HARNESS_INTEGRATION": "1",
-                    "HARNESS_DATABASE_URL": self.service.store.dsn,
-                    "HARNESS_REDIS_URL": os.environ.get("HARNESS_REDIS_URL", "redis://127.0.0.1:56379/0")}
-        # INV-RELEASE-001: incumbent tests may import sibling test helpers under
-        # importlib mode. Expose only that test directory, not incumbent src.
-        incumbent_env = {**test_env, "PYTHONPATH": str(Path(incumbent) / "tests")}
-        tests = self._check([str(python), "-m", "pytest", str(Path(incumbent) / "tests"),
-                             "-c", str(Path(incumbent) / "pyproject.toml"), "--import-mode=importlib", "-q"], path, env=incumbent_env)
-        candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path, env=test_env)
+        with isolated_release_services(python, path, self.artifacts) as test_env:
+            with incumbent_test_workspace(incumbent, path) as evaluator:
+                incumbent_env = {**test_env, "PYTHONPATH": os.pathsep.join(
+                    [str(evaluator / 'tests'), str(evaluator / 'src')])}
+                tests = self._check([str(python), "-m", "pytest", str(evaluator / 'tests'),
+                                     "-c", str(evaluator / 'pyproject.toml'),
+                                     "--import-mode=importlib", "-q"],
+                                    str(evaluator), timeout=900, env=incumbent_env)
+            candidate_tests = self._check([str(python), "-m", "pytest", "-q"], path, timeout=900, env=test_env)
         tests = {"passed": tests["passed"] and candidate_tests["passed"],
                  "evidence": self.artifacts.put(canonical({"incumbent": tests, "candidate": candidate_tests}),
                                                 "test-suites:" + release_id)["ref"]}
@@ -151,6 +178,42 @@ class ReleaseRunner:
                 # Docker client timeout alone does not terminate the daemon-owned container.
                 run_process(["docker", "rm", "-f", name], timeout=30)
 
+    def rollback_if_compatible(self, active: dict, reason: str) -> dict:
+        # INV-RELEASE-001: a healthy old CLI does not prove that its writers
+        # enforce tombstones. Unknown compatibility must not restore old writers.
+        with self.service.store.transaction() as tx:
+            current = tx.get('releases', active['release_id'])
+            previous = tx.get('releases', (active.get('previous') or {}).get('release_id', ''))
+        paths = ['src/codex_harness/adapters/store.py',
+                     'src/codex_harness/adapters/record_references.py',
+                     'src/codex_harness/adapters/artifacts.py',
+                     'src/codex_harness/application/rlm.py']
+        compatibility_error = None
+        try:
+            require(current is not None and previous is not None, 'Rollback source identity missing')
+            revisions = [r['candidate']['revision'] for r in (current, previous)]
+            for path in paths:
+                sources = [self.git._git('show', revision + ':' + path, strip=False)
+                           for revision in revisions]
+                require(sources[0] == sources[1], 'Rollback retention protocol differs: ' + path)
+        except Exception as exc:
+            compatibility_error = str(exc)
+        # Fence the final tombstone observation against collector publication.
+        # Collector lock acquisition is nonblocking while it owns its DB tx.
+        with FileLock(str(self.artifacts.root.parent / 'artifacts.lock'), timeout=30):
+            with self.service.store.transaction() as tx:
+                require(tx.get('deployment', 'active') == active, 'Stale rollback')
+                blocked = bool(tx.scan('artifact_tombstones')) and compatibility_error is not None
+                tx.put('maintenance_control', 'collection', {'status': 'paused',
+                       'reason': 'rollback requires verified writer convergence', 'at': utcnow()})
+            if not blocked:
+                previous = self.releases.rollback(active['release_id'], reason)
+                return {'status': 'rolled_back', 'active': previous}
+        receipt = self.artifacts.put(canonical({'active': active, 'reason': reason,
+            'compatibility_error': compatibility_error, 'paths': paths}), 'rollback-compatibility-blocked')
+        return {'status': 'rollback_blocked', 'active': active, 'reason': compatibility_error,
+                'evidence': receipt['ref']}
+
     def monitor(self) -> dict:
         with self.service.store.transaction() as tx:
             active = tx.get("deployment", "active")
@@ -160,8 +223,7 @@ class ReleaseRunner:
         check = self._check(["docker", "run", "--rm", "--memory", "512m", "--entrypoint", "codex",
                              image["image"], "--version"], timeout=45)
         if not check["passed"]:
-            previous = self.releases.rollback(active["release_id"], "External CLI health check failed")
-            return {"status": "rolled_back", "active": previous, "check": check}
+            return {**self.rollback_if_compatible(active, "External CLI health check failed"), 'check': check}
         running = run_process(["docker", "compose", "ps", "--format", "json"], cwd=str(self.git.repository), timeout=30)
         require(running.returncode == 0, "Cannot inspect deployed containers")
         for line in running.stdout.splitlines():
@@ -177,6 +239,6 @@ class ReleaseRunner:
                 continue
             check = self._check(["docker", "exec", container["ID"], "codex", "--version"], timeout=30)
             if not check["passed"]:
-                previous = self.releases.rollback(active["release_id"], "Deployed container CLI health check failed")
-                return {"status": "rolled_back", "active": previous, "container": container["Service"], "check": check}
+                return {**self.rollback_if_compatible(active, "Deployed container CLI health check failed"),
+                        'container': container['Service'], 'check': check}
         return {"status": "healthy", "checked_at": utcnow(), "check": check}

@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import uuid
+from contextlib import contextmanager
 from pathlib import Path
 
 from filelock import FileLock
@@ -21,7 +23,34 @@ class FileArtifacts:
         with FileLock(str(self.root.parent / "artifacts.lock"), timeout=30):
             return self._put(body, source)
 
+    def _changed(self):
+        (self.root / 'generation').write_text(uuid.uuid4().hex)
+
+    @contextmanager
+    def retain(self, reference: str):
+        # INV-RESOURCE-001: durable pins survive long provider calls and crashes.
+        pin = self.root / (uuid.uuid4().hex + '.pin')
+        with FileLock(str(self.root.parent / "artifacts.lock"), timeout=30):
+            self._body(reference)
+            require(not (self.root / (reference[7:] + '.deleted')).exists(),
+                    "Artifact dependency was collected")
+            pin.write_text(reference)
+            self._changed()
+        try:
+            yield
+        finally:
+            with FileLock(str(self.root.parent / "artifacts.lock"), timeout=30):
+                pin.unlink(missing_ok=True)
+                self._changed()
+
     def _put(self, body: str, source: str) -> dict:
+        # INV-RESOURCE-001: deleted identities cannot be resurrected indirectly.
+        refs = set(re.findall(r"sha256:[0-9a-f]{64}", body))
+        refs.add('sha256:' + hashlib.sha256(body.encode('utf-8')).hexdigest())
+        for ref in refs:
+            require(not (self.root / (ref[7:] + '.deleted')).exists(),
+                    "Artifact dependency was collected")
+        self._changed()
         data = body.encode("utf-8")
         key = hashlib.sha256(data).hexdigest()
         path = self.root / (key + ".txt")

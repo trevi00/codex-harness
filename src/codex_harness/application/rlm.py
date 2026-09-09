@@ -15,6 +15,10 @@ class RecursiveContext:
 
     def analyze(self, reference: str, question: str, start: int = 0,
                 length: int | None = None, depth: int = 0) -> dict:
+        with self.artifacts.retain(reference):
+            return self._analyze(reference, question, start, length, depth)
+
+    def _analyze(self, reference, question, start, length, depth):
         require(depth <= self.max_depth, "RLM recursion depth exhausted")
         length = length if length is not None else self.artifacts.inspect(reference)["characters"] - start
         require(start >= 0 and length >= 0, "Invalid external context range")

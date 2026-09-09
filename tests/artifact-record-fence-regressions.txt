@@ -1,0 +1,10 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /runtime/workspaces/9fef2878-81e1-4110-b0c6-1b43835dfe44
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 20 items
+
+tests/test_maintenance.py ....................                           [100%]
+
+============================== 20 passed in 3.19s ==============================
