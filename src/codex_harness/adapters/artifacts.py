@@ -9,6 +9,7 @@ from pathlib import Path
 
 from filelock import FileLock
 
+from codex_harness.adapters.record_references import potential_references
 from codex_harness.domain.model import ContractError, canonical, require, utcnow
 
 
@@ -45,7 +46,7 @@ class FileArtifacts:
 
     def _put(self, body: str, source: str) -> dict:
         # INV-RESOURCE-001: deleted identities cannot be resurrected indirectly.
-        refs = set(re.findall(r"sha256:[0-9a-f]{64}", body))
+        refs = potential_references(body)
         refs.add('sha256:' + hashlib.sha256(body.encode('utf-8')).hexdigest())
         for ref in refs:
             require(not (self.root / (ref[7:] + '.deleted')).exists(),

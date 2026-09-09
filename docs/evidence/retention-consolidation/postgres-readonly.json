@@ -1,0 +1,13 @@
+{
+  "scope": "Read-only connectivity and collection-control observation; no load or contention qualification",
+  "connect_seconds": 0.05019281801651232,
+  "select_seconds": [
+    0.0026615870010573417,
+    0.00023492201580666006,
+    0.0001523229875601828,
+    0.0001576750073581934,
+    9.276601485908031e-05
+  ],
+  "collection_status": "paused",
+  "status": "succeeded"
+}

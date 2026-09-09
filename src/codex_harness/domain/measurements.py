@@ -131,3 +131,25 @@ def evaluate(definition: Definition, evidence: dict | None, now: datetime) -> Ev
 
 def definition_documents():
     return [asdict(d) for d in DEFINITIONS]
+
+
+def measurement_population(rows, *, decisions=False):
+    """Replay inputs for the definitions above; preserve malformed input as-is."""
+    if not isinstance(rows, list):
+        return rows
+    fields = {'id', 'status', 'lease_until'}
+    if not decisions:
+        fields |= {'created_at', 'completed_at', 'attempt', 'attempt_outcomes'}
+    projected = []
+    for row in rows:
+        if not isinstance(row, dict):
+            projected.append(row)
+            continue
+        value = {key: row[key] for key in fields if key in row}
+        outcomes = value.get('attempt_outcomes')
+        if isinstance(outcomes, list):
+            value['attempt_outcomes'] = [
+                {key: outcome[key] for key in ('attempt', 'at', 'status') if key in outcome}
+                if isinstance(outcome, dict) else outcome for outcome in outcomes]
+        projected.append(value)
+    return projected

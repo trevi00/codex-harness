@@ -1,0 +1,139 @@
+{
+  "task_id": "a56a0afd-03ec-4c23-bdb7-511bdf812073",
+  "base": "e68d5e157465b4b03193ee3feeb3a776473b8d40",
+  "previous_candidate": "34da547aa6d8fc162ac9890cc5cd40d6a3d138b3",
+  "checks": [
+    {
+      "argv": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "log": "ruff.log"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest"
+      ],
+      "exit_code": 0,
+      "passed": 717,
+      "skipped": 34,
+      "log": "pytest.log"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "docs/evidence/retention-consolidation/controls.py"
+      ],
+      "exit_code": 0,
+      "log": "negative-controls.json"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "initial_suite": {
+    "passed": 713,
+    "skipped": 34,
+    "exit_code": 0,
+    "scope": "Before final additional tests; tool output only"
+  },
+  "preservation": {
+    "byte_identical_to_previous_candidate": [
+      "docs/evidence/python-runner-rework/README.md",
+      "docs/evidence/python-runner-rework/focused.log",
+      "docs/evidence/python-runner-rework/negative-control.json",
+      "docs/evidence/python-runner-rework/pytest-initial.log",
+      "docs/evidence/python-runner-rework/pytest-intermediate.log",
+      "docs/evidence/python-runner-rework/pytest-newlines.log",
+      "docs/evidence/python-runner-rework/pytest.log",
+      "docs/evidence/python-runner-rework/ruff-initial.log",
+      "docs/evidence/python-runner-rework/ruff.log",
+      "docs/evidence/python-runner-rework/validation.json",
+      "docs/evidence/reference-rework/README.md",
+      "docs/evidence/reference-rework/diff-check.json",
+      "docs/evidence/reference-rework/focused-failure.json",
+      "docs/evidence/reference-rework/intermediate-diff-check.json",
+      "docs/evidence/reference-rework/intermediate-pytest.json",
+      "docs/evidence/reference-rework/intermediate-ruff.json",
+      "docs/evidence/reference-rework/intermediate-validation.json",
+      "docs/evidence/reference-rework/negative-control.json",
+      "docs/evidence/reference-rework/pytest.json",
+      "docs/evidence/reference-rework/rejected-negative-control.json",
+      "docs/evidence/reference-rework/ruff.json",
+      "docs/evidence/reference-rework/validation.json",
+      "src/codex_harness/application/measurements.py",
+      "src/codex_harness/domain/measurements.py",
+      "tests/fixtures/reference_runner/original.txt",
+      "tests/test_maintenance_postgres.py",
+      "tests/test_measurements.py",
+      "tests/test_skill_history.py"
+    ],
+    "adapted": [
+      "docs/artifact-reference-semantics.md",
+      "src/codex_harness/adapters/maintenance.py",
+      "src/codex_harness/adapters/record_references.py",
+      "tests/test_maintenance.py",
+      "tests/test_reference_kinds.py"
+    ]
+  },
+  "qualification": "Incomplete: no independent reviews, current production dry run, writer convergence, fresh service suites or actual CLI canaries",
+  "files_sha256": {
+    "docs/artifact-reference-semantics.md": "b4f49476621501b024d94f679ebaad17c61a72269adf7b8ce525896d474bfcb6",
+    "docs/evidence/python-runner-rework/README.md": "a3bb991ce8fd6a6f174b862d0c49b7fd1d0cada2375b1e4fc0def160804cfec2",
+    "docs/evidence/python-runner-rework/focused.log": "b45d168004e4e3f23a24c38d52474002dfb962416073d596efd7aab0989cf771",
+    "docs/evidence/python-runner-rework/negative-control.json": "3a7581263b58f0a42744c5e3ebfab07e8de58d93a04013071ab9b0be2f59186d",
+    "docs/evidence/python-runner-rework/pytest-initial.log": "f3d5149e6e3fd4edc06c3df73dd426f3baa2b1e405bb2725a3148e9889e74e6d",
+    "docs/evidence/python-runner-rework/pytest-intermediate.log": "51e768ede6907415347f35fc81d7f21889dc6bf1a9c8744216bbbea2e1da1b24",
+    "docs/evidence/python-runner-rework/pytest-newlines.log": "444908784002a5bb3559c948f19226dcb70904befc0a12b1be55aed0ac171278",
+    "docs/evidence/python-runner-rework/pytest.log": "80ec10dc30f2a93e496e4de0f52c86c18f84f99c959320e85257892b2f6861a1",
+    "docs/evidence/python-runner-rework/ruff-initial.log": "8ee4f5214e0810d95ff12c1e415e0a6df3c2fe448d30e33986707bfca5789268",
+    "docs/evidence/python-runner-rework/ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "docs/evidence/python-runner-rework/validation.json": "4046f8cfeca9c81b7ac6f646ca7769140d595a65bde94616d802c48f5c45b154",
+    "docs/evidence/reference-rework/README.md": "0746da4b470e687f52d54ddf786a638132e86a05c1c01555eacd235bf4dff182",
+    "docs/evidence/reference-rework/diff-check.json": "cdd6f8450d526a617d05dea435eb8c4f157bc5c5905009d9023e4defa6cac0fc",
+    "docs/evidence/reference-rework/focused-failure.json": "92f96938e48cb2f51367cfdad5e8bbf944ca43c76a328ae43f0eea8a17eb1a69",
+    "docs/evidence/reference-rework/intermediate-diff-check.json": "cdd6f8450d526a617d05dea435eb8c4f157bc5c5905009d9023e4defa6cac0fc",
+    "docs/evidence/reference-rework/intermediate-pytest.json": "7affacda044a66586bdae33b54b04862383fff1ed20885af5cc27d1e62f261a6",
+    "docs/evidence/reference-rework/intermediate-ruff.json": "fca108a46fe08a021278923f7a2d8cf8e719332e837591371c1a45f2a92dca6d",
+    "docs/evidence/reference-rework/intermediate-validation.json": "9e9d06e72ee0fc5a7aa928135cc37952e05ef5a020abcef261b2f6990605d065",
+    "docs/evidence/reference-rework/negative-control.json": "069d6f208c973d37d97e840431e7030bf95de0940a43e72efc43b3d77a6a7472",
+    "docs/evidence/reference-rework/pytest.json": "a58139184530e87b7ab509f0aa0fa1328f7e15d4b9733c6ac5e84a34404afc33",
+    "docs/evidence/reference-rework/rejected-negative-control.json": "61fcdf2f54f323277ae1190425da28527d70c02d30190e7e4b3b07a887bf0fca",
+    "docs/evidence/reference-rework/ruff.json": "fca108a46fe08a021278923f7a2d8cf8e719332e837591371c1a45f2a92dca6d",
+    "docs/evidence/reference-rework/validation.json": "f38aa82722099e47e9b19903cc9a7168f10a304c24f72a35d84c490c6528a42b",
+    "docs/evidence/retention-consolidation/README.md": "ca206fa60af68eb31258c85346fbe1ee0b5d88217fe9693a89bd5a80b48ce930",
+    "docs/evidence/retention-consolidation/controls.py": "39745d2a2d18f21f4a4fba2e426190795971996e2f48aa76f86079bd838b96bc",
+    "docs/evidence/retention-consolidation/environment.json": "0d1576c38d16e2b1d440ddcf7339e88571e43f391792e179410a7aa71c614c82",
+    "docs/evidence/retention-consolidation/negative-controls.json": "8c84281fd6e65c9572a4a37b692d8ec1ef824ffaf122345a07af0f0e8b8902c9",
+    "docs/evidence/retention-consolidation/postgres-readonly.json": "75a2ace6c8eb46ebab90ab49796d8f57c9567abbdecffc4282da152fcb5a4f31",
+    "docs/evidence/retention-consolidation/pytest.log": "3928746e2f8892677fc3e582df6076030953acdc4be0fa723243be86dc485bb5",
+    "docs/evidence/retention-consolidation/ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "src/codex_harness/adapters/artifacts.py": "dc1695f87b68cbdc88ad30a2c24b92cfabf79edb866a92a7c7d99e7045ca5142",
+    "src/codex_harness/adapters/executor.py": "cb44642e1009b0c8ab6ac3e609b3fe09b571f24f49211e784daf8693b526beac",
+    "src/codex_harness/adapters/maintenance.py": "f70c1fab2d8b8037e932f6570355558fd8badbca7edb3ad2ca3506caa05383ad",
+    "src/codex_harness/adapters/record_references.py": "8c364524b4b6bada974301005ebe0d5785e4a8ff7792b80be7a4b6af55b23abb",
+    "src/codex_harness/adapters/store.py": "7b6041d39b6db53b1c8ca166c2a468b4385fd3ed969d0964f7508f43f7706494",
+    "src/codex_harness/application/measurements.py": "7c1cb23a981888b74215bf262b610fbf9b2519badc9af651b6e5b07bca1d3eea",
+    "src/codex_harness/domain/measurements.py": "4ee179e3337a8f8d15f301632e51b35751150cef99fd2b05d37062077df03906",
+    "tests/fixtures/reference_runner/original.txt": "b967dca2a7a4cf978c06c0f08198ac4677b4fa28fa3e3d20a0da2d8abbf85855",
+    "tests/test_git_workspace.py": "d57c5aac057fa49383a0cedceaf915dde9553226d588442ca85c562774d96f04",
+    "tests/test_maintenance.py": "a6a04dd164b347d22e9ecb39370f3a66e8f4269a51f3c287f07b992eb920ae7d",
+    "tests/test_maintenance_postgres.py": "1468b6fa329c8ded3e0e490385e656e8a44645a4a5615b1f7f80135204c9ad06",
+    "tests/test_measurements.py": "b091d85924056836bd5ed092ac1d14a9953116a254b732caf2de8f1a357bed95",
+    "tests/test_reference_kinds.py": "0871e232c837c3710d4bb82b7e280e85cf3629f054d57bb8e60ccf06063131f0",
+    "tests/test_skill_history.py": "3a9fb2b0d73cc59549935971826a815ee6ea3183d325e3db56ba93046d491d86"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "pytest",
+    "tests/test_maintenance.py",
+    "-k",
+    "ambiguous_receipts",
+    "--runxfail",
+    "-q"
+  ],
+  "exit_code": 1,
+  "source_revision": "5dc00f184a6bfff450d4fd090aa1bff13e1e036f",
+  "scope": "Rejected decoder loaded with restored candidate and new regression tests; not a complete rejected-revision checkout",
+  "decoder_sha256": "58ba0da7e158ba1317a82fba045b673136042a47c4f55632c23e9554f82316e9",
+  "log_sha256": "61fcdf2f54f323277ae1190425da28527d70c02d30190e7e4b3b07a887bf0fca",
+  "log": "rejected-negative-control.json",
+  "stdout_stderr_sha256": "08971a9cb6bd8402b7920886082595d19a983a441dcf49462b17abf34ce84e7b"
+}

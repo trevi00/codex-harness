@@ -1,0 +1,32 @@
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 7 packages in 13.26s
+I001 [*] Import block is un-sorted or un-formatted
+  --> src/codex_harness/adapters/record_references.py:3:1
+   |
+ 1 |   """Shared runtime record reference semantics for publication and collection."""
+ 2 |
+ 3 | / import ast
+ 4 | | import hashlib
+ 5 | | import io
+ 6 | | import json
+ 7 | | import re
+ 8 | | import tomllib
+ 9 | | import tokenize
+10 | | from urllib.parse import urlsplit
+   | |_________________________________^
+11 |
+12 |   PATTERN = re.compile(r"(?<!spec-)sha256:[0-9a-f]{64}(?![0-9a-f])")
+   |
+help: Organize imports
+   |
+7  | import re
+8  + import tokenize
+9  | import tomllib
+   - import tokenize
+10 | from urllib.parse import urlsplit
+   |
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.

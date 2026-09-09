@@ -67,6 +67,47 @@ def test_retry_keeps_original_base_and_uncommitted_work(tmp_path):
         adapter.prepare('retry', git(root, 'rev-parse', 'HEAD'))
 
 
+def test_failed_dirty_review_is_preserved_and_retry_uses_clean_checkout(tmp_path, monkeypatch):
+    from codex_harness.adapters.artifacts import FileArtifacts
+    from codex_harness.adapters.executor import Executor
+    from codex_harness.adapters.store import MemoryStore
+    from codex_harness.application.service import Harness
+    from codex_harness.bootstrap import organization
+    from codex_harness.domain.model import envelope
+
+    root = repository(tmp_path)
+    adapter = GitWorkspace(str(root), str(tmp_path / 'workspaces'))
+    workspace = adapter.prepare('implementation', 'HEAD')
+    (Path(workspace['path']) / 'candidate.txt').write_text('candidate fixture')
+    candidate = adapter.capture(workspace)
+    service = Harness(MemoryStore(), organization())
+    executor = Executor(service, adapter, FileArtifacts(str(tmp_path / 'artifacts')))
+    message = envelope('task.assign', 'lead:improvement', 'worker:implementation', 'implement', {}, 'test')
+    with service.store.transaction() as tx:
+        tx.put('decisions_pending', 'review', {'id': 'review', 'actor': 'lead:improvement',
+               'phase': 'review_lead', 'input': {'candidate': candidate}, 'message': message,
+               'status': 'pending', 'attempt': 0})
+    paths = []
+
+    def review(agent, task_id, objective, data, cwd, *args, **kwargs):
+        paths.append(Path(cwd))
+        assert 'outside the checkout' in objective
+        if len(paths) == 1:
+            (Path(cwd) / 'review-evidence.txt').write_text('retain failed review evidence')
+        return {'accepted': True, 'reason': 'unit fixture', 'execution_ref': 'fixture:review'}
+
+    monkeypatch.setattr(executor, '_run', review)
+    first = executor.decide_one('lead:improvement')
+    assert first['status'] == 'retry'
+    with service.store.transaction() as tx:
+        assert not tx.scan('releases')
+    second = executor.decide_one('lead:improvement')
+    assert second['status'] == 'succeeded'
+    assert len(paths) == 2 and paths[0] != paths[1]
+    assert (paths[0] / 'review-evidence.txt').read_text() == 'retain failed review evidence'
+    assert not (paths[1] / 'review-evidence.txt').exists()
+
+
 def test_hook_identity_survives_rework_and_rebase_without_prompt_metadata(tmp_path):
     root = repository(tmp_path)
     adapter = GitWorkspace(str(root), str(tmp_path / "workspaces"))

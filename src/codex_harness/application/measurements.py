@@ -2,7 +2,12 @@
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 
-from codex_harness.domain.measurements import DEFINITIONS, definition_documents, evaluate
+from codex_harness.domain.measurements import (
+    DEFINITIONS,
+    definition_documents,
+    evaluate,
+    measurement_population,
+)
 from codex_harness.domain.model import canonical, digest, require
 from codex_harness.ports import ArtifactStore, Store
 
@@ -17,7 +22,11 @@ class Measurements:
             tasks, decisions = tx.scan('tasks'), tx.scan('decisions_pending')
             now = now or datetime.now(timezone.utc)
         # INV-GRAPH-001: runtime snapshots live in PostgreSQL; bytes are immutable evidence.
-        evidence = {'observed_at': now.isoformat(), 'tasks': tasks, 'decisions': decisions,
+        # INV-METRIC-001: retain every evaluator input, not repeated prompt/log payloads.
+        # Each observation still has its own timestamp and independently replayable bytes.
+        evidence = {'observed_at': now.isoformat(), 'tasks': measurement_population(tasks),
+                    'decisions': measurement_population(decisions, decisions=True),
+                    'input_schema': 'measurement-population.v1',
                     'repository_revision': repository_revision, 'definitions': definition_documents()}
         ref = self.artifacts.put(canonical(evidence), 'conductor-measurements.v1')['ref']
         results = []

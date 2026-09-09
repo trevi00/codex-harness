@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "uv",
+    "run",
+    "pytest",
+    "tests/test_reference_kinds.py",
+    "tests/test_maintenance.py",
+    "tests/test_measurements.py",
+    "--runxfail",
+    "-q"
+  ],
+  "exit_code": 1,
+  "result": "1 failed, 131 passed",
+  "failure": "test_buildkit_progress_only_excludes_complete_identity_lines: bounded preflight exhaustion retained a BuildKit identity after repeatedly unescaping unchanged text.",
+  "command_evidence": "89e28d"
+}

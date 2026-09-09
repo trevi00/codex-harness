@@ -490,13 +490,17 @@ class Executor:
             if phase.startswith("review_"):
                 candidate = data["candidate"]
                 inspected = self.git.inspect(candidate["revision"], candidate["base"])
-                cwd = self.git.review_workspace(candidate["revision"], decision["id"])
+                # INV-RELEASE-001: preserve failed review outputs; retries get
+                # an independent clean checkout, never the prior dirty workspace.
+                cwd = self.git.review_workspace(candidate["revision"], decision["id"] + '-' + str(decision['generation']))
                 data = {**data, "independent_diff": inspected}
             result = self._run(agent, decision["id"], "Evaluate " + phase + ". Assess Google SRE "
                                "reliability, arc42 architecture impact, existing graph/contracts, measurable benefit, "
                                "evidence and rollback. Accept only when justified. For diagnosis, confirm a root "
                                "cause only from evidence, never from generic error similarity; reuse a known cause "
-                               "ID only when the cause and scope are the same.", data, cwd,
+                               "ID only when the cause and scope are the same. For source reviews, keep the "
+                               "checkout unchanged; write temporary logs and reproduction scripts in a system "
+                               "temporary directory outside the checkout and retain evidence through artifact tools.", data, cwd,
                                 DIAGNOSIS if phase == "diagnose" else VERDICT, True,
                                 heartbeat=lambda: self.workflow.heartbeat(lease), lease=lease,
                                 workload="design" if phase == "diagnose" else "final_validation")

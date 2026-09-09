@@ -120,3 +120,29 @@ def test_snapshot_and_final_batch_duration(maintenance_store, tmp_path):
     assert result['files'] == 100
     assert result['snapshot_seconds'] < 1
     assert result['max_batch_seconds'] < 1
+
+
+def test_slow_root_decoding_does_not_hold_postgres_workflow_lock(maintenance_store, tmp_path):
+    entered, release = Event(), Event()
+    artifacts = FileArtifacts(str(tmp_path / 'artifacts'))
+    workflow = Workflow(maintenance_store, organization())
+    workflow.submit(envelope('task.assign', 'lead:improvement', 'worker:implementation',
+                             'implement', {'objective': 'root decode responsiveness'}, 'test'))
+    running = workflow.claim('worker:implementation', 'heartbeat', lease_seconds=120)
+
+    class PausedRootDecoder(ArtifactMaintenance):
+        def _roots(self, records):
+            entered.set()
+            assert release.wait(15)
+            return super()._roots(records)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        collection = pool.submit(PausedRootDecoder(maintenance_store, artifacts).collect, False)
+        try:
+            assert entered.wait(5)
+            heartbeat = pool.submit(workflow.heartbeat, running)
+            heartbeat.result(timeout=5)
+            assert not collection.done()
+        finally:
+            release.set()
+        assert collection.result(timeout=10)['files'] == 0
